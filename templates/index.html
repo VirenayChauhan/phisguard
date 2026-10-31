@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>PhishGuard — link &amp; email checker with receipts</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f7cff'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='white' text-anchor='middle'>PG</text></svg>">
+</head>
+<body>
+<!-- Authentication is shown before any dashboard data or analysis controls. -->
+<section class="auth-screen" id="auth-screen" aria-labelledby="auth-title">
+  <div class="auth-card">
+    <div class="auth-brand-mark" aria-hidden="true">PG</div>
+    <div class="auth-eyebrow">SECURE WORKSPACE</div>
+    <h1 id="auth-title">Sign in to PhishGuard</h1>
+    <p class="auth-lede" id="auth-lede">Create a secure account or log in to access the phishing protection workspace.</p>
+
+    <div class="auth-tabs" id="auth-tabs" role="tablist" aria-label="Account access">
+      <button class="auth-tab active" id="tab-login" type="button" role="tab" aria-selected="true">Log in</button>
+      <button class="auth-tab" id="tab-register" type="button" role="tab" aria-selected="false">Create account</button>
+    </div>
+
+    <form id="login-form" class="auth-form">
+      <label for="login-username">Username</label>
+      <input id="login-username" type="text" autocomplete="username" minlength="3" maxlength="32"
+             placeholder="your_username" required>
+      <label for="login-password">Password</label>
+      <input id="login-password" type="password" autocomplete="current-password"
+             placeholder="Your password" required>
+      <button class="btn btn-primary auth-submit" id="btn-login" type="submit">
+        Log in <span aria-hidden="true">→</span>
+      </button>
+      <div class="auth-actions">
+        <button class="auth-link" id="btn-forgot-password" type="button">Forgot password?</button>
+      </div>
+    </form>
+
+    <form id="register-form" class="auth-form" hidden>
+      <div class="register-progress" aria-label="Account creation progress">
+        <span class="register-progress-step active" data-progress-step="1"><b>1</b> Account</span>
+        <span class="register-progress-line"></span>
+        <span class="register-progress-step" data-progress-step="2"><b>2</b> Password</span>
+        <span class="register-progress-line"></span>
+        <span class="register-progress-step" data-progress-step="3"><b>3</b> Recovery</span>
+      </div>
+
+      <section class="register-step active" data-register-step="1">
+        <div class="register-step-heading"><b>Set up your account</b><span>Basic details first.</span></div>
+        <label for="register-username">Username</label>
+        <input id="register-username" type="text" autocomplete="username" minlength="3" maxlength="32"
+               pattern="[A-Za-z][A-Za-z0-9_]{2,31}" placeholder="your_username" required>
+        <div class="auth-help">3–32 characters, starting with a letter.</div>
+        <label for="register-mobile">Mobile number</label>
+        <input id="register-mobile" type="tel" inputmode="tel" autocomplete="tel"
+               pattern="(?:\+91[\s-]?)?[6-9][0-9]{9}" placeholder="9876543210" required>
+        <label for="register-email">Gmail address <span class="optional-label">(optional)</span></label>
+        <input id="register-email" type="email" autocomplete="email"
+               pattern="[^@\s]+@(gmail\.com|googlemail\.com)" placeholder="name@gmail.com">
+        <div class="auth-help">You can add it later from Privacy &amp; authentication.</div>
+        <button class="btn btn-primary auth-submit register-next" type="button">Next <span aria-hidden="true">→</span></button>
+      </section>
+
+      <section class="register-step" data-register-step="2" hidden>
+        <div class="register-step-heading"><b>Protect your account</b><span>Choose a password you can remember.</span></div>
+        <label for="register-password">Password</label>
+        <input id="register-password" type="password" autocomplete="new-password"
+               minlength="8" maxlength="128" placeholder="At least 8 characters" required>
+        <div class="auth-help">Use at least 8 characters with a letter and a number.</div>
+        <label for="register-password-confirm">Confirm password</label>
+        <input id="register-password-confirm" type="password" autocomplete="new-password"
+               minlength="8" maxlength="128" placeholder="Re-enter password" required>
+        <div class="register-actions">
+          <button class="btn btn-ghost register-back" type="button">← Back</button>
+          <button class="btn btn-primary register-next" type="button">Next <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+
+      <section class="register-step" data-register-step="3" hidden>
+        <div class="register-step-heading"><b>Add a recovery option</b><span>Use this if you ever forget your password.</span></div>
+        <label for="register-recovery-question">Password recovery question</label>
+        <select id="register-recovery-question" required>
+          <option value="">Choose a question</option>
+          <option>What is your favorite game?</option>
+          <option>What is your favorite flower?</option>
+          <option>What is your favorite hobby?</option>
+          <option>What city were you born in?</option>
+          <option>What was your first pet's name?</option>
+        </select>
+        <label for="register-recovery-answer">Your answer</label>
+        <input id="register-recovery-answer" type="text" autocomplete="off" minlength="2" maxlength="128"
+               placeholder="Enter an answer" required>
+        <div class="auth-help">Choose an answer others cannot easily guess.</div>
+        <div class="register-actions">
+          <button class="btn btn-ghost register-back" type="button">← Back</button>
+          <button class="btn btn-primary" id="btn-register" type="submit">Create account <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+    </form>
+
+    <form id="forgot-lookup-form" class="auth-form" hidden>
+      <label for="forgot-username">Username</label>
+      <input id="forgot-username" type="text" autocomplete="username" minlength="3" maxlength="32"
+             placeholder="your_username" required>
+      <div class="auth-help">We will show the recovery question saved for this account.</div>
+      <button class="btn btn-primary auth-submit" id="btn-forgot-lookup" type="submit">
+        Continue <span aria-hidden="true">→</span>
+      </button>
+      <div class="auth-actions">
+        <button class="auth-link" id="btn-back-login" type="button">← Back to login</button>
+      </div>
+    </form>
+
+    <form id="forgot-reset-form" class="auth-form" hidden>
+      <div class="auth-sent-note">Recovery question<br><b id="forgot-question">–</b></div>
+      <label for="forgot-answer">Your answer</label>
+      <input id="forgot-answer" type="text" autocomplete="off" minlength="2" maxlength="128"
+             placeholder="Enter your answer" required>
+      <label for="forgot-new-password">New password</label>
+      <input id="forgot-new-password" type="password" autocomplete="new-password" minlength="8" maxlength="128"
+             placeholder="At least 8 characters" required>
+      <label for="forgot-confirm-password">Confirm new password</label>
+      <input id="forgot-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128"
+             placeholder="Re-enter password" required>
+      <div class="auth-help">At least 8 characters with one letter and one number.</div>
+      <button class="btn btn-primary auth-submit" id="btn-forgot-reset" type="submit">
+        Reset password <span aria-hidden="true">→</span>
+      </button>
+      <div class="auth-actions">
+        <button class="auth-link" id="btn-forgot-start-over" type="button">Use a different account</button>
+      </div>
+    </form>
+
+    <section class="saved-accounts" id="saved-accounts" hidden aria-label="Saved accounts">
+      <div class="saved-accounts-title">Saved accounts</div>
+      <div class="saved-account-list" id="saved-account-list"></div>
+      <div class="auth-help">Only usernames are remembered here. A password is always required.</div>
+    </section>
+
+    <div class="auth-message" id="auth-message" role="status" aria-live="polite"></div>
+    <div class="auth-security-note">
+      <span class="security-icon" aria-hidden="true">✓</span>
+      Passwords are securely hashed. Your session is protected with an HttpOnly cookie.
+    </div>
+  </div>
+</section>
+
+<div class="app" id="dashboard" hidden>
+
+  <!-- ============================== SIDEBAR ============================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">PG</div>
+      <div>
+        <div class="brand-name">PhishGuard</div>
+        <div class="brand-sub">verdicts with receipts</div>
+      </div>
+    </div>
+
+    <nav class="nav" aria-label="Main">
+      <div class="nav-label">Workspace</div>
+      <button class="nav-item" data-route="overview" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </button>
+      <button class="nav-item" data-route="saved">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-3-6 3Z"/><path d="M9 7h6"/></svg>
+        Saved scans
+      </button>
+      <div class="nav-label">Check</div>
+      <button class="nav-item" data-route="link" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+        Check a link <span class="kbd">1</span>
+      </button>
+      <button class="nav-item" data-route="email">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+        Check an email <span class="kbd">2</span>
+      </button>
+
+      <div class="nav-label">Organisation</div>
+      <button class="nav-item" data-route="sweep">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/><circle cx="12" cy="12" r="3"/></svg>
+        Org sweep <span class="kbd">3</span>
+      </button>
+      <button class="nav-item" data-route="coverage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+        Coverage &amp; design
+      </button>
+
+      <div class="nav-label">Recent</div>
+      <div class="recent" id="recent"></div>
+    </nav>
+
+    <div class="side-foot">
+      <div class="engine-card">
+        <div class="row"><span class="k">engine</span><span class="v" id="engine-ver">–</span></div>
+        <div class="row"><span class="k">intel</span><span class="v" id="engine-intel">–</span></div>
+        <div class="row"><span class="k">domains seen</span><span class="v" id="engine-domains">–</span></div>
+        <div class="row"><span class="k">reports</span><span class="v" id="engine-reports">–</span></div>
+      </div>
+      <button class="nav-item" id="theme-toggle" aria-live="polite">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+        <span id="theme-label">Light mode</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- =============================== MAIN =============================== -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="page-title">Check a link</h1>
+        <div class="crumb" id="page-crumb">Instant lexical verdict, then infrastructure, reputation and a click preview</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="chip" id="chip-intel"><span class="dot"></span> intel <b>–</b></div>
+        <div class="chip" id="chip-clusters"><span class="dot"></span> clusters <b>–</b></div>
+        <div class="user-menu">
+          <button class="profile-trigger" id="btn-profile" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="profile-avatar" id="profile-avatar">?</span>
+            <span class="user-email" id="user-identity">–</span>
+            <span class="profile-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="profile-menu" id="profile-menu" role="menu" hidden>
+            <div class="profile-menu-head">
+              <div class="profile-menu-name" id="profile-menu-name">–</div>
+              <div class="profile-menu-mobile" id="profile-menu-mobile">–</div>
+            </div>
+            <button class="profile-action" id="btn-settings" type="button" role="menuitem">⚙ Settings</button>
+            <button class="profile-action" id="btn-add-account" type="button" role="menuitem">＋ Add account</button>
+            <div class="profile-section-label">Saved accounts</div>
+            <div class="profile-saved-list" id="profile-saved-list"></div>
+            <button class="profile-action danger-action" id="btn-logout" type="button" role="menuitem">↪ Log out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- --------------------------------------------------- OVERVIEW VIEW -->
+      <section class="view" id="view-overview">
+        <div class="dashboard-welcome card">
+          <div>
+            <div class="auth-eyebrow">PERSONAL SECURITY CENTER</div>
+            <h2 class="hero-title">Welcome back, <span id="dashboard-user-name">–</span></h2>
+            <p class="hero-sub">Keep your links, email checks, and account safety in one place.</p>
+          </div>
+          <div class="dashboard-quick-actions">
+            <button class="btn btn-primary" data-dashboard-route="link">＋ Check a link</button>
+            <button class="btn btn-ghost" data-dashboard-route="email">Check an email</button>
+            <button class="btn btn-ghost" data-dashboard-route="saved">Saved scans</button>
+          </div>
+        </div>
+        <div class="kpis" id="personal-kpis" style="margin-top:16px"></div>
+        <div class="grid grid-2" style="margin-top:16px">
+          <div class="card">
+            <div class="card-head"><h3 class="card-title">Your security score</h3><div class="spacer"></div><span class="chip" id="dashboard-score-label">–</span></div>
+            <div class="card-body dashboard-score-body">
+              <div class="dashboard-score-ring" id="dashboard-score">–</div>
+              <div><b id="dashboard-score-title">Complete your security profile</b><div class="sub" id="dashboard-score-help">Add your account details to improve your score.</div></div>
+            </div>
+          </div>
+          <div class="card" id="dashboard-checklist-card">
+            <div class="card-head"><h3 class="card-title">Security checklist</h3></div>
+            <div class="card-body" id="dashboard-checklist"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-head"><h3 class="card-title">Recently saved scans</h3><div class="spacer"></div><button class="btn btn-ghost btn-sm" data-dashboard-route="saved">View all</button></div>
+          <div id="dashboard-saved-list"></div>
+        </div>
+      </section>
+
+      <!-- ---------------------------------------------------- SAVED VIEW -->
+      <section class="view" id="view-saved" hidden>
+        <div class="hero saved-scans-hero">
+          <div class="auth-eyebrow">YOUR SECURITY LIBRARY</div>
+          <h2 class="hero-title">Saved scans</h2>
+          <p class="hero-sub">Keep important link and email results in folders for later review.</p>
+        </div>
+        <div class="saved-folder-bar" id="saved-folder-list" aria-label="Saved scan folders"></div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><h3 class="card-title" id="saved-scans-title">All saved scans</h3><div class="spacer"></div><span class="faint tiny" id="saved-scans-count">0 scans</span></div>
+          <div class="saved-scans-list" id="saved-scans-list"></div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------- LINK VIEW -->
+      <section class="view" id="view-link">
+        <div class="hero">
+          <h2 class="hero-title">What did you receive?</h2>
+          <p class="hero-sub">Paste a URL. Nothing is ever rendered clickable, and nothing is fetched from your browser.</p>
+          <div class="input-row">
+            <label class="field" for="url-input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+              <input id="url-input" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+                     placeholder="hxxps://paypal.com.secure-login-verify[.]top/account/verify" aria-describedby="url-hint">
+              <button class="clear" id="url-clear" title="Clear" aria-label="Clear input" hidden>×</button>
+            </label>
+            <button class="btn btn-primary" id="btn-url">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              Analyse
+            </button>
+          </div>
+          <div id="url-hint" class="samples">
+            <span class="label">Try one:</span>
+            <button class="sample" data-demo="http://paypal.com.secure-login-verify.top/account/verify?id=8821">brand in subdomain</button>
+            <button class="sample" data-demo="https://hdfcbank.com.secure-verify.top/kyc">bank lookalike</button>
+            <button class="sample" data-demo="https://microsoft.com@evil-login.ru/">@ decoy</button>
+            <button class="sample" data-demo="https://bit.ly/3xKyc">shortener</button>
+            <button class="sample" data-demo="https://www.google.com">clean control</button>
+          </div>
+          <div class="pipeline" id="url-pipeline" hidden style="margin-top:16px">
+            <span class="stage" data-stage="lexical"><span class="pip"></span>lexical</span>
+            <span class="stage" data-stage="infra"><span class="pip"></span>registration &amp; DNS</span>
+            <span class="stage" data-stage="rep"><span class="pip"></span>reputation</span>
+            <span class="stage" data-stage="preview"><span class="pip"></span>click preview</span>
+            <span class="stage" data-stage="baseline"><span class="pip"></span>baseline</span>
+          </div>
+        </div>
+        <div id="url-out" class="stack" style="margin-top:16px" aria-live="polite"></div>
+      </section>
+
+      <!-- ------------------------------------------------------ EMAIL VIEW -->
+      <section class="view" id="view-email" hidden>
+        <div class="hero">
+          <h2 class="hero-title">Check a suspicious email</h2>
+          <p class="hero-sub">Drop a <b>.eml</b> or paste the raw source with headers. SPF, DKIM and DMARC are verified, links are scored, attachments are hashed, and bank details are diffed against the vendor's trusted baseline.</p>
+
+          <div class="grid grid-2" style="gap:16px">
+            <div class="drop" id="eml-drop" tabindex="0" role="button" aria-label="Choose an .eml file">
+              <input type="file" id="eml-file" accept=".eml,.txt,message/rfc822" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5-5 5 5"/><path d="M12 5v12"/></svg>
+              <div class="drop-title" id="drop-title">Drop an .eml here</div>
+              <div class="drop-sub" id="drop-sub">or click to browse · 12 MB max · nothing is uploaded anywhere else</div>
+            </div>
+            <div class="stack-sm">
+              <div class="seg" role="group" aria-label="Input mode">
+                <button data-emode="file" aria-pressed="true">File</button>
+                <button data-emode="paste" aria-pressed="false">Paste source</button>
+              </div>
+              <textarea class="raw" id="eml-raw" placeholder="Paste full raw source — From:, Received:, DKIM-Signature:, Authentication-Results:, then the body…" hidden></textarea>
+              <div class="samples" style="margin-top:0">
+                <span class="label">Samples:</span>
+                <button class="sample" data-sample="bec_invoice">BEC bank-change</button>
+                <button class="sample" data-sample="india_upi">UPI / KYC</button>
+                <button class="sample" data-sample="digital_arrest">digital arrest</button>
+                <button class="sample" data-sample="clean">clean mail</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-row" style="margin-top:16px">
+            <button class="btn btn-primary" id="btn-eml">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+              Analyse email
+            </button>
+            <span class="faint small" style="align-self:center">Files never leave this host. Only hashes and counters are stored.</span>
+          </div>
+        </div>
+        <div id="email-out" class="stack" style="margin-top:16px" aria-live="polite"></div>
+      </section>
+
+      <!-- ------------------------------------------------------ SWEEP VIEW -->
+      <section class="view" id="view-sweep" hidden>
+        <div class="stack">
+          <div class="kpis" id="sweep-kpis"></div>
+          <div class="card">
+            <div class="card-head">
+              <h3 class="card-title">Campaign clusters</h3>
+              <div class="spacer"></div>
+              <span class="faint tiny">clustered by subject + sender + link hosts</span>
+              <button class="btn btn-ghost btn-sm" id="btn-refresh-clusters">Refresh</button>
+            </div>
+            <div id="sweep-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3 class="card-title">How report-to-sweep works</h3></div>
+            <div class="card-body prose">
+              <p style="margin-top:0">When one person reports a message, we fingerprint the campaign from the
+              normalised subject, the sender and the set of link hosts. Every later recipient is matched to the
+              same cluster, so the warning shows <b>“3 reports · 1 clicked”</b> before they act.</p>
+              <ul>
+                <li><b>Cluster, don't duplicate.</b> A re-sent variant with a new subject prefix or a fresh
+                  lookalike domain still lands in the same cluster when the link hosts match.</li>
+                <li><b>Social proof is the strongest signal.</b> People trust “17 others received this” more
+                  than any risk score.</li>
+                <li><b>Report latency beats detection accuracy.</b> The metric that matters is minutes from
+                  delivery to first report.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- --------------------------------------------------- COVERAGE VIEW -->
+      <section class="view" id="view-coverage" hidden>
+        <div class="stack">
+          <div class="card">
+            <div class="card-head"><h3 class="card-title">What this engine actually does</h3></div>
+            <div class="card-body">
+              <div class="tile-grid">
+                <div class="tile"><div class="n">01</div><h5>Lexical — no network</h5>
+                  <p>IDN &amp; homoglyphs, typosquatting against 180+ brands, brand-in-subdomain, <span class="mono">@</span> decoys, ports, high-abuse TLDs, shorteners, entropy, double extensions, open-redirect wrappers. Runs in ~5&nbsp;ms.</p></div>
+                <div class="tile"><div class="n">02</div><h5>Infrastructure</h5>
+                  <p>RDAP registration age and registrar, DNS (A/MX/NS/SPF/DMARC), TLS issuer and certificate age. A brand-claiming domain with no MX is not a brand.</p></div>
+                <div class="tile"><div class="n">03</div><h5>Reputation</h5>
+                  <p>Google Safe Browsing and VirusTotal with your own key. Missing keys are labelled — never silently treated as clean.</p></div>
+                <div class="tile"><div class="n">04</div><h5>Click preview</h5>
+                  <p>Server-side redirect chain, login-form discovery, and whether a password field POSTs to a different domain. SSRF-guarded, JavaScript never executed.</p></div>
+                <div class="tile"><div class="n">05</div><h5>Email forensics</h5>
+                  <p>SPF/DKIM/DMARC with real signature verification, Received-chain hop analysis, Reply-To and display-name spoofing, BEC lexicon, India scam corpus, attachment flags.</p></div>
+                <div class="tile"><div class="n">06</div><h5>Organisation memory</h5>
+                  <p>First-contact senders and domains, vendor bank-detail diffs against a trusted baseline, time-of-click URL snapshots, and campaign clustering.</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="card"><div class="card-head"><h3 class="card-title">Deliberate choices</h3></div>
+              <div class="card-body prose"><ul>
+                <li><b>Progressive verdicts.</b> Lexical answer in milliseconds, corroboration streams in after. A slow checker gets bypassed.</li>
+                <li><b>“Unknown” is a real answer.</b> If infrastructure can't corroborate, we say so. An unexpandable short link is never “safe”.</li>
+                <li><b>Every verdict has reasons.</b> Named signals, weights, thresholds and a receipt ID you can paste into a ticket.</li>
+                <li><b>Never clickable.</b> Everything is defanged — <span class="defang">hxxps://evil[.]com</span>.</li>
+                <li><b>Teach, don't scold.</b> Each signal carries the transferable lesson.</li>
+              </ul></div></div>
+            <div class="card"><div class="card-head"><h3 class="card-title">Deliberate non-features</h3></div>
+              <div class="card-body prose"><ul>
+                <li><b>No opaque “risk score 87”.</b> Scores are derived from auditable signals.</li>
+                <li><b>No JS execution, no form submission.</b> The preview reads HTML and describes it.</li>
+                <li><b>No AI chat bubble.</b> An evidence chain with citations beats prose.</li>
+                <li><b>No silent green ticks.</b> Degraded mode is labelled every time.</li>
+                <li><b>No auto-trust of an email's own numbers.</b> A bank detail from an unverified message never becomes the baseline.</li>
+              </ul></div></div>
+          </div>
+
+          <div class="card"><div class="card-head"><h3 class="card-title">Known limits, stated rather than hidden</h3></div>
+            <div class="card-body prose"><ul>
+              <li><b>.eml only</b> — <span class="mono">.msg</span> needs one more parser.</li>
+              <li><b>No image or QR decoding</b> — attachment hashes are reported instead.</li>
+              <li><b>Public-suffix list is small and India-heavy</b> — swap in the full PSL for wider coverage.</li>
+              <li><b>Single HTML GET preview</b> — JS-gated and login-gated pages won't reveal themselves.</li>
+              <li><b>SQLite</b> is fine for a desk; move to Postgres for multi-tenant.</li>
+            </ul></div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <button class="help-ai-fab" id="help-ai-fab" type="button" aria-label="Open Help AI">✦ Help Guide</button>
+  <aside class="assistant-panel" id="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title" hidden>
+    <div class="assistant-head">
+      <div>
+        <div class="auth-eyebrow">OFFLINE APP GUIDE</div>
+        <h2 id="assistant-title">PhishGuard Help</h2>
+      </div>
+      <button class="btn btn-icon btn-ghost" id="assistant-close" type="button" aria-label="Close Help AI">×</button>
+    </div>
+    <div class="assistant-messages" id="assistant-messages" aria-live="polite">
+      <div class="assistant-bubble assistant-bubble-ai"><b>Hi! I’m the PhishGuard Help Guide.</b><br>Ask me how to use the app, solve a login problem, or manage your accounts. I use the built-in app guide, so no API key is required.</div>
+    </div>
+    <div class="assistant-suggestions" id="assistant-suggestions">
+      <button type="button" data-assistant-question="How do I create another account and switch accounts?">Create or switch account</button>
+      <button type="button" data-assistant-question="Why can’t I log in to PhishGuard?">Login problem</button>
+      <button type="button" data-assistant-question="How do I safely check a suspicious link?">Check a suspicious link</button>
+    </div>
+    <form class="assistant-form" id="assistant-form">
+      <textarea id="assistant-input" maxlength="1200" rows="2" placeholder="Ask a question…" required></textarea>
+      <button class="btn btn-primary" id="assistant-send" type="submit">Ask AI <span aria-hidden="true">→</span></button>
+    </form>
+  </aside>
+</div>
+
+<!-- account settings + receipt drawer + toasts -->
+<div class="account-scrim" id="account-scrim" hidden></div>
+<aside class="account-panel" id="account-panel" role="dialog" aria-modal="true" aria-labelledby="account-panel-title" hidden>
+  <div class="account-panel-head">
+    <div>
+      <div class="auth-eyebrow">ACCOUNT</div>
+      <h2 id="account-panel-title">Profile &amp; settings</h2>
+    </div>
+    <button class="btn btn-icon btn-ghost" id="account-panel-close" type="button" aria-label="Close settings">×</button>
+  </div>
+  <div class="account-panel-body">
+    <div class="profile-large">
+      <div class="profile-avatar large" id="settings-avatar">?</div>
+      <div><div class="profile-menu-name" id="settings-name">–</div><div class="profile-menu-mobile" id="settings-email">Gmail not added</div></div>
+    </div>
+    <nav class="settings-nav" aria-label="Settings sections">
+      <button class="settings-nav-item active" id="settings-tab-profile" type="button" aria-selected="true">
+        <span class="settings-nav-icon" aria-hidden="true">◎</span>
+        <span><b>Profile</b><small>Personal details and appearance</small></span>
+      </button>
+      <button class="settings-nav-item" id="settings-tab-privacy" type="button" aria-selected="false">
+        <span class="settings-nav-icon" aria-hidden="true">▣</span>
+        <span><b>Privacy &amp; authentication</b><small>Password, data and account security</small></span>
+      </button>
+    </nav>
+    <section class="settings-section" id="settings-profile-section">
+    <div class="settings-card">
+      <div class="settings-card-title">Profile appearance</div>
+      <div class="settings-help">Customize the name and initials shown in the app. Your password is required to save profile changes.</div>
+      <form class="settings-form" id="settings-profile-form">
+        <label for="settings-display-name">Display name</label>
+        <input id="settings-display-name" type="text" maxlength="60" autocomplete="name" placeholder="Your name">
+        <label for="settings-avatar-input">Avatar initials</label>
+        <input id="settings-avatar-input" type="text" maxlength="2" pattern="[A-Za-z0-9]{1,2}" placeholder="AR">
+        <label for="settings-profile-password">Current password</label>
+        <input id="settings-profile-password" type="password" autocomplete="current-password" required>
+        <button class="btn btn-primary" id="settings-profile-submit" type="submit">Save profile</button>
+      </form>
+    </div>
+    <div class="settings-card">
+      <div class="settings-row"><span>Username</span><b id="settings-username">–</b></div>
+      <div class="settings-row"><span>Gmail address</span><b id="settings-email-value">Not added</b></div>
+      <div class="settings-row"><span>Mobile number</span><b id="settings-mobile-value">–</b></div>
+      <div class="settings-row"><span>Session</span><b>Active on this device</b></div>
+    </div>
+    <div class="settings-card">
+      <div class="settings-row"><span>Appearance</span><button class="btn btn-ghost btn-sm" id="settings-theme" type="button">Switch theme</button></div>
+    </div>
+    </section>
+    <section class="settings-section" id="settings-privacy-section" hidden>
+    <div class="privacy-hero">
+      <div class="privacy-hero-icon" aria-hidden="true">✓</div>
+      <div><div class="auth-eyebrow">PROTECTED ACCOUNT</div><h3>Privacy &amp; authentication</h3><p>Control your sign-in details, notifications, and personal data from one secure place.</p></div>
+    </div>
+    <details class="privacy-group" id="privacy-security-group" open>
+      <summary><span class="privacy-group-icon">♢</span><span><b>Account security</b><small>Gmail, mobile number, password and login activity</small></span><span class="privacy-chevron">⌄</span></summary>
+      <div class="privacy-group-body">
+      <div class="settings-help">Sensitive account changes always require your current password.</div>
+    <div class="settings-card">
+      <div class="settings-card-title" id="settings-email-title">Add Gmail address</div>
+      <div class="settings-help">Use a Gmail address you control. This local app saves the address but does not send email verification codes.</div>
+      <form class="settings-form" id="settings-email-form">
+        <label for="settings-email-input">Gmail address</label>
+        <input id="settings-email-input" type="email" autocomplete="email" placeholder="name@gmail.com" required>
+        <label for="settings-email-password">Current password</label>
+        <input id="settings-email-password" type="password" autocomplete="current-password" required>
+        <button class="btn btn-primary" id="settings-email-submit" type="submit">Add Gmail address</button>
+      </form>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">Password recovery question</div>
+      <div class="settings-help">Use this only if you cannot log in. Your answer is stored as a secure hash and is never shown back to you.</div>
+      <form class="settings-form" id="settings-recovery-form">
+        <label for="settings-recovery-question">Recovery question</label>
+        <select id="settings-recovery-question" required>
+          <option value="">Choose a question</option>
+          <option>What is your favorite game?</option>
+          <option>What is your favorite flower?</option>
+          <option>What is your favorite hobby?</option>
+          <option>What city were you born in?</option>
+          <option>What was your first pet's name?</option>
+        </select>
+        <label for="settings-recovery-answer">Your answer</label>
+        <input id="settings-recovery-answer" type="text" autocomplete="off" minlength="2" maxlength="128" required>
+        <label for="settings-recovery-password">Current password</label>
+        <input id="settings-recovery-password" type="password" autocomplete="current-password" required>
+        <button class="btn btn-primary" id="settings-recovery-submit" type="submit">Save recovery question</button>
+      </form>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">Change mobile number</div>
+      <form class="settings-form" id="settings-mobile-form">
+        <label for="settings-mobile-input">New mobile number</label>
+        <input id="settings-mobile-input" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876543210" required>
+        <label for="settings-mobile-password">Current password</label>
+        <input id="settings-mobile-password" type="password" autocomplete="current-password" required>
+        <button class="btn btn-primary" id="settings-mobile-submit" type="submit">Save mobile number</button>
+      </form>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">Change password</div>
+      <div class="settings-help">Confirm your old password before choosing a new one.</div>
+      <form class="settings-form" id="settings-password-form">
+        <label for="settings-current-password">Current password</label>
+        <input id="settings-current-password" type="password" autocomplete="current-password" required>
+        <label for="settings-new-password">New password</label>
+        <input id="settings-new-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+        <label for="settings-confirm-password">Confirm new password</label>
+        <input id="settings-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+        <div class="settings-help">At least 8 characters with one letter and one number.</div>
+        <button class="btn btn-primary" id="settings-password-submit" type="submit">Change password</button>
+      </form>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">Account activity</div>
+      <div class="settings-row"><span>Last password changed</span><b id="settings-password-changed">–</b></div>
+      <div class="settings-row"><span>Account created</span><b id="settings-account-created">–</b></div>
+      <div class="settings-row"><span>Recent logins</span><button class="btn btn-ghost btn-sm" id="settings-refresh-history" type="button">Refresh</button></div>
+      <div class="settings-login-history" id="settings-login-history"><div class="profile-empty">Open settings to load login history.</div></div>
+    </div>
+      </div>
+    </details>
+    <details class="privacy-group" id="privacy-notifications-group" open>
+      <summary><span class="privacy-group-icon">◌</span><span><b>Notifications</b><small>Choose how PhishGuard keeps you informed</small></span><span class="privacy-chevron">⌄</span></summary>
+      <div class="privacy-group-body">
+    <div class="settings-card notification-card">
+      <div class="settings-card-title">Browser notifications</div>
+      <div class="settings-help">Receive a message when a scan finishes, even when this browser tab is minimized.</div>
+      <div class="notification-status" id="notification-status">Browser permission has not been requested.</div>
+      <div class="settings-form">
+        <label class="settings-check"><input id="notify-browser" type="checkbox"> Allow browser notifications</label>
+        <label class="settings-check"><input id="notify-scan-complete" type="checkbox"> Notify me when a scan is complete</label>
+        <label class="settings-check"><input id="notify-sound" type="checkbox"> Play a soft notification sound</label>
+        <button class="btn btn-primary" id="settings-enable-notifications" type="button">Enable browser notifications</button>
+      </div>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">Notification preferences</div>
+      <div class="settings-help">Choose which account updates PhishGuard should prepare for you.</div>
+      <form class="settings-form" id="settings-preferences-form">
+        <label class="settings-check"><input id="notify-security" type="checkbox"> Security and login alerts</label>
+        <label class="settings-check"><input id="notify-email" type="checkbox"> Email notifications</label>
+        <label class="settings-check"><input id="notify-tips" type="checkbox"> Product tips and safety guidance</label>
+        <button class="btn btn-ghost" id="settings-preferences-submit" type="submit">Save preferences</button>
+      </form>
+    </div>
+      </div>
+    </details>
+    <details class="privacy-group" id="privacy-data-group" open>
+      <summary><span class="privacy-group-icon">▤</span><span><b>Privacy &amp; data</b><small>Download or clear the information connected to your account</small></span><span class="privacy-chevron">⌄</span></summary>
+      <div class="privacy-group-body">
+    <div class="settings-card">
+      <div class="settings-card-title">Your data</div>
+      <div class="settings-help">Download your profile, login history, Help Guide questions, and reports submitted by this account.</div>
+      <button class="btn btn-ghost" id="settings-download-data" type="button">↓ Download my data</button>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">Clear personal data</div>
+      <div class="settings-help">Remove your saved Help Guide questions and submitted reports. Your account, password, and login history will remain.</div>
+      <form class="settings-form" id="settings-clear-data-form">
+        <label for="settings-clear-data-password">Current password</label>
+        <input id="settings-clear-data-password" type="password" autocomplete="current-password" required>
+        <label class="settings-check"><input id="settings-clear-data-confirm" type="checkbox" required> I understand my personal activity will be removed</label>
+        <button class="btn btn-ghost" id="settings-clear-data-submit" type="submit">Clear personal data</button>
+      </form>
+    </div>
+      </div>
+    </details>
+    <details class="privacy-group privacy-danger-group" id="privacy-danger-group">
+      <summary><span class="privacy-group-icon">!</span><span><b>Danger zone</b><small>Permanent account removal</small></span><span class="privacy-chevron">⌄</span></summary>
+      <div class="privacy-group-body">
+    <div class="settings-card settings-danger-card">
+      <div class="settings-card-title">Delete account</div>
+      <div class="settings-help">This permanently deletes your account, sessions, login history, Help Guide history, and submitted reports.</div>
+      <form class="settings-form" id="settings-delete-form">
+        <label for="settings-delete-password">Current password</label>
+        <input id="settings-delete-password" type="password" autocomplete="current-password" required>
+        <label class="settings-check"><input id="settings-delete-confirm" type="checkbox" required> I understand this cannot be undone</label>
+        <button class="btn btn-danger" id="settings-delete-submit" type="submit">Delete account</button>
+      </form>
+    </div>
+      </div>
+    </details>
+    </section>
+    <div class="settings-message" id="settings-message" role="status" aria-live="polite"></div>
+    <div class="settings-card">
+      <div class="settings-card-title">Accounts on this device</div>
+      <div class="profile-saved-list" id="settings-saved-list"></div>
+      <button class="btn btn-primary" id="settings-add-account" type="button">＋ Add another account</button>
+    </div>
+  </div>
+</aside>
+
+<div class="drawer-scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Verdict receipt">
+  <div class="drawer-head">
+    <h3 id="drawer-title">Audit receipt</h3>
+    <div class="spacer" style="margin-left:auto"></div>
+    <button class="btn btn-ghost btn-sm" id="drawer-copy">Copy JSON</button>
+    <button class="btn btn-icon btn-ghost" id="drawer-close" aria-label="Close">×</button>
+  </div>
+  <div class="drawer-body"><pre class="code" id="drawer-code">Loading…</pre></div>
+</aside>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
