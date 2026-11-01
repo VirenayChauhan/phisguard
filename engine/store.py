@@ -654,13 +654,13 @@ def get_receipt(rid: str) -> dict | None:
 
 def stats() -> dict:
     with _LOCK, _conn() as c:
-        q = lambda sql: c.execute(sql).fetchone()[0]
+        q = lambda sql: c.execute(sql).fetchone()["n"]
         return {
-            "domains_seen": q("SELECT COUNT(*) FROM domains"),
-            "senders_seen": q("SELECT COUNT(*) FROM senders"),
-            "vendors_tracked": q("SELECT COUNT(*) FROM vendors"),
-            "urls_tracked": q("SELECT COUNT(*) FROM url_snapshots"),
-            "reports": q("SELECT COUNT(*) FROM reports"),
-            "clusters": q("SELECT COUNT(DISTINCT cluster_key) FROM reports"),
-            "receipts": q("SELECT COUNT(*) FROM receipts"),
+            "domains_seen": q("SELECT COUNT(*) AS n FROM domains"),
+            "senders_seen": q("SELECT COUNT(*) AS n FROM senders"),
+            "vendors_tracked": q("SELECT COUNT(*) AS n FROM vendors"),
+            "urls_tracked": q("SELECT COUNT(*) AS n FROM url_snapshots"),
+            "reports": q("SELECT COUNT(*) AS n FROM reports"),
+            "clusters": q("SELECT COUNT(DISTINCT cluster_key) AS n FROM reports"),
+            "receipts": q("SELECT COUNT(*) AS n FROM receipts"),
         }
