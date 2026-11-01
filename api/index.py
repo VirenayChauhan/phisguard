@@ -34,6 +34,12 @@ class _VercelOriginalPath:
         from urllib.parse import parse_qsl, urlencode
 
         params = parse_qsl(environ.get("QUERY_STRING", ""), keep_blank_values=True)
+        if any(key == "__pg_debug" for key, _ in params):
+            import json
+            body = json.dumps({"path_info": environ.get("PATH_INFO"), "query": environ.get("QUERY_STRING"),
+                               "headers": {k: v for k, v in environ.items() if k.startswith("HTTP_X_")}}).encode()
+            start_response("200 OK", [("Content-Type", "application/json"), ("Content-Length", str(len(body)))])
+            return [body]
         path = None
         remaining = []
         for key, value in params:
