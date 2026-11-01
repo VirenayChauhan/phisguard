@@ -23,3 +23,28 @@ if os.getenv("VERCEL") and not any(os.getenv(name) for name in (
 else:
     os.environ.setdefault("AUTH_COOKIE_SECURE", "1" if os.getenv("VERCEL") else "0")
     from app import app
+
+
+class _VercelOriginalPath:
+    """Restore the external path after Vercel rewrites requests to this function."""
+    def __init__(self, application):
+        self.application = application
+
+    def __call__(self, environ, start_response):
+        from urllib.parse import parse_qsl, urlencode
+
+        params = parse_qsl(environ.get("QUERY_STRING", ""), keep_blank_values=True)
+        path = None
+        remaining = []
+        for key, value in params:
+            if key == "__pg_original_path":
+                path = value
+            else:
+                remaining.append((key, value))
+        if path and path.startswith("/") and "\\\\" not in path and ".." not in path.split("/"):
+            environ["PATH_INFO"] = path
+            environ["QUERY_STRING"] = urlencode(remaining, doseq=True)
+        return self.application(environ, start_response)
+
+
+app.wsgi_app = _VercelOriginalPath(app.wsgi_app)
