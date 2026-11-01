@@ -6,7 +6,9 @@ import os
 # Never silently use a serverless instance's disposable filesystem for accounts.
 # The page remains reachable while setup is pending, but data APIs explain the
 # missing persistent store instead of creating a misleading ephemeral database.
-if os.getenv("VERCEL") and not os.getenv("DATABASE_URL"):
+if os.getenv("VERCEL") and not any(os.getenv(name) for name in (
+    "DATABASE_URL", "DATABASE_POSTGRES_PRISMA_URL", "DATABASE_URL_UNPOOLED"
+)):
     from flask import Flask, jsonify
 
     app = Flask(__name__)

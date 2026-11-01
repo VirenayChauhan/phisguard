@@ -15,7 +15,14 @@ import threading
 import uuid
 from datetime import datetime, timezone
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+# Neon Marketplace integration names its pooled endpoint DATABASE_POSTGRES_PRISMA_URL.
+# Prefer the explicit app setting, then that pooled endpoint, and only then its
+# direct (unpooled) endpoint for serverless deployment.
+DATABASE_URL = (
+    os.environ.get("DATABASE_URL", "").strip()
+    or os.environ.get("DATABASE_POSTGRES_PRISMA_URL", "").strip()
+    or os.environ.get("DATABASE_URL_UNPOOLED", "").strip()
+)
 DB_PATH = os.environ.get("PHISHGUARD_DB",
                          os.path.join(os.path.dirname(__file__), "..", "data", "phishguard.db"))
 _LOCK = threading.Lock()
