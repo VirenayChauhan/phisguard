@@ -183,13 +183,15 @@ def _public_user(account) -> dict:
         "avatar_initials": _value(account, "avatar_initials") or _default_initials(display_name, username),
         "mobile": _value(account, "mobile", ""),
         "email": _value(account, "email") or "",
+        "email_verified": bool(_value(account, "email_verified_at")),
         "created_at": _value(account, "created_at", ""),
         "last_login_at": _value(account, "last_login_at", ""),
         "password_changed_at": _value(account, "password_changed_at") or _value(account, "created_at", ""),
         "has_recovery_question": bool(_value(account, "recovery_answer_hash")),
         "notifications": {
             "security": bool(_value(account, "notify_security", 1)),
-            "email": bool(_value(account, "notify_email", 1)),
+            "email": bool(_value(account, "notify_email_delivery", 0)),
+            "push_scan": bool(_value(account, "notify_push_scan", 1)),
             "tips": bool(_value(account, "notify_tips", 1)),
         },
     }
@@ -273,6 +275,81 @@ def login_account(username: str, password: str, request_ip: str,
         secrets.token_urlsafe(12), username, request_ip, _iso(_now()), True
     )
     return _create_session(account, request_ip, user_agent)
+
+
+OTP_TTL_SECONDS = 600
+OTP_MAX_REQUESTS = 3
+OTP_GLOBAL_MAX_PER_DAY = 100
+OTP_MAX_ATTEMPTS = 5
+
+
+def issue_email_otp(email: str, purpose: str, request_ip: str = "") -> tuple[str, str]:
+    """Create a short-lived, one-use email code with bounded online guessing."""
+    email = normalize_gmail(email)
+    if purpose not in {"verify_email", "password_reset"}:
+        raise AuthError("Invalid email-code purpose.", 400)
+    now = _now()
+    since = _iso(now - timedelta(minutes=15))
+    request_ip = request_ip or "unknown"
+    if store.count_recent_otp_requests(email, request_ip, since) >= OTP_MAX_REQUESTS:
+        raise AuthError("Too many email codes requested. Please try again later.", 429)
+    if store.count_otp_requests_since(_iso(now - timedelta(days=1))) >= OTP_GLOBAL_MAX_PER_DAY:
+        raise AuthError("Email code delivery has reached its daily safety limit.", 429)
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    challenge_id = secrets.token_urlsafe(24)
+    store.invalidate_otp_challenges(email, purpose, _iso(now))
+    store.create_otp_challenge(
+        challenge_id, email, generate_password_hash(code, method="scrypt"),
+        now.isoformat(timespec="microseconds"),
+        (now + timedelta(seconds=OTP_TTL_SECONDS)).isoformat(timespec="microseconds"),
+        request_ip, purpose,
+    )
+    return challenge_id, code
+
+
+def verify_email_otp(email: str, purpose: str, code: str) -> str:
+    email = normalize_gmail(email)
+    if not isinstance(code, str) or not re.fullmatch(r"\d{6}", code):
+        raise AuthError("The email code is invalid or expired.", 400)
+    challenge = store.latest_otp_challenge(email, purpose)
+    now = _now()
+    if (not challenge or challenge["used_at"]
+            or challenge["expires_at"] <= now.isoformat(timespec="microseconds")
+            or int(challenge["attempts"] or 0) >= OTP_MAX_ATTEMPTS):
+        raise AuthError("The email code is invalid or expired.", 400)
+    attempts = store.increment_otp_attempts(challenge["challenge_id"], OTP_MAX_ATTEMPTS)
+    if attempts > OTP_MAX_ATTEMPTS or not check_password_hash(challenge["code_hash"], code):
+        raise AuthError("The email code is invalid or expired.", 400)
+    if not store.mark_otp_used(challenge["challenge_id"], _iso(now)):
+        raise AuthError("The email code is invalid or expired.", 400)
+    return email
+
+
+def verify_account_email(username: str, code: str) -> dict:
+    username = normalize_username(username)
+    account = store.get_auth_account(username)
+    if not account or not account["email"]:
+        raise AuthError("Add a Gmail address before verifying it.", 400)
+    email = verify_email_otp(account["email"], "verify_email", code)
+    store.mark_auth_email_verified(account["user_id"], _iso(_now()))
+    return _public_user(store.get_auth_account(username))
+
+
+def reset_password_with_email_otp(username: str, code: str, new_password: str,
+                                  request_ip: str = "", user_agent: str = "") -> tuple[dict, str]:
+    username = normalize_username(username)
+    new_password = validate_password(new_password)
+    account = store.get_auth_account(username)
+    if not account or not account["email"] or not _value(account, "email_verified_at"):
+        raise AuthError("The email code is invalid or expired.", 400)
+    if check_password_hash(account["password_hash"], new_password):
+        raise AuthError("New password must be different from the current password.", 400)
+    verify_email_otp(account["email"], "password_reset", code)
+    changed_at = _iso(_now())
+    store.update_auth_password(account["user_id"], generate_password_hash(new_password), changed_at)
+    store.revoke_user_login_sessions(account["user_id"], changed_at)
+    updated = store.get_auth_account(username)
+    return _create_session(updated, request_ip, user_agent)
 
 
 def get_recovery_question(username: str) -> str:
@@ -404,12 +481,14 @@ def update_preferences(username: str, preferences: dict) -> dict:
     if not account:
         raise AuthError("Account not found.", 404)
     values = {
-        "security": bool(preferences.get("security", True)),
-        "email": bool(preferences.get("email", True)),
-        "tips": bool(preferences.get("tips", True)),
+        "security": bool(preferences.get("security", _value(account, "notify_security", 1))),
+        "email": bool(preferences.get("email", _value(account, "notify_email_delivery", 0))),
+        "tips": bool(preferences.get("tips", _value(account, "notify_tips", 1))),
+        "push_scan": bool(preferences.get("push_scan", _value(account, "notify_push_scan", 1))),
     }
     store.update_auth_preferences(
-        account["user_id"], values["security"], values["email"], values["tips"]
+        account["user_id"], values["security"], values["email"], values["tips"],
+        values["push_scan"],
     )
     return _public_user(store.get_auth_account(username))
 

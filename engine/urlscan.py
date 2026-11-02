@@ -36,7 +36,8 @@ def analyze_quick(raw_url: str) -> dict:
     return v
 
 
-def analyze_full(raw_url: str, do_preview: bool = True) -> dict:
+def analyze_full(raw_url: str, do_preview: bool = True,
+                 include_reputation: bool = False) -> dict:
     lex = lexical.analyze_url(raw_url)
     facts = lex["facts"]
     signals = list(lex["signals"])
@@ -66,23 +67,36 @@ def analyze_full(raw_url: str, do_preview: bool = True) -> dict:
         intel_ok = False
         notes.append("raw IP host: no registration/DNS metadata to correlate")
 
-    # ---- reputation feeds ---------------------------------------------------
+    # ---- optional reputation feeds -----------------------------------------
     rep_sigs, rep_notes, rep_ok = [], [], False
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        f_gsb = pool.submit(intel.safe_browsing, facts.get("input", raw_url))
-        f_vt = pool.submit(intel.virustotal_url, raw_url)
-        for res, label in ((f_gsb.result(), "gsb"), (f_vt.result(), "vt")):
-            rep_notes.append(res.get("note", ""))
-            rep_ok = rep_ok or res.get("ok", False)
-            if res.get("hit"):
-                rep_sigs.append(sig(
-                    f"intel_{label}", f"Listed as malicious by {label.upper()}",
-                    "critical", 50,
-                    f"{res.get('note')} — an independent reputation feed already "
-                    "classifies this URL as hostile.",
-                    category="reputation"))
+    if include_reputation:
+        providers = (
+            ("gsb", "Google Safe Browsing", intel.safe_browsing, facts.get("input", raw_url)),
+            ("vt", "VirusTotal", intel.virustotal_url, raw_url),
+            ("urlhaus", "URLhaus", intel.urlhaus_url, raw_url),
+            ("phishtank", "PhishTank", intel.phishtank_url, raw_url),
+        )
+        with ThreadPoolExecutor(max_workers=len(providers)) as pool:
+            futures = [(label, name, pool.submit(check, value))
+                       for label, name, check, value in providers]
+            for label, name, future in futures:
+                res = future.result()
+                rep_notes.append(res.get("note", ""))
+                # A negative lookup is not evidence that a URL is safe. Provider
+                # hits become attributed evidence; no-match does not raise confidence.
+                rep_ok = rep_ok or bool(res.get("hit"))
+                if res.get("hit"):
+                    rep_sigs.append(sig(
+                        f"intel_{label}", f"Listed by {name}",
+                        "critical", 50,
+                        f"{res.get('note')} — this independent threat-intelligence "
+                        "source has a matching record. A feed match is strong evidence, "
+                        "but provider data can still contain errors.",
+                        category="reputation"))
+        notes.extend([n for n in rep_notes if n])
+    else:
+        notes.append("third-party URL reputation checks skipped for this scan by user choice")
     signals.extend(rep_sigs)
-    notes.extend([n for n in rep_notes if n])
 
     # ---- what happens if you click -----------------------------------------
     preview = None

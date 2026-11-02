@@ -8,4 +8,5 @@ python-dotenv>=1.0,<2   # local .env loading for auth settings
 psycopg[binary]>=3.2,<4 # persistent Postgres backend for serverless hosting
 
 # ---- optional ----
-# Safe Browsing / VirusTotal need no package: they're plain HTTPS calls with your own key.
+pywebpush>=2.0.3,<3.0  # standards-based push; disabled unless VAPID keys are configured
+# Safe Browsing / VirusTotal/URLhaus/PhishTank use HTTPS APIs and optional keys.

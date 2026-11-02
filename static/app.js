@@ -98,7 +98,7 @@ function notificationPrefsKey() {
 }
 
 function getNotificationPrefs() {
-  const defaults = { browser: false, scanComplete: true, sound: false };
+  const defaults = { browser: false, scanComplete: true, sound: false, push: false };
   try {
     const value = JSON.parse(localStorage.getItem(notificationPrefsKey()) || '{}');
     return { ...defaults, ...value };
@@ -128,7 +128,9 @@ function syncNotificationUI() {
     status.textContent = 'This browser does not support system notifications.';
     status.classList.add('blocked');
   } else if (permission === 'granted' && prefs.browser) {
-    status.textContent = 'Browser notifications are enabled for this account.';
+    status.textContent = prefs.push
+      ? 'Browser notifications and background push are enabled for this account.'
+      : 'Browser notifications work in this session; background push is not configured here.';
     status.classList.add('ready');
   } else if (permission === 'denied') {
     status.textContent = 'Notifications are blocked. Allow them in your browser site settings.';
@@ -138,6 +140,40 @@ function syncNotificationUI() {
   }
 }
 
+function vapidKeyBytes(value) {
+  const padded = `${value}${'='.repeat((4 - value.length % 4) % 4)}`;
+  const binary = atob(padded.replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function registerBackgroundPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+  const keyInfo = await api('/api/notifications/push/key');
+  if (!keyInfo.configured || !keyInfo.public_key) return false;
+  const registration = await navigator.serviceWorker.register('/sw.js');
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: vapidKeyBytes(keyInfo.public_key),
+    });
+  }
+  await postJSON('/api/notifications/push/subscribe', { subscription: subscription.toJSON() });
+  return true;
+}
+
+async function disableBrowserNotifications() {
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration('/');
+    const subscription = await registration?.pushManager?.getSubscription();
+    if (subscription) {
+      try { await postJSON('/api/notifications/push/unsubscribe', { endpoint: subscription.endpoint }); } catch { /* still disable the browser device */ }
+      await subscription.unsubscribe();
+    }
+  } catch { /* local notifications can still be disabled if server cleanup fails */ }
+  setNotificationPrefs({ browser: false, push: false });
+}
+
 async function enableBrowserNotifications() {
   if (typeof window.Notification === 'undefined') {
     toast('This browser does not support notifications', 'err');
@@ -145,11 +181,13 @@ async function enableBrowserNotifications() {
   }
   const permission = await Notification.requestPermission();
   if (permission === 'granted') {
-    setNotificationPrefs({ browser: true, scanComplete: true });
-    toast('Browser notifications enabled');
-    try { new Notification('PhishGuard notifications enabled', { body: 'You will be notified when a scan finishes.' }); } catch { /* permission may be unavailable in this context */ }
+    let pushEnabled = false;
+    try { pushEnabled = await registerBackgroundPush(); } catch { /* foreground notifications remain available */ }
+    setNotificationPrefs({ browser: true, scanComplete: true, push: pushEnabled });
+    toast(pushEnabled ? 'Browser and background push enabled' : 'Browser notifications enabled for this session');
+    try { new Notification('PhishGuard notifications enabled', { body: pushEnabled ? 'You can receive campaign alerts when this browser is closed.' : 'Background push is not configured on this deployment.' }); } catch { /* permission may be unavailable in this context */ }
   } else {
-    setNotificationPrefs({ browser: false });
+    setNotificationPrefs({ browser: false, push: false });
     toast('Browser notifications were not enabled', 'err');
   }
 }
@@ -239,6 +277,10 @@ function updateProfileUI(user) {
   $('#settings-email').textContent = user?.email || 'Gmail not added';
   $('#settings-username').textContent = user?.username || '–';
   $('#settings-email-value').textContent = user?.email || 'Not added';
+  $('#settings-email-verified').textContent = user?.email_verified ? 'Verified' : (user?.email ? 'Not verified' : 'No email');
+  $('#settings-email-verified').classList.toggle('is-verified', Boolean(user?.email_verified));
+  $('#settings-email-send-code').hidden = !user?.email || Boolean(user?.email_verified);
+  $('#settings-email-verify-form').hidden = !user?.email || Boolean(user?.email_verified);
   $('#settings-mobile-value').textContent = user?.mobile || '–';
   $('#settings-email-title').textContent = user?.email ? 'Change Gmail address' : 'Add Gmail address';
   $('#settings-email-submit').textContent = user?.email ? 'Save Gmail address' : 'Add Gmail address';
@@ -248,8 +290,13 @@ function updateProfileUI(user) {
   $('#settings-password-changed').textContent = formatAccountDate(user?.password_changed_at);
   $('#settings-account-created').textContent = formatAccountDate(user?.created_at);
   $('#notify-security').checked = user?.notifications?.security !== false;
-  $('#notify-email').checked = user?.notifications?.email !== false;
+  $('#notify-email').checked = user?.notifications?.email === true;
   $('#notify-tips').checked = user?.notifications?.tips !== false;
+  const notificationPrefs = getNotificationPrefs();
+  localStorage.setItem(notificationPrefsKey(), JSON.stringify({
+    ...notificationPrefs,
+    scanComplete: user?.notifications?.push_scan !== false,
+  }));
   syncNotificationUI();
 }
 
@@ -300,6 +347,7 @@ function showLogin(tab = 'login', username = '') {
   $('#register-form').hidden = !isRegister;
   $('#forgot-lookup-form').hidden = true;
   $('#forgot-reset-form').hidden = true;
+  $('#forgot-email-reset-form').hidden = true;
   $('#tab-login').classList.toggle('active', !isRegister);
   $('#tab-register').classList.toggle('active', isRegister);
   $('#tab-login').setAttribute('aria-selected', String(!isRegister));
@@ -328,10 +376,14 @@ function showForgotPassword(username = '') {
   $('#register-form').hidden = true;
   $('#forgot-lookup-form').hidden = false;
   $('#forgot-reset-form').hidden = true;
+  $('#forgot-email-reset-form').hidden = true;
   $('#forgot-username').value = username;
   $('#forgot-answer').value = '';
   $('#forgot-new-password').value = '';
   $('#forgot-confirm-password').value = '';
+  $('#forgot-email-code').value = '';
+  $('#forgot-email-new-password').value = '';
+  $('#forgot-email-confirm-password').value = '';
   setAuthMessage('');
   if (username) $('#forgot-username').focus();
 }
@@ -500,9 +552,20 @@ $('#settings-theme').onclick = () =>
 $('#settings-enable-notifications').onclick = enableBrowserNotifications;
 $('#notify-browser').onchange = (event) => {
   if (event.target.checked) enableBrowserNotifications();
-  else setNotificationPrefs({ browser: false });
+  else disableBrowserNotifications();
 };
-$('#notify-scan-complete').onchange = (event) => setNotificationPrefs({ scanComplete: event.target.checked });
+$('#notify-scan-complete').onchange = async (event) => {
+  const enabled = event.target.checked;
+  setNotificationPrefs({ scanComplete: enabled });
+  if (!activeUser) return;
+  try {
+    const result = await postJSON('/api/account/preferences', { push_scan: enabled });
+    updateProfileUI(result.user);
+  } catch (error) {
+    setNotificationPrefs({ scanComplete: !enabled });
+    setSettingsMessage(error.message, 'error');
+  }
+};
 $('#notify-sound').onchange = (event) => setNotificationPrefs({ sound: event.target.checked });
 
 $('#settings-profile-form').onsubmit = async (event) => {
@@ -617,6 +680,40 @@ $('#settings-email-form').onsubmit = async (event) => {
   }
 };
 
+$('#settings-email-send-code').onclick = async (event) => {
+  const button = event.currentTarget;
+  setSettingsMessage('');
+  setAuthBusy(button, true, 'Sending…');
+  try {
+    const result = await postJSON('/api/auth/email/request-verification', {});
+    setSettingsMessage(result.message || 'A verification code has been sent.', 'success');
+    $('#settings-email-code').focus();
+  } catch (error) {
+    setSettingsMessage(error.message, 'error');
+  } finally {
+    setAuthBusy(button, false);
+  }
+};
+
+$('#settings-email-verify-form').onsubmit = async (event) => {
+  event.preventDefault();
+  const button = $('#settings-email-verify-submit');
+  setSettingsMessage('');
+  setAuthBusy(button, true, 'Verifying…');
+  try {
+    const result = await postJSON('/api/auth/email/verify', {
+      code: $('#settings-email-code').value.trim(),
+    });
+    updateProfileUI(result.user);
+    $('#settings-email-code').value = '';
+    setSettingsMessage('Email address verified. Email-based recovery and enabled notices are ready.', 'success');
+  } catch (error) {
+    setSettingsMessage(error.message, 'error');
+  } finally {
+    setAuthBusy(button, false);
+  }
+};
+
 $('#settings-recovery-form').onsubmit = async (event) => {
   event.preventDefault();
   const button = $('#settings-recovery-submit');
@@ -722,6 +819,46 @@ $('#forgot-lookup-form').onsubmit = async (event) => {
     setAuthBusy(button, false);
   }
 };
+
+$('#btn-request-reset-code').onclick = async (event) => {
+  const button = event.currentTarget;
+  setAuthMessage('');
+  setAuthBusy(button, true, 'Sending…');
+  try {
+    const result = await postJSON('/api/auth/forgot-password/email/request', {
+      username: $('#forgot-username').value.trim(),
+    });
+    $('#forgot-lookup-form').hidden = true;
+    $('#forgot-reset-form').hidden = true;
+    $('#forgot-email-reset-form').hidden = false;
+    $('#forgot-email-code').focus();
+    setAuthMessage(result.message || 'If this account has a verified Gmail address, a code has been sent.', 'success');
+  } catch (error) {
+    setAuthMessage(error.message, 'error');
+  } finally {
+    setAuthBusy(button, false);
+  }
+};
+
+$('#forgot-email-reset-form').onsubmit = (event) => {
+  event.preventDefault();
+  const newPassword = $('#forgot-email-new-password').value;
+  if (newPassword !== $('#forgot-email-confirm-password').value) {
+    setAuthMessage('Passwords do not match.', 'error');
+    return;
+  }
+  submitAuth(
+    event.currentTarget,
+    $('#btn-forgot-email-reset'),
+    '/api/auth/forgot-password/email/reset',
+    {
+      username: $('#forgot-username').value.trim(),
+      code: $('#forgot-email-code').value.trim(),
+      new_password: newPassword,
+    },
+  );
+};
+$('#btn-forgot-email-start-over').onclick = () => showForgotPassword($('#forgot-username').value.trim());
 
 $('#forgot-reset-form').onsubmit = (event) => {
   event.preventDefault();
@@ -1488,6 +1625,7 @@ function skeletonVerdict() {
 
 async function analyseUrl(url) {
   const out = $('#url-out');
+  const includeReputation = $('#url-reputation-consent').checked;
   lastUrl = url;
   $('#url-pipeline').hidden = false;
   resetStages();
@@ -1507,7 +1645,9 @@ async function analyseUrl(url) {
     return;
   }
   setStage('lexical', 'done');
-  ['infra', 'rep', 'preview'].forEach((s) => setStage(s, 'run'));
+  setStage('infra', 'run');
+  setStage('rep', includeReputation ? 'run' : 'skip');
+  setStage('preview', 'run');
 
   const f = quick.facts || {};
   const quickSaveItem = { kind: 'url', label: f.defanged || url, short: url.replace(/^https?:\/\//, '').slice(0, 32), tier: quick.label, score: quick.score, payload: url };
@@ -1521,14 +1661,17 @@ async function analyseUrl(url) {
       + fact('latency', '~5 ms'),
   }) + `<div class="callout" style="display:flex;align-items:center;gap:10px">
       <span class="spinner"></span>
-      <div><b>Instant verdict shown.</b> <span class="muted">Corroborating with registration, DNS, TLS and reputation data…</span></div>
+      <div><b>Instant verdict shown.</b> <span class="muted">Checking registration, DNS and TLS${includeReputation ? ' plus the providers you selected' : '; no third-party reputation lookup will be made'}…</span></div>
     </div>` + signalsCard(quick);
   bindFilters(out);
   receiptButton(quick, out, quickSaveItem);
 
   let full;
   try {
-    full = await postJSON('/api/check/url', { url });
+    full = await postJSON('/api/check/url', {
+      url,
+      include_reputation: includeReputation,
+    });
   } catch (e) {
     ['infra', 'rep', 'preview'].forEach((s) => setStage(s, ''));
     $('#btn-url').disabled = false;
@@ -1540,7 +1683,8 @@ async function analyseUrl(url) {
     notifyScanComplete('link', quick, url.replace(/^https?:\/\//, '').slice(0, 42));
     return;
   }
-  ['infra', 'rep', 'preview', 'baseline'].forEach((s) => setStage(s, 'done'));
+  ['infra', 'preview', 'baseline'].forEach((s) => setStage(s, 'done'));
+  setStage('rep', includeReputation ? 'done' : 'skip');
   $('#btn-url').disabled = false;
 
   const reg = (full.facts && full.facts.registration) || {};
@@ -1552,7 +1696,8 @@ async function analyseUrl(url) {
       : 'unknown')
     + fact('DNS', dns.resolves ? `resolves · ${(dns.a || []).length} A` : '<span style="color:var(--warn)">no A record</span>')
     + fact('TLS', tls.ok ? `valid · ${esc(tls.not_before_days)}d` : (tls.error ? 'invalid' : 'n/a'))
-    + fact('intel', full.intel_ok ? 'corroborated' : 'degraded');
+    + fact('independent data', full.intel_ok ? 'available' : 'degraded')
+    + fact('third-party URL check', includeReputation ? 'enabled for configured providers' : 'not shared');
 
   const fullSaveItem = { kind: 'url', label: full.facts.defanged || url, short: url.replace(/^https?:\/\//, '').slice(0, 32), tier: full.label, score: full.score, payload: url };
   out.innerHTML = verdictHero(full, { saveScan: true, facts })

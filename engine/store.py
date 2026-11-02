@@ -15,14 +15,19 @@ import threading
 import uuid
 from datetime import datetime, timezone
 
-# Neon Marketplace integration names its pooled endpoint DATABASE_POSTGRES_PRISMA_URL.
-# Prefer the explicit app setting, then that pooled endpoint, and only then its
-# direct (unpooled) endpoint for serverless deployment.
-DATABASE_URL = (
-    os.environ.get("DATABASE_URL", "").strip()
-    or os.environ.get("DATABASE_POSTGRES_PRISMA_URL", "").strip()
-    or os.environ.get("DATABASE_URL_UNPOOLED", "").strip()
-)
+from engine.database_config import database_url_from_env
+
+# Preview uses a Neon URL scoped only to Vercel Preview. Never fall back to the
+# generic integration variables in Preview; they may belong to Production.
+DATABASE_URL = database_url_from_env(os.environ)
+if (
+    os.getenv("VERCEL")
+    and os.getenv("VERCEL_ENV", "").strip().lower() == "preview"
+    and not DATABASE_URL
+):
+    raise RuntimeError(
+        "Preview deployment requires the isolated PHISGUARD_PREVIEW_DATABASE_URL."
+    )
 DB_PATH = os.environ.get("PHISHGUARD_DB",
                          os.path.join(os.path.dirname(__file__), "..", "data", "phishguard.db"))
 _LOCK = threading.Lock()
@@ -75,9 +80,15 @@ CREATE TABLE IF NOT EXISTS auth_users(
 CREATE TABLE IF NOT EXISTS auth_otp_challenges(
   challenge_id TEXT PRIMARY KEY, email TEXT NOT NULL, code_hash TEXT NOT NULL,
   created_at TEXT NOT NULL, expires_at TEXT NOT NULL, attempts INTEGER DEFAULT 0,
-  used_at TEXT, request_ip TEXT);
+  used_at TEXT, request_ip TEXT, purpose TEXT NOT NULL DEFAULT 'password_reset');
 CREATE INDEX IF NOT EXISTS idx_auth_otp_email_created
   ON auth_otp_challenges(email, created_at);
+CREATE TABLE IF NOT EXISTS notification_deliveries(
+  user_id TEXT NOT NULL, event_key TEXT NOT NULL, created_at TEXT NOT NULL,
+  PRIMARY KEY(user_id, event_key));
+CREATE TABLE IF NOT EXISTS push_subscriptions(
+  endpoint TEXT PRIMARY KEY, user_id TEXT NOT NULL, subscription_json TEXT NOT NULL,
+  created_at TEXT NOT NULL, last_used_at TEXT);
 CREATE TABLE IF NOT EXISTS auth_sessions(
   token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, created_at TEXT NOT NULL,
   expires_at TEXT NOT NULL, revoked_at TEXT);
@@ -86,10 +97,13 @@ CREATE INDEX IF NOT EXISTS idx_auth_sessions_email
 CREATE TABLE IF NOT EXISTS auth_accounts(
   user_id TEXT PRIMARY KEY, username TEXT NOT NULL COLLATE NOCASE UNIQUE,
   password_hash TEXT NOT NULL, mobile TEXT NOT NULL, email TEXT,
+  email_verified_at TEXT,
   display_name TEXT, avatar_initials TEXT, password_changed_at TEXT,
   recovery_question TEXT, recovery_answer_hash TEXT,
   notify_security INTEGER NOT NULL DEFAULT 1,
   notify_email INTEGER NOT NULL DEFAULT 1,
+  notify_email_delivery INTEGER NOT NULL DEFAULT 0,
+  notify_push_scan INTEGER NOT NULL DEFAULT 1,
   notify_tips INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL, last_login_at TEXT);
 CREATE TABLE IF NOT EXISTS auth_login_sessions(
@@ -143,6 +157,8 @@ def init():
             ("vendors", "offered TEXT"),
             ("vendors", "last_confirmed TEXT"),
             ("auth_accounts", "email TEXT"),
+            ("auth_accounts", "email_verified_at TEXT"),
+            ("auth_otp_challenges", "purpose TEXT NOT NULL DEFAULT 'password_reset'"),
             ("auth_accounts", "display_name TEXT"),
             ("auth_accounts", "avatar_initials TEXT"),
             ("auth_accounts", "password_changed_at TEXT"),
@@ -150,6 +166,8 @@ def init():
             ("auth_accounts", "recovery_answer_hash TEXT"),
             ("auth_accounts", "notify_security INTEGER NOT NULL DEFAULT 1"),
             ("auth_accounts", "notify_email INTEGER NOT NULL DEFAULT 1"),
+            ("auth_accounts", "notify_email_delivery INTEGER NOT NULL DEFAULT 0"),
+            ("auth_accounts", "notify_push_scan INTEGER NOT NULL DEFAULT 1"),
             ("auth_accounts", "notify_tips INTEGER NOT NULL DEFAULT 1"),
             ("auth_login_sessions", "ip_address TEXT"),
             ("auth_login_sessions", "user_agent TEXT"),
@@ -162,6 +180,10 @@ def init():
                 if DATABASE_URL:
                     raise
         c.execute(
+            "CREATE INDEX IF NOT EXISTS idx_auth_otp_purpose_email "
+            "ON auth_otp_challenges(purpose, email, created_at)"
+        )
+        c.execute(
             "UPDATE auth_accounts SET password_changed_at=created_at "
             "WHERE password_changed_at IS NULL"
         )
@@ -172,38 +194,61 @@ def init():
 
 
 # --------------------------------------------------------------- auth -------
-def latest_otp_challenge(email: str) -> sqlite3.Row | None:
+def latest_otp_challenge(email: str, purpose: str) -> sqlite3.Row | None:
     with _LOCK, _conn() as c:
         return c.execute(
-            "SELECT * FROM auth_otp_challenges WHERE email=? "
-            "ORDER BY created_at DESC LIMIT 1", (email,)
+            "SELECT * FROM auth_otp_challenges WHERE email=? AND purpose=? "
+            "AND used_at IS NULL ORDER BY created_at DESC LIMIT 1", (email, purpose)
         ).fetchone()
 
 
-def create_otp_challenge(challenge_id: str, email: str, code_hash: str,
-                         created_at: str, expires_at: str, request_ip: str) -> None:
+def get_otp_challenge(challenge_id: str, email: str, purpose: str) -> sqlite3.Row | None:
+    with _LOCK, _conn() as c:
+        return c.execute(
+            "SELECT * FROM auth_otp_challenges WHERE challenge_id=? AND email=? "
+            "AND purpose=?", (challenge_id, email, purpose)
+        ).fetchone()
+
+
+def invalidate_otp_challenges(email: str, purpose: str, used_at: str) -> None:
     with _LOCK, _conn() as c:
         c.execute(
-            "INSERT INTO auth_otp_challenges "
-            "(challenge_id,email,code_hash,created_at,expires_at,request_ip) "
-            "VALUES(?,?,?,?,?,?)",
-            (challenge_id, email, code_hash, created_at, expires_at, request_ip),
+            "UPDATE auth_otp_challenges SET used_at=? "
+            "WHERE email=? AND purpose=? AND used_at IS NULL",
+            (used_at, email, purpose),
         )
 
 
-def increment_otp_attempts(challenge_id: str) -> int:
+def create_otp_challenge(challenge_id: str, email: str, code_hash: str,
+                         created_at: str, expires_at: str, request_ip: str,
+                         purpose: str) -> None:
+    with _LOCK, _conn() as c:
+        c.execute(
+            "INSERT INTO auth_otp_challenges "
+            "(challenge_id,email,code_hash,created_at,expires_at,request_ip,purpose) "
+            "VALUES(?,?,?,?,?,?,?)",
+            (challenge_id, email, code_hash, created_at, expires_at, request_ip, purpose),
+        )
+
+
+def increment_otp_attempts(challenge_id: str, max_attempts: int = 5) -> int:
     with _LOCK, _conn() as c:
         c.execute("UPDATE auth_otp_challenges SET attempts=attempts+1 "
-                  "WHERE challenge_id=?", (challenge_id,))
+                  "WHERE challenge_id=? AND used_at IS NULL AND attempts<?",
+                  (challenge_id, max_attempts))
         row = c.execute("SELECT attempts FROM auth_otp_challenges "
                         "WHERE challenge_id=?", (challenge_id,)).fetchone()
         return int(row["attempts"]) if row else 0
 
 
-def mark_otp_used(challenge_id: str, used_at: str) -> None:
+def mark_otp_used(challenge_id: str, used_at: str) -> bool:
     with _LOCK, _conn() as c:
-        c.execute("UPDATE auth_otp_challenges SET used_at=? WHERE challenge_id=?",
-                  (used_at, challenge_id))
+        cursor = c.execute(
+            "UPDATE auth_otp_challenges SET used_at=? "
+            "WHERE challenge_id=? AND used_at IS NULL AND attempts<5",
+            (used_at, challenge_id),
+        )
+        return cursor.rowcount == 1
 
 
 def count_recent_otp_requests(email: str, request_ip: str, since: str) -> int:
@@ -212,6 +257,15 @@ def count_recent_otp_requests(email: str, request_ip: str, since: str) -> int:
             "SELECT COUNT(*) AS n FROM auth_otp_challenges "
             "WHERE created_at>=? AND (email=? OR request_ip=?)",
             (since, email, request_ip),
+        ).fetchone()
+        return int(row["n"] if row else 0)
+
+
+def count_otp_requests_since(since: str) -> int:
+    with _LOCK, _conn() as c:
+        row = c.execute(
+            "SELECT COUNT(*) AS n FROM auth_otp_challenges WHERE created_at>=?",
+            (since,),
         ).fetchone()
         return int(row["n"] if row else 0)
 
@@ -319,9 +373,104 @@ def update_auth_mobile(user_id: str, mobile: str) -> None:
 def update_auth_email(user_id: str, email: str) -> None:
     with _LOCK, _conn() as c:
         c.execute(
-            "UPDATE auth_accounts SET email=? WHERE user_id=?",
+            "UPDATE auth_accounts SET email=?, email_verified_at=NULL WHERE user_id=?",
             (email, user_id),
         )
+
+
+def mark_auth_email_verified(user_id: str, verified_at: str) -> None:
+    with _LOCK, _conn() as c:
+        c.execute(
+            "UPDATE auth_accounts SET email_verified_at=? WHERE user_id=?",
+            (verified_at, user_id),
+        )
+
+
+def list_email_notification_accounts():
+    with _LOCK, _conn() as c:
+        return c.execute(
+            "SELECT user_id, username, email FROM auth_accounts "
+            "WHERE email IS NOT NULL AND email<>'' AND email_verified_at IS NOT NULL "
+            "AND notify_email_delivery=1 ORDER BY created_at"
+        ).fetchall()
+
+
+def save_push_subscription(endpoint: str, user_id: str, subscription_json: str,
+                           created_at: str) -> None:
+    with _LOCK, _conn() as c:
+        c.execute(
+            "INSERT INTO push_subscriptions(endpoint,user_id,subscription_json,created_at) "
+            "VALUES(?,?,?,?) ON CONFLICT(endpoint) DO UPDATE SET "
+            "user_id=excluded.user_id, subscription_json=excluded.subscription_json, "
+            "created_at=excluded.created_at, last_used_at=NULL",
+            (endpoint, user_id, subscription_json, created_at),
+        )
+
+
+def list_push_subscriptions(user_id: str):
+    with _LOCK, _conn() as c:
+        return c.execute(
+            "SELECT endpoint, subscription_json FROM push_subscriptions WHERE user_id=? LIMIT 3",
+            (user_id,),
+        ).fetchall()
+
+
+def list_push_user_ids():
+    with _LOCK, _conn() as c:
+        return c.execute("SELECT DISTINCT user_id FROM push_subscriptions").fetchall()
+
+
+def delete_push_subscription(endpoint: str, user_id: str | None = None) -> None:
+    with _LOCK, _conn() as c:
+        if user_id:
+            c.execute("DELETE FROM push_subscriptions WHERE endpoint=? AND user_id=?",
+                      (endpoint, user_id))
+        else:
+            c.execute("DELETE FROM push_subscriptions WHERE endpoint=?", (endpoint,))
+
+
+def count_report_clusters_since(since: str) -> int:
+    with _LOCK, _conn() as c:
+        row = c.execute(
+            "SELECT COUNT(DISTINCT cluster_key) AS n FROM reports WHERE created_at>=?",
+            (since,),
+        ).fetchone()
+        return int(row["n"] if row else 0)
+
+
+def create_notification_delivery(user_id: str, event_key: str, created_at: str) -> bool:
+    with _LOCK, _conn() as c:
+        cursor = c.execute(
+            "INSERT INTO notification_deliveries(user_id,event_key,created_at) "
+            "VALUES(?,?,?) ON CONFLICT(user_id,event_key) DO NOTHING",
+            (user_id, event_key, created_at),
+        )
+        return cursor.rowcount == 1
+
+
+def has_notification_delivery(user_id: str, event_key: str) -> bool:
+    with _LOCK, _conn() as c:
+        row = c.execute(
+            "SELECT 1 FROM notification_deliveries WHERE user_id=? AND event_key=?",
+            (user_id, event_key),
+        ).fetchone()
+        return bool(row)
+
+
+def count_notification_deliveries_since(since: str, event_prefix: str = "") -> int:
+    with _LOCK, _conn() as c:
+        if event_prefix:
+            row = c.execute(
+                "SELECT COUNT(*) AS n FROM notification_deliveries "
+                "WHERE created_at>=? AND event_key LIKE ?",
+                (since, event_prefix + "%"),
+            ).fetchone()
+        else:
+            row = c.execute(
+                "SELECT COUNT(*) AS n FROM notification_deliveries WHERE created_at>=?",
+                (since,),
+            ).fetchone()
+        return int(row["n"] if row else 0)
 
 
 def update_auth_profile(user_id: str, display_name: str, avatar_initials: str) -> None:
@@ -333,12 +482,14 @@ def update_auth_profile(user_id: str, display_name: str, avatar_initials: str) -
 
 
 def update_auth_preferences(user_id: str, notify_security: bool,
-                            notify_email: bool, notify_tips: bool) -> None:
+                            notify_email: bool, notify_tips: bool,
+                            notify_push_scan: bool) -> None:
     with _LOCK, _conn() as c:
         c.execute(
-            "UPDATE auth_accounts SET notify_security=?, notify_email=?, notify_tips=? "
-            "WHERE user_id=?",
-            (int(notify_security), int(notify_email), int(notify_tips), user_id),
+            "UPDATE auth_accounts SET notify_security=?, notify_email=?, "
+            "notify_email_delivery=?, notify_tips=?, notify_push_scan=? WHERE user_id=?",
+            (int(notify_security), int(notify_email), int(notify_email),
+             int(notify_tips), int(notify_push_scan), user_id),
         )
 
 
@@ -417,7 +568,12 @@ def clear_user_activity(username: str) -> None:
 
 def delete_auth_account(user_id: str, username: str) -> None:
     with _LOCK, _conn() as c:
+        account = c.execute("SELECT email FROM auth_accounts WHERE user_id=?", (user_id,)).fetchone()
+        if account and account["email"]:
+            c.execute("DELETE FROM auth_otp_challenges WHERE email=?", (account["email"],))
         c.execute("DELETE FROM auth_login_sessions WHERE user_id=?", (user_id,))
+        c.execute("DELETE FROM push_subscriptions WHERE user_id=?", (user_id,))
+        c.execute("DELETE FROM notification_deliveries WHERE user_id=?", (user_id,))
         c.execute("DELETE FROM auth_login_attempts WHERE username=?", (username,))
         c.execute("DELETE FROM auth_recovery_attempts WHERE username=?", (username,))
         c.execute("DELETE FROM assistant_requests WHERE username=?", (username,))

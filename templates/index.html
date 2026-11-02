@@ -121,7 +121,7 @@
       <article class="landing-capability-card landing-capability-featured"><div class="landing-card-icon">↗</div><span class="landing-card-index">01 / LINKS</span><h3>Spot the telltale details</h3><p>Look for IDN and homoglyph tricks, brand lookalikes, deceptive @ signs, ports, risky TLDs, shorteners, double extensions, and open redirects. Registration age, DNS, TLS, and a guarded redirect preview add context.</p><div class="landing-tags"><span>Domain signals</span><span>DNS &amp; TLS</span><span>Redirect preview</span></div></article>
       <article class="landing-capability-card"><div class="landing-card-icon">✉</div><span class="landing-card-index">02 / EMAIL</span><h3>Look beyond the display name</h3><p>Review SPF, DKIM, and DMARC; Received-chain and Reply-To mismatches; display-name spoofing; BEC language; links; attachment hashes; and bank-detail changes.</p></article>
       <article class="landing-capability-card"><div class="landing-card-icon">▤</div><span class="landing-card-index">03 / MEMORY</span><h3>Keep useful context</h3><p>Save scans, remember first-contact senders and domains, track time-of-click URL snapshots, compare vendor bank details, and group related reports by subject, sender, and link hosts.</p></article>
-      <article class="landing-capability-card"><div class="landing-card-icon">⌕</div><span class="landing-card-index">04 / REPUTATION</span><h3>Know when a signal is missing</h3><p>Optional Safe Browsing and VirusTotal checks use your own API keys. If a provider is not configured, PhishGuard labels it unavailable rather than calling the message safe.</p></article>
+      <article class="landing-capability-card"><div class="landing-card-icon">⌕</div><span class="landing-card-index">04 / REPUTATION</span><h3>Know when a signal is missing</h3><p>Optional Google Safe Browsing, VirusTotal, URLhaus, and PhishTank lookups add provider-attributed evidence only when enabled. Full URL sharing is opt-in per scan; a missing provider match is not a safety clearance.</p></article>
     </div>
   </section>
 
@@ -259,10 +259,11 @@
       <label for="forgot-username">Username</label>
       <input id="forgot-username" type="text" autocomplete="username" minlength="3" maxlength="32"
              placeholder="your_username" required>
-      <div class="auth-help">We will show the recovery question saved for this account.</div>
+      <div class="auth-help">You can use your recovery question or request a code sent to a verified Gmail address.</div>
       <button class="btn btn-primary auth-submit" id="btn-forgot-lookup" type="submit">
-        Continue <span aria-hidden="true">→</span>
+        Continue with recovery question <span aria-hidden="true">→</span>
       </button>
+      <button class="auth-link auth-submit" id="btn-request-reset-code" type="button">Send a reset code to verified Gmail</button>
       <div class="auth-actions">
         <button class="auth-link" id="btn-back-login" type="button">← Back to login</button>
       </div>
@@ -285,6 +286,21 @@
       </button>
       <div class="auth-actions">
         <button class="auth-link" id="btn-forgot-start-over" type="button">Use a different account</button>
+      </div>
+    </form>
+
+    <form id="forgot-email-reset-form" class="auth-form" hidden>
+      <div class="auth-sent-note">Enter the six-digit code sent to the account’s verified Gmail address.</div>
+      <label for="forgot-email-code">Email code</label>
+      <input id="forgot-email-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" required>
+      <label for="forgot-email-new-password">New password</label>
+      <input id="forgot-email-new-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required>
+      <label for="forgot-email-confirm-password">Confirm new password</label>
+      <input id="forgot-email-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Re-enter password" required>
+      <div class="auth-help">Code expires after 10 minutes. Passwords need one letter and one number.</div>
+      <button class="btn btn-primary auth-submit" id="btn-forgot-email-reset" type="submit">Reset password <span aria-hidden="true">→</span></button>
+      <div class="auth-actions">
+        <button class="auth-link" id="btn-forgot-email-start-over" type="button">Use a different account</button>
       </div>
     </form>
 
@@ -489,6 +505,13 @@
             <button class="sample" data-demo="https://microsoft.com@evil-login.ru/">@ decoy</button>
             <button class="sample" data-demo="https://bit.ly/3xKyc">shortener</button>
             <button class="sample" data-demo="https://www.google.com">clean control</button>
+          </div>
+          <div class="reputation-consent" role="group" aria-labelledby="url-reputation-consent-label">
+            <label class="settings-check" id="url-reputation-consent-label">
+              <input id="url-reputation-consent" type="checkbox">
+              Share this URL with configured third-party reputation providers
+            </label>
+            <div class="settings-help">Off by default. If enabled, the exact URL may be sent to Google Safe Browsing, VirusTotal, URLhaus, and/or PhishTank according to available server keys and provider limits. The self-made PhishGuard analysis still runs when unchecked. A provider no-match does not mean safe.</div>
           </div>
           <div class="pipeline" id="url-pipeline" hidden style="margin-top:16px">
             <span class="stage" data-stage="lexical"><span class="pip"></span>lexical</span>
@@ -695,13 +718,20 @@
       </div>
     <div class="settings-card" data-security-action-card="email" hidden>
       <div class="settings-card-title" id="settings-email-title">Add Gmail address</div>
-      <div class="settings-help">Use a Gmail address you control. This local app saves the address but does not send email verification codes.</div>
+      <div class="settings-help">Verify an address you control to use email password recovery and opt-in scan or campaign notices. PhishGuard uses server-side Gmail SMTP; no custom domain is needed.</div>
+      <div class="settings-row"><span>Email status</span><b id="settings-email-verified">Not verified</b></div>
       <form class="settings-form" id="settings-email-form">
         <label for="settings-email-input">Gmail address</label>
         <input id="settings-email-input" type="email" autocomplete="email" placeholder="name@gmail.com" required>
         <label for="settings-email-password">Current password</label>
         <input id="settings-email-password" type="password" autocomplete="current-password" required>
         <button class="btn btn-primary" id="settings-email-submit" type="submit">Add Gmail address</button>
+      </form>
+      <button class="btn btn-ghost" id="settings-email-send-code" type="button">Send verification code</button>
+      <form class="settings-form" id="settings-email-verify-form">
+        <label for="settings-email-code">Verification code</label>
+        <input id="settings-email-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" required>
+        <button class="btn btn-primary" id="settings-email-verify-submit" type="submit">Verify email</button>
       </form>
     </div>
     <div class="settings-card" data-security-action-card="recovery" hidden>
@@ -762,7 +792,7 @@
       <div class="privacy-group-body">
     <div class="settings-card notification-card">
       <div class="settings-card-title">Browser notifications</div>
-      <div class="settings-help">Receive a message when a scan finishes, even when this browser tab is minimized.</div>
+      <div class="settings-help">On this device, browser alerts work while the app is open. If the owner configures VAPID keys, enabling notifications also registers standards-based Web Push so opted-in scan and weekly campaign notices can arrive when the site is closed. A device subscription is stored against your account and removed when you disable notifications or delete the account. No paid push provider is used.</div>
       <div class="notification-status" id="notification-status">Browser permission has not been requested.</div>
       <div class="settings-form">
         <label class="settings-check"><input id="notify-browser" type="checkbox"> Allow browser notifications</label>
@@ -773,7 +803,7 @@
     </div>
     <div class="settings-card">
       <div class="settings-card-title">Notification preferences</div>
-      <div class="settings-help">Choose which account updates PhishGuard should prepare for you.</div>
+      <div class="settings-help">Email alerts stay off until you opt in, verify a Gmail address, and the operator configures Gmail SMTP. When enabled, PhishGuard sends scan summaries (up to 5 per day) and a weekly aggregate of new campaign clusters; the digest does not expose other users’ report details. Security-alert and product-tip toggles are saved preferences but do not currently trigger email.</div>
       <form class="settings-form" id="settings-preferences-form">
         <label class="settings-check"><input id="notify-security" type="checkbox"> Security and login alerts</label>
         <label class="settings-check"><input id="notify-email" type="checkbox"> Email notifications</label>
@@ -786,6 +816,10 @@
     <details class="privacy-group" id="privacy-data-group" data-settings-category="privacy">
       <summary><span class="privacy-group-icon">▤</span><span><b>Privacy &amp; data</b><small>Download or clear the information connected to your account</small></span><span class="privacy-chevron">⌄</span></summary>
       <div class="privacy-group-body">
+    <div class="settings-card">
+      <div class="settings-card-title">Third-party threat-intelligence checks</div>
+      <div class="settings-help">Your URL is checked against the self-made PhishGuard engines first. For a full scan, the URL is sent to Google Safe Browsing, VirusTotal, URLhaus, and/or PhishTank only if you tick the per-scan sharing option and the operator has configured that provider. Quick scans never call these providers. Provider matches are extra evidence; no match means unknown, not proven safe. Providers apply their own retention and usage terms.</div>
+    </div>
     <div class="settings-card">
       <div class="settings-card-title">Your data</div>
       <div class="settings-help">Download your profile, login history, Help Guide questions, and reports submitted by this account.</div>

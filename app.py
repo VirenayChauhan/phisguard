@@ -4,11 +4,14 @@ Run:  python3 app.py     (binds 0.0.0.0:8000)
 """
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import traceback
+import uuid
+from datetime import datetime, timedelta, timezone
 
-from flask import Flask, jsonify, make_response, render_template, request
+from flask import Flask, jsonify, make_response, render_template, request, send_from_directory
 
 try:
     from dotenv import load_dotenv
@@ -16,7 +19,7 @@ try:
 except ImportError:  # requirements.txt installs this; keep imports resilient for tests
     pass
 
-from engine import assistant, auth, emailscan, store, urlscan
+from engine import assistant, auth, emailscan, mailer, push, store, urlscan
 
 MAX_UPLOAD = 12 * 1024 * 1024  # 12 MB .eml ceiling
 
@@ -37,7 +40,10 @@ PUBLIC_API_PATHS = {
     "/api/auth/login",
     "/api/auth/forgot-password/question",
     "/api/auth/forgot-password/reset",
+    "/api/auth/forgot-password/email/request",
+    "/api/auth/forgot-password/email/reset",
     "/api/auth/logout",
+    "/api/cron/cluster-digest",
 }
 
 
@@ -56,6 +62,14 @@ def require_authentication():
 @app.get("/")
 def index():
     return render_template("index.html")
+
+
+@app.get("/sw.js")
+def service_worker():
+    response = make_response(send_from_directory(app.static_folder, "sw.js"))
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @app.get("/login")
@@ -93,6 +107,49 @@ def _session_response(user: dict, token: str):
         path="/",
     )
     return response
+
+
+def _send_scan_email(username: str, result: dict, channel: str) -> None:
+    """Best-effort push and opted-in email summary; never breaks a scan."""
+    account = store.get_auth_account(username)
+    if not account:
+        return
+    label = str(result.get("label") or "unknown").replace("_", " ")[:40]
+    score = result.get("score", "not available")
+    facts = result.get("facts") or {}
+    target = (facts.get("registrable_domain") or
+              (result.get("email") or {}).get("from_domain") or "not available")
+    if account["notify_push_scan"]:
+        try:
+            push.send_to_user(
+                account["user_id"], "PhishGuard scan complete",
+                f"{channel.title()} scan: {label}. Review the evidence in PhishGuard.", "/",
+            )
+        except Exception as exc:
+            app.logger.info("Optional browser push was not delivered (%s)", type(exc).__name__)
+    if (not mailer.configured() or not account["email"]
+            or not account["email_verified_at"] or not account["notify_email_delivery"]):
+        return
+    now = datetime.now(timezone.utc)
+    since = (now - timedelta(days=1)).isoformat(timespec="seconds")
+    if (store.count_notification_deliveries_since(since, "scan:") >= 100
+            or store.count_notification_deliveries_since(since, f"scan:{account['user_id']}:") >= 5):
+        return
+    event_key = f"scan:{account['user_id']}:{uuid.uuid4().hex}"
+    body = (
+        "PhishGuard finished a scan you requested.\n\n"
+        f"Type: {'link' if channel == 'url' else 'email'}\n"
+        f"Result: {label}\n"
+        f"Score: {score}\n"
+        f"Domain: {str(target)[:253]}\n\n"
+        "This is a summary only; open your PhishGuard workspace to review evidence. "
+        "Provider matches are additional signals and no match is not proof of safety.\n"
+    )
+    try:
+        mailer.send_email(account["email"], f"PhishGuard {channel} scan complete: {label}", body)
+        store.create_notification_delivery(account["user_id"], event_key, now.isoformat(timespec="seconds"))
+    except Exception as exc:
+        app.logger.info("Optional scan email was not delivered (%s)", type(exc).__name__)
 
 
 @app.post("/api/auth/register")
@@ -143,6 +200,79 @@ def forgot_password_reset():
             request.headers.get("User-Agent", "")
         )
         return _session_response(user, token)
+    except auth.AuthError as exc:
+        return jsonify({"error": str(exc)}), exc.status
+
+
+@app.post("/api/auth/forgot-password/email/request")
+def forgot_password_email_request():
+    data = request.get_json(silent=True) or {}
+    if not mailer.configured():
+        return jsonify({"error": "Email delivery is not configured on this deployment yet."}), 503
+    try:
+        username = auth.normalize_username(data.get("username", ""))
+    except auth.AuthError:
+        return jsonify({"ok": True, "message": "If this account has a verified Gmail address, a code has been sent."})
+    account = store.get_auth_account(username)
+    if account and account["email"] and account["email_verified_at"]:
+        try:
+            _, code = auth.issue_email_otp(account["email"], "password_reset", request.remote_addr or "unknown")
+            mailer.send_email(
+                account["email"], "PhishGuard password reset code",
+                f"Your PhishGuard password-reset code is {code}. It expires in 10 minutes. "
+                "If you did not request this, you can ignore this message.\n",
+            )
+        except auth.AuthError as exc:
+            # Keep account existence and OTP throttle state out of the response.
+            app.logger.info("Password-recovery code was not issued (status %s)", exc.status)
+        except mailer.MailDeliveryError as exc:
+            app.logger.info("Password-recovery email was not delivered (%s)", type(exc).__name__)
+    return jsonify({"ok": True, "message": "If this account has a verified Gmail address, a code has been sent."})
+
+
+@app.post("/api/auth/forgot-password/email/reset")
+def forgot_password_email_reset():
+    data = request.get_json(silent=True) or {}
+    try:
+        user, token = auth.reset_password_with_email_otp(
+            data.get("username", ""), data.get("code", ""), data.get("new_password", ""),
+            request.remote_addr or "unknown", request.headers.get("User-Agent", "")
+        )
+        return _session_response(user, token)
+    except auth.AuthError as exc:
+        return jsonify({"error": str(exc)}), exc.status
+
+
+@app.post("/api/auth/email/request-verification")
+def request_email_verification():
+    user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+    account = store.get_auth_account(user["username"])
+    if not account or not account["email"]:
+        return jsonify({"error": "Add a Gmail address before verifying it."}), 400
+    if account["email_verified_at"]:
+        return jsonify({"ok": True, "message": "This Gmail address is already verified."})
+    if not mailer.configured():
+        return jsonify({"error": "Email delivery is not configured on this deployment yet."}), 503
+    try:
+        _, code = auth.issue_email_otp(account["email"], "verify_email", request.remote_addr or "unknown")
+        mailer.send_email(
+            account["email"], "Verify your PhishGuard email address",
+            f"Your PhishGuard email verification code is {code}. It expires in 10 minutes.\n",
+        )
+        return jsonify({"ok": True, "message": "A verification code has been sent to your Gmail address."})
+    except auth.AuthError as exc:
+        return jsonify({"error": str(exc)}), exc.status
+    except mailer.MailDeliveryError as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+@app.post("/api/auth/email/verify")
+def verify_email_address():
+    user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+    data = request.get_json(silent=True) or {}
+    try:
+        updated_user = auth.verify_account_email(user["username"], data.get("code", ""))
+        return jsonify({"ok": True, "user": updated_user})
     except auth.AuthError as exc:
         return jsonify({"error": str(exc)}), exc.status
 
@@ -207,6 +337,48 @@ def recovery_question():
         return jsonify({"ok": True, "user": updated_user})
     except auth.AuthError as exc:
         return jsonify({"error": str(exc)}), exc.status
+
+
+@app.get("/api/notifications/push/key")
+def push_public_key():
+    user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+    return jsonify({"configured": push.configured(), "public_key": push.public_key() if user and push.configured() else ""})
+
+
+@app.post("/api/notifications/push/subscribe")
+def push_subscribe():
+    user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+    account = store.get_auth_account(user["username"])
+    data = request.get_json(silent=True) or {}
+    subscription = data.get("subscription") or {}
+    endpoint = subscription.get("endpoint") if isinstance(subscription, dict) else ""
+    keys = subscription.get("keys") if isinstance(subscription, dict) else {}
+    if (not push.configured() or not isinstance(endpoint, str)
+            or not push.valid_endpoint(endpoint) or not isinstance(keys, dict)
+            or not all(isinstance(keys.get(k), str) and keys.get(k) for k in ("p256dh", "auth"))
+            or len(keys.get("p256dh", "")) > 200 or len(keys.get("auth", "")) > 100):
+        return jsonify({"error": "Invalid subscription or browser push is not configured."}), 400
+    safe_subscription = {
+        "endpoint": endpoint,
+        "expirationTime": None,
+        "keys": {"p256dh": keys["p256dh"], "auth": keys["auth"]},
+    }
+    store.save_push_subscription(
+        endpoint, account["user_id"], json.dumps(safe_subscription), store.now()
+    )
+    return jsonify({"ok": True})
+
+
+@app.post("/api/notifications/push/unsubscribe")
+def push_unsubscribe():
+    user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+    account = store.get_auth_account(user["username"])
+    data = request.get_json(silent=True) or {}
+    endpoint = data.get("endpoint", "")
+    if not isinstance(endpoint, str) or not push.valid_endpoint(endpoint):
+        return jsonify({"error": "Invalid subscription endpoint."}), 400
+    store.delete_push_subscription(endpoint, account["user_id"])
+    return jsonify({"ok": True})
 
 
 @app.post("/api/account/profile")
@@ -340,9 +512,16 @@ def check_url():
         if mode == "quick":
             result = urlscan.analyze_quick(url)
         else:
-            result = urlscan.analyze_full(url, do_preview=data.get("preview", True))
+            result = urlscan.analyze_full(
+                url, do_preview=data.get("preview", True),
+                include_reputation=bool(data.get("include_reputation", False)),
+            )
         result["cluster_hint"] = (result.get("facts") or {}).get(
             "registrable_domain") or "unknown"
+        if mode != "quick":
+            scan_user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+            if scan_user:
+                _send_scan_email(scan_user["username"], result, "url")
         return jsonify(result)
     except Exception as exc:
         traceback.print_exc()
@@ -365,10 +544,78 @@ def check_email():
     if len(raw) > MAX_UPLOAD:
         return jsonify({"error": "message too large (12 MB max)"}), 413
     try:
-        return jsonify(emailscan.scan_eml(raw))
+        result = emailscan.scan_eml(raw)
+        scan_user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+        if scan_user:
+            _send_scan_email(scan_user["username"], result, "email")
+        return jsonify(result)
     except Exception as exc:
         traceback.print_exc()
         return jsonify({"error": f"could not parse message: {type(exc).__name__}: {exc}"}), 400
+
+
+@app.get("/api/cron/cluster-digest")
+def cluster_digest_cron():
+    """Send a weekly, privacy-minimized digest of new campaign clusters."""
+    secret = os.environ.get("CRON_SECRET", "").strip()
+    if not secret:
+        return jsonify({"error": "CRON_SECRET is not configured."}), 503
+    supplied = request.headers.get("Authorization", "")
+    expected = f"Bearer {secret}"
+    if not hmac.compare_digest(supplied, expected):
+        return jsonify({"error": "unauthorized"}), 401
+    now = datetime.now(timezone.utc)
+    since = (now - timedelta(days=7)).isoformat(timespec="seconds")
+    cluster_count = store.count_report_clusters_since(since)
+    if not cluster_count:
+        return jsonify({"ok": True, "sent": 0, "push_sent": 0, "new_clusters": 0})
+    iso_year, iso_week, _ = now.isocalendar()
+    event_key = f"cluster-digest:{iso_year}-W{iso_week:02d}"
+    app_url = os.environ.get("PUBLIC_APP_URL", "https://phisguard-five.vercel.app/").strip()
+    sent = 0
+    push_sent = 0
+    email_recipients = store.list_email_notification_accounts() if mailer.configured() else []
+    for recipient in email_recipients:
+        if store.has_notification_delivery(recipient["user_id"], event_key):
+            continue
+        if store.count_notification_deliveries_since(since) >= 100:
+            break
+        body = (
+            f"There were {cluster_count} reported campaign cluster(s) in PhishGuard "
+            "during the last seven days.\n\n"
+            "This is an aggregate count only; it does not include other users’ "
+            "submitted email content or report details. Community reports are leads, "
+            "not proof. Open PhishGuard to review your workspace.\n\n"
+            f"{app_url}\n"
+        )
+        try:
+            mailer.send_email(recipient["email"], "PhishGuard weekly campaign digest", body)
+            if store.create_notification_delivery(
+                recipient["user_id"], event_key, now.isoformat(timespec="seconds")
+            ):
+                sent += 1
+        except Exception as exc:
+            app.logger.info("Optional weekly digest was not delivered (%s)", type(exc).__name__)
+    push_event_key = f"cluster-push-digest:{iso_year}-W{iso_week:02d}"
+    for subscribed in store.list_push_user_ids():
+        user_id = subscribed["user_id"]
+        if store.has_notification_delivery(user_id, push_event_key):
+            continue
+        if store.count_notification_deliveries_since(since) >= 100:
+            break
+        try:
+            delivered = push.send_to_user(
+                user_id, "PhishGuard campaign digest",
+                f"{cluster_count} campaign cluster(s) were reported this week. Review in PhishGuard.", "/",
+            )
+            if delivered and store.create_notification_delivery(
+                user_id, push_event_key, now.isoformat(timespec="seconds")
+            ):
+                push_sent += delivered
+        except Exception as exc:
+            app.logger.info("Optional push digest was not delivered (%s)", type(exc).__name__)
+    return jsonify({"ok": True, "sent": sent, "push_sent": push_sent,
+                    "new_clusters": cluster_count})
 
 
 @app.post("/api/report")

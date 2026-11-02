@@ -31,10 +31,14 @@ else
   log "using existing database $DB"
 fi
 
-if [ -n "${GSB_API_KEY:-}${VT_API_KEY:-}" ]; then
-  log "reputation keys detected"
+if [ -n "${GSB_API_KEY:-}${VT_API_KEY:-}${URLHAUS_AUTH_KEY:-}${PHISHTANK_APP_KEY:-}" ]; then
+  log "optional reputation keys detected"
 else
-  log "no reputation keys — running with BYO-key mode (fully functional)"
+  log "no reputation keys — using local analysis only until per-scan providers are configured"
+fi
+
+if [ -n "${GMAIL_SMTP_USERNAME:-}${GMAIL_SMTP_APP_PASSWORD:-}" ]; then
+  log "optional Gmail SMTP configuration detected"
 fi
 
 log "starting gunicorn on 0.0.0.0:${PORT:-8000}"

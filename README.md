@@ -82,7 +82,7 @@ identically inside a sandboxed preview iframe and offline.
 | **Teach-in-the-moment** | Every signal carries the transferable lesson, so the checker trains people on real attacks they actually received. | `data.TEACH`, `verdict._tips` |
 | **Progressive verdicts** | Lexical answer in ~5 ms, corroboration streams in. A slow checker gets bypassed. | `/api/check/url?mode=quick` then `mode=full` |
 | **Never clickable** | Every URL is defanged (`hxxps://evil[.]com`). | `lexical.defang` |
-| **BYO-key, degrades gracefully** | Safe Browsing / VirusTotal are optional. Missing keys are labelled, never silently treated as "clean". | `intel.py` |
+| **BYO-key, privacy-first reputation** | Google Safe Browsing v5, VirusTotal, URLhaus, and PhishTank are optional signals. URL sharing is opt-in per full scan; unavailable/no-match providers never clear a URL as safe. | `intel.py`, `urlscan.py` |
 
 ---
 
@@ -96,11 +96,13 @@ engine/
                         homoglyphs, BEC lexicon, India scam corpus, teach-lines
   lexical.py            no-network URL analysis (the fast half of every verdict)
   net.py                SSRF-guarded fetch, RDAP domain age, DNS, TLS, HTML parsing
-  intel.py              Safe Browsing + VirusTotal (optional keys)
-  urlscan.py            orchestration: lexical → infrastructure → reputation → preview
+  intel.py              Safe Browsing v5, VirusTotal, URLhaus, PhishTank (optional keys)
+  mailer.py             optional low-volume Gmail SMTP delivery for OTPs and notices
+  push.py               optional VAPID Web Push delivery
+  urlscan.py            orchestration: lexical → infrastructure → consented reputation → preview
   emailscan.py          SPF/DKIM/DMARC, Received-chain, BEC, India rules, attachments
   verdict.py            scoring, confidence, the honest "unknown", receipts
-  store.py              SQLite: baselines, vendors, snapshots, clusters, receipts
+  store.py              SQLite/Postgres: baselines, auth, OTPs, subscriptions, clusters
 templates/index.html    single-page UI (vanilla JS, no build step)
 static/style.css
 samples/*.eml           4 demo messages (3 attacks, 1 clean control)
@@ -179,9 +181,9 @@ mobile, changing a password, managing a recovery question, or reviewing login
 activity. Privacy & data includes export, clearing personal activity, and
 password-confirmed account deletion. Clearing personal data keeps the account and
 security login history; deleting the account removes the account and its personal
-activity permanently. Browser notifications can be enabled for completed scans,
-with optional sound. Notifications work while the browser tab remains open or
-minimized; closing the browser requires a future server push-notification service.
+activity permanently. Browser notifications can be enabled for completed scans, with optional sound.
+Foreground notifications work while the app is open; optional VAPID Web Push can
+also deliver scan alerts and weekly aggregate cluster notices when the site is closed.
 
 The public landing page is shown before sign-in. The signed-in **Overview** page
 shows recent checks on this device, saved scans, items flagged for review, and
@@ -225,16 +227,75 @@ Open <http://localhost:8000>, then:
   "Bank details CHANGED vs this vendor's previous invoice"
 - **Org sweep** → see value protected + campaign clusters
 
-### 2. Add reputation keys (optional, 5 minutes)
+### 2. Optional reputation keys
+
+Set provider keys only in server-side environment variables (`.env` locally or the
+Vercel project settings). The local PhishGuard engines remain primary. The optional
+Google Safe Browsing v5, VirusTotal, URLhaus, and PhishTank checks are additional
+signals; unavailable providers and no-match responses do not establish safety.
+Full scans ask for explicit per-scan consent before sending a URL to whichever
+providers have been configured. Quick scans never make those calls. Review each
+provider's non-commercial terms, rate limits, and data-retention rules before use.
+
 ```bash
-cp .env.example .env      # then export them, or use a process manager
-export GSB_API_KEY=...    # Google Safe Browsing v4 key
-export VT_API_KEY=...     # VirusTotal (free tier is fine)
+cp .env.example .env
+# Set only the keys for providers you choose to enable:
+GSB_API_KEY=
+VT_API_KEY=
+URLHAUS_AUTH_KEY=
+PHISHTANK_APP_KEY=
 ```
-Nothing breaks without them — the UI shows `intel: BYO-key` and confidence stays honest.
+
+Missing keys are normal: the rest of PhishGuard continues to work without them.
+
+### 3. Optional email and background push
+
+These connections are off until their server-side variables are set. Gmail SMTP
+works without a custom domain: use a Gmail sender with 2-Step Verification and a
+Google App Password (never the account's normal password). In the app, users must
+verify their own Gmail address and explicitly opt in before scan summaries or the
+weekly aggregate cluster digest is delivered. Scan-summary delivery is capped at five emails per account per day and 100
+notifications total per day; OTP code requests have a separate 100-per-day cap plus
+per-address/IP throttling. Gmail's own limits and
+terms still apply; this is intended for non-commercial, low-volume use.
+
+```text
+GMAIL_SMTP_USERNAME=your-sender@gmail.com
+GMAIL_SMTP_APP_PASSWORD=<Google App Password>
+GMAIL_FROM_ADDRESS=your-sender@gmail.com
+GMAIL_SMTP_HOST=smtp.gmail.com
+GMAIL_SMTP_PORT=587
+CRON_SECRET=<long random value for the weekly Vercel cron>
+PUBLIC_APP_URL=https://phisguard-five.vercel.app/
+```
+
+For background browser notifications, generate one VAPID key pair and configure
+`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` (for example,
+`mailto:your-sender@gmail.com`). With project dependencies installed, this prints
+a matching base64url key pair locally:
+
+```bash
+python - <<'PY'
+from cryptography.hazmat.primitives import serialization
+from py_vapid import Vapid
+from py_vapid.utils import b64urlencode
+v = Vapid()
+v.generate_keys()
+private = v.private_key.private_numbers().private_value.to_bytes(32, "big")
+public = v.public_key.public_bytes(serialization.Encoding.X962,
+    serialization.PublicFormat.UncompressedPoint)
+print("VAPID_PRIVATE_KEY=" + b64urlencode(private))
+print("VAPID_PUBLIC_KEY=" + b64urlencode(public))
+PY
+```
+
+Treat the private key output as a secret and set it only server-side. Users subscribe
+per browser; disabling browser notifications removes that device's subscription.
+No paid push vendor is required. The weekly cron runs once a week; on Vercel Hobby,
+keep scheduled jobs within the plan's daily schedule limit.
 
 
-### 3. Deploy with Docker (the recommended way to keep a stable link)
+### 4. Deploy with Docker (the recommended way to keep a stable link)
 
 Docker gives you a **host port**, so the URL is always `http://localhost:8000` — the
 token-secured preview link from the hosted sandbox does not apply inside a container.
@@ -277,6 +338,7 @@ docker compose down          # add -v to also delete the persisted data
 ```bash
 docker run -d --name phishguard -p 8000:8000 -v phishguard-data:/app/data \
   -e GSB_API_KEY=your-key -e VT_API_KEY=your-key \
+  -e URLHAUS_AUTH_KEY=your-key -e PHISHTANK_APP_KEY=your-key \
   phishguard:0.9.0
 ```
 
@@ -309,7 +371,7 @@ publish it to your host. To share it on a LAN, publish to all interfaces
 authenticating reverse proxy in front of it first, because there is no login by design.
 
 
-### 4. Make it yours
+### 5. Make it yours
 - Add brands to `engine/data.py → BRANDS` and, crucially, real ones to `LEGIT_DOMAINS`
   (the allowlist is what keeps false positives at zero).
 - Add local scam patterns to `INDIA_RULES` — `{id, pattern, title, evidence, weight, tip}`.
@@ -318,7 +380,7 @@ authenticating reverse proxy in front of it first, because there is no login by 
 - Wire `POST /api/report` from your mail gateway so reporting happens before anyone clicks.
 - Feed `report.json` clusters into your SIEM/SOAR; `GET /api/receipt/<id>` is the artifact.
 
-### 5. Before you trust it in production
+### 6. Before you trust it in production
 - [ ] Replace the dev server with gunicorn/uWSGI (the Dockerfile already does).
 - [ ] Put the preview fetcher in an isolated egress-only container or a real sandbox VM.
 - [ ] Add auth, rate limiting and a per-tenant data-retention policy (emails are PII).
