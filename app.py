@@ -50,7 +50,16 @@ PUBLIC_API_PATHS = {
 @app.before_request
 def require_authentication():
     """Keep the dashboard and every analysis API behind the verified session."""
-    if not request.path.startswith("/api/") or request.path in PUBLIC_API_PATHS:
+    if not request.path.startswith("/api/"):
+        return None
+    if request.path == "/api/assistant":
+        # The built-in, read-only FAQ is available before login. Still require the
+        # normal request-protection header when an authenticated user submits it.
+        user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+        if user and request.method in {"POST", "PUT", "PATCH", "DELETE"} and request.headers.get("X-Requested-With") != "XMLHttpRequest":
+            return jsonify({"error": "missing request protection header"}), 403
+        return None
+    if request.path in PUBLIC_API_PATHS:
         return None
     if auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"])):
         if request.method in {"POST", "PUT", "PATCH", "DELETE"} and request.headers.get("X-Requested-With") != "XMLHttpRequest":
@@ -485,13 +494,18 @@ def stats():
 @app.post("/api/assistant")
 def help_assistant():
     user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
-    if not user:
-        return jsonify({"error": "authentication required"}), 401
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        data = {}
     try:
-        result = assistant.answer(
-            data.get("question", ""), user["username"], request.remote_addr or "unknown"
-        )
+        if user:
+            result = assistant.answer(
+                data.get("question", ""), user["username"], request.remote_addr or "unknown"
+            )
+        else:
+            # Pre-login questions are answered from the bundled FAQ only and are
+            # not written to the account-help request history.
+            result = assistant.answer_public(data.get("question", ""))
         return jsonify(result)
     except assistant.AssistantError as exc:
         return jsonify({"error": str(exc)}), exc.status

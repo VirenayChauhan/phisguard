@@ -607,29 +607,32 @@
     </main>
   </div>
 
-  <button class="help-ai-fab" id="help-ai-fab" type="button" aria-label="Open Help AI">✦ Help Guide</button>
-  <aside class="assistant-panel" id="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title" hidden>
-    <div class="assistant-head">
-      <div>
-        <div class="auth-eyebrow">OFFLINE APP GUIDE</div>
-        <h2 id="assistant-title">PhishGuard Help</h2>
-      </div>
-      <button class="btn btn-icon btn-ghost" id="assistant-close" type="button" aria-label="Close Help AI">×</button>
-    </div>
-    <div class="assistant-messages" id="assistant-messages" aria-live="polite">
-      <div class="assistant-bubble assistant-bubble-ai"><b>Hi! I’m the PhishGuard Help Guide.</b><br>Ask me how to use the app, solve a login problem, or manage your accounts. I use the built-in app guide, so no API key is required.</div>
-    </div>
-    <div class="assistant-suggestions" id="assistant-suggestions">
-      <button type="button" data-assistant-question="How do I create another account and switch accounts?">Create or switch account</button>
-      <button type="button" data-assistant-question="Why can’t I log in to PhishGuard?">Login problem</button>
-      <button type="button" data-assistant-question="How do I safely check a suspicious link?">Check a suspicious link</button>
-    </div>
-    <form class="assistant-form" id="assistant-form">
-      <textarea id="assistant-input" maxlength="1200" rows="2" placeholder="Ask a question…" required></textarea>
-      <button class="btn btn-primary" id="assistant-send" type="submit">Ask AI <span aria-hidden="true">→</span></button>
-    </form>
-  </aside>
 </div>
+
+<!-- Shared by the sign-in screens and the authenticated workspace. This guide is
+     FAQ-based, app-scoped, and does not send questions to an external AI service. -->
+<button class="help-ai-fab" id="help-ai-fab" type="button" aria-label="Open PhishGuard Help Guide" hidden>✦ Help Guide</button>
+<aside class="assistant-panel" id="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title" hidden>
+  <div class="assistant-head">
+    <div>
+      <div class="auth-eyebrow">BUILT-IN GUIDE · PHISHGUARD ONLY</div>
+      <h2 id="assistant-title">PhishGuard Help</h2>
+    </div>
+    <button class="btn btn-icon btn-ghost" id="assistant-close" type="button" aria-label="Close Help Guide">×</button>
+  </div>
+  <div class="assistant-messages" id="assistant-messages" aria-live="polite">
+    <div class="assistant-bubble assistant-bubble-ai"><b>Hi! I’m the PhishGuard Help Guide.</b><br>I can help with PhishGuard login, account recovery, scans, and settings. I use a built-in app guide—not a cloud AI—and I can’t answer general questions.</div>
+  </div>
+  <div class="assistant-suggestions" id="assistant-suggestions">
+    <button type="button" data-assistant-question="How do I create a PhishGuard account?">Create an account</button>
+    <button type="button" data-assistant-question="Why can’t I log in to PhishGuard?">Login problem</button>
+    <button type="button" data-assistant-question="How do I reset my PhishGuard password?">Reset password</button>
+  </div>
+  <form class="assistant-form" id="assistant-form">
+    <textarea id="assistant-input" maxlength="1200" rows="2" placeholder="Ask about PhishGuard…" required></textarea>
+    <button class="btn btn-primary" id="assistant-send" type="submit">Ask Guide <span aria-hidden="true">→</span></button>
+  </form>
+</aside>
 
 <!-- account settings + receipt drawer + toasts -->
 <div class="account-scrim" id="account-scrim" hidden></div>

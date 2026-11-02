@@ -321,10 +321,17 @@ function setupLandingReveals() {
   requestAnimationFrame(() => targets.forEach((target) => observer.observe(target)));
 }
 
+function syncAssistantVisibility() {
+  const available = !$('#auth-screen').hidden || !$('#dashboard').hidden;
+  $('#help-ai-fab').hidden = !available;
+  if (!available) closeAssistant();
+}
+
 function showLanding() {
   $('#landing-page').hidden = false;
   $('#auth-screen').hidden = true;
   $('#dashboard').hidden = true;
+  syncAssistantVisibility();
   setupLandingReveals();
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
@@ -333,6 +340,7 @@ function showLogin(tab = 'login', username = '') {
   $('#landing-page').hidden = true;
   $('#auth-screen').hidden = false;
   $('#dashboard').hidden = true;
+  syncAssistantVisibility();
   if (location.pathname !== '/ui-trial') {
     const loginUrl = tab === 'register' ? '/login?mode=register' : '/login';
     if (location.pathname !== '/login' || location.search !== (tab === 'register' ? '?mode=register' : '')) {
@@ -368,6 +376,7 @@ function showForgotPassword(username = '') {
   $('#landing-page').hidden = true;
   $('#auth-screen').hidden = false;
   $('#dashboard').hidden = true;
+  syncAssistantVisibility();
   if (location.pathname !== '/login' && location.pathname !== '/ui-trial') history.replaceState(null, '', '/login');
   $('#auth-title').textContent = 'Reset your password';
   $('#auth-lede').textContent = 'Answer the recovery question you chose when creating your account.';
@@ -424,6 +433,7 @@ function enterDashboard(user) {
   $('#landing-page').hidden = true;
   $('#auth-screen').hidden = true;
   $('#dashboard').hidden = false;
+  syncAssistantVisibility();
   updateProfileUI(user);
   rememberAccount(user);
   setSettingsMessage('');

@@ -195,9 +195,10 @@ passwords and session tokens are never stored there.
 The visual system uses warm evergreen, sage, and brass accents instead of a blue
 palette. Dark and light themes remain available from the theme toggle.
 
-Gmail is format-checked and stored as an account detail; this local version does
-not send an email verification code. Existing accounts are upgraded automatically
-with no Gmail address, and can add one later from Profile → Settings.
+Gmail is optional during registration. An account can add an address later from
+Settings → Sign-in & security and verify it with a one-time code when email delivery
+is configured. A verified address can be used for password recovery and opted-in
+notifications. Existing accounts are upgraded without requiring an email address.
 
 Profile settings also support customizable display name and initials, notification
 preferences, last password-change information, recent login history with browser,
@@ -207,11 +208,13 @@ existing databases.
 
 ### Help guide
 
-The dashboard includes a small offline Help Guide. It answers predefined questions
-about account creation, login, switching accounts, changing passwords or mobile
-numbers, settings, link analysis, email analysis, saved data, and common startup problems. It uses no AI or web-search API,
-so no API key is needed. The rest of PhishGuard can still use an internet connection
-for full URL checks when requested.
+The sign-in screens and workspace include a built-in, app-scoped Help Guide. It selects
+answers from a PhishGuard FAQ about account creation and recovery, settings, link and
+email checks, saved data, and optional reputation signals. It is not a
+cloud-hosted generative LLM: questions are not sent to an AI or web-search provider,
+and no AI API key or paid service is required. Pre-login questions are not saved to
+account help history. Out-of-scope questions receive a refusal instead of a general
+answer. The rest of PhishGuard can still use the internet for user-requested checks.
 
 ### 1. Local (2 minutes)
 ```bash
