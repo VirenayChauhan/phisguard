@@ -1,0 +1,119 @@
+/* PhishGuard motion layer: restrained, CSS-only, and respectful of reduced-motion. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .view:not([hidden]) {
+    animation: pg-view-enter 240ms cubic-bezier(.2, .7, .2, 1) both;
+  }
+
+  .dashboard-welcome,
+  .workspace-view-hero,
+  .workspace-tool-hero {
+    animation: pg-hero-enter 340ms cubic-bezier(.2, .7, .2, 1) both;
+  }
+
+  #view-overview > .kpis { animation: pg-hero-enter 340ms 45ms cubic-bezier(.2, .7, .2, 1) both; }
+  #view-overview > .overview-status-card { animation: pg-hero-enter 340ms 85ms cubic-bezier(.2, .7, .2, 1) both; }
+  #view-overview > .overview-panels { animation: pg-hero-enter 340ms 125ms cubic-bezier(.2, .7, .2, 1) both; }
+  #view-saved > .saved-folder-bar { animation: pg-hero-enter 320ms 60ms cubic-bezier(.2, .7, .2, 1) both; }
+  #view-saved > .card { animation: pg-hero-enter 320ms 100ms cubic-bezier(.2, .7, .2, 1) both; }
+
+  .tool-art-orbit { animation: pg-orbit 34s linear infinite; transform-origin: center; }
+  .library-orbit-one { animation: pg-library-orbit-one 42s linear infinite; transform-origin: center; }
+  .library-orbit-two { animation: pg-library-orbit-two 52s linear infinite; transform-origin: center; }
+  .tool-art-shield { animation: pg-float 5.4s ease-in-out infinite; }
+  .email-art-envelope { animation: pg-envelope-float 5.8s ease-in-out infinite; }
+  .library-sheet-front { animation: pg-sheet-float 6.2s ease-in-out infinite; }
+
+  .verdict { animation: pg-verdict-enter 300ms cubic-bezier(.2, .7, .2, 1) both; }
+  .settings-home-option { animation: pg-option-enter 240ms cubic-bezier(.2, .7, .2, 1) both; }
+  .settings-home-option:nth-child(2) { animation-delay: 30ms; }
+  .settings-home-option:nth-child(3) { animation-delay: 55ms; }
+  .settings-home-option:nth-child(4) { animation-delay: 80ms; }
+  .settings-home-option:nth-child(5) { animation-delay: 105ms; }
+  .settings-home-option:nth-child(6) { animation-delay: 130ms; }
+
+  .account-scrim:not([hidden]) { animation: pg-scrim-enter 180ms ease-out both; }
+  .account-panel:not([hidden]) { animation: pg-panel-enter 220ms cubic-bezier(.2, .7, .2, 1) both; }
+
+  .nav-item:not(:disabled),
+  .sidebar-guide button,
+  .btn:not(:disabled) {
+    transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  }
+  .nav-item:not(:disabled):active,
+  .sidebar-guide button:active,
+  .btn:not(:disabled):active,
+  .settings-home-option:active {
+    transform: scale(.985);
+  }
+}
+
+@keyframes pg-view-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pg-hero-enter {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pg-verdict-enter {
+  from { opacity: 0; transform: translateY(7px) scale(.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pg-option-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pg-scrim-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pg-panel-enter {
+  from { opacity: .7; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pg-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pg-library-orbit-one {
+  from { transform: rotate(-28deg); }
+  to { transform: rotate(332deg); }
+}
+
+@keyframes pg-library-orbit-two {
+  from { transform: rotate(47deg); }
+  to { transform: rotate(407deg); }
+}
+
+@keyframes pg-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes pg-envelope-float {
+  0%, 100% { transform: rotate(-4deg) translateY(0); }
+  50% { transform: rotate(-4deg) translateY(-3px); }
+}
+
+@keyframes pg-sheet-float {
+  0%, 100% { transform: translate(-2px, 7px) rotate(-5deg); }
+  50% { transform: translate(-2px, 4px) rotate(-5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
