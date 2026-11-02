@@ -215,6 +215,11 @@
         <input id="register-email" type="email" autocomplete="email"
                pattern="[^@\s]+@(gmail\.com|googlemail\.com)" placeholder="name@gmail.com">
         <div class="auth-help">You can add it later from Privacy &amp; authentication.</div>
+        <label class="settings-check" for="register-monthly-summary">
+          <input id="register-monthly-summary" type="checkbox">
+          Email me a monthly summary of flagged sites
+        </label>
+        <div class="auth-help">Optional and off by default. Includes flagged domains from your scans only—not full URLs or email contents. Verify your Gmail address to receive it; change this anytime in Settings.</div>
         <button class="btn btn-primary auth-submit register-next" type="button">Next <span aria-hidden="true">→</span></button>
       </section>
 
@@ -724,7 +729,7 @@
       </div>
     <div class="settings-card" data-security-action-card="email" hidden>
       <div class="settings-card-title" id="settings-email-title">Add Gmail address</div>
-      <div class="settings-help">Verify an address you control to use email password recovery and opt-in scan or campaign notices. PhishGuard uses server-side Gmail SMTP; no custom domain is needed.</div>
+      <div class="settings-help">Verify your Gmail address to receive password-reset codes and, if you opt in, a monthly summary of flagged domains from your own scans. Mail is sent through the configured Mailjet account; scan summaries never contain full URLs or submitted email contents.</div>
       <div class="settings-row"><span>Email status</span><b id="settings-email-verified">Not verified</b></div>
       <form class="settings-form" id="settings-email-form">
         <label for="settings-email-input">Gmail address</label>
@@ -809,10 +814,10 @@
     </div>
     <div class="settings-card">
       <div class="settings-card-title">Notification preferences</div>
-      <div class="settings-help">Email alerts stay off until you opt in, verify a Gmail address, and the operator configures Gmail SMTP. When enabled, PhishGuard sends scan summaries (up to 5 per day) and a weekly aggregate of new campaign clusters; the digest does not expose other users’ report details. Security-alert and product-tip toggles are saved preferences but do not currently trigger email.</div>
+      <div class="settings-help">Monthly email summaries are optional. If enabled, PhishGuard stores only flagged domains and basic scan details for your account, then emails a month-end summary to your verified Gmail address when there are flagged results. It never includes full URLs or submitted email contents. Turning this off deletes the stored summary records. Password-reset codes are separate security emails.</div>
       <form class="settings-form" id="settings-preferences-form">
         <label class="settings-check"><input id="notify-security" type="checkbox"> Security and login alerts</label>
-        <label class="settings-check"><input id="notify-email" type="checkbox"> Email notifications</label>
+        <label class="settings-check"><input id="notify-email" type="checkbox"> Monthly flagged-site summaries
         <label class="settings-check"><input id="notify-tips" type="checkbox"> Product tips and safety guidance</label>
         <button class="btn btn-ghost" id="settings-preferences-submit" type="submit">Save preferences</button>
       </form>

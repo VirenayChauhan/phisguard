@@ -3,7 +3,7 @@
 A phishing **link and email** checker that shows its work, protects the whole org from
 one person's report, and covers the India-specific scams global tools miss.
 
-It is a working application, not a mockup: **40 passing tests**, live RDAP/DNS/TLS
+It is a working application, not a mockup: **79 passing tests**, live RDAP/DNS/TLS
 lookups, real DKIM verification, real BEC and bank-fraud detection.
 
 ```bash
@@ -97,7 +97,7 @@ engine/
   lexical.py            no-network URL analysis (the fast half of every verdict)
   net.py                SSRF-guarded fetch, RDAP domain age, DNS, TLS, HTML parsing
   intel.py              Safe Browsing v5, VirusTotal, URLhaus, PhishTank (optional keys)
-  mailer.py             optional low-volume Gmail SMTP delivery for OTPs and notices
+  mailer.py             optional low-volume Mailjet API delivery for OTPs and summaries
   push.py               optional VAPID Web Push delivery
   urlscan.py            orchestration: lexical → infrastructure → consented reputation → preview
   emailscan.py          SPF/DKIM/DMARC, Received-chain, BEC, India rules, attachments
@@ -253,26 +253,31 @@ PHISHTANK_APP_KEY=
 
 Missing keys are normal: the rest of PhishGuard continues to work without them.
 
-### 3. Optional email and background push
+### 3. Optional Mailjet email and background push
 
-These connections are off until their server-side variables are set. Gmail SMTP
-works without a custom domain: use a Gmail sender with 2-Step Verification and a
-Google App Password (never the account's normal password). In the app, users must
-verify their own Gmail address and explicitly opt in before scan summaries or the
-weekly aggregate cluster digest is delivered. Scan-summary delivery is capped at five emails per account per day and 100
-notifications total per day; OTP code requests have a separate 100-per-day cap plus
-per-address/IP throttling. Gmail's own limits and
-terms still apply; this is intended for non-commercial, low-volume use.
+Mailjet delivery stays off until the server-side API key, secret key, and verified
+sender address are configured. Email is limited to password-reset / address-verification
+codes and an opt-in monthly summary of an account's flagged domains. Immediate scan
+emails, weekly campaign emails, marketing, full URLs, and submitted email contents are
+not sent. Monthly scan storage is opt-in, stores only the account, month, domain, scan
+type, verdict, score, and count, and is deleted when the user turns the setting off or
+deletes the account. Each domain is aggregated to one row per account per month.
 
 ```text
-GMAIL_SMTP_USERNAME=your-sender@gmail.com
-GMAIL_SMTP_APP_PASSWORD=<Google App Password>
-GMAIL_FROM_ADDRESS=your-sender@gmail.com
-GMAIL_SMTP_HOST=smtp.gmail.com
-GMAIL_SMTP_PORT=587
-CRON_SECRET=<long random value for the weekly Vercel cron>
-PUBLIC_APP_URL=https://phisguard-five.vercel.app/
+MAILJET_API_KEY=<Mailjet API key>
+MAILJET_SECRET_KEY=<Mailjet secret key>
+MAILJET_FROM_EMAIL=<sender address verified in Mailjet>
+MAILJET_FROM_NAME=PhishGuard
+CRON_SECRET=<long random value for scheduled Vercel jobs>
 ```
+
+Keep the API and secret keys server-side only; never put them in browser code, a
+`.env` committed to Git, or a message. A Gmail sender can be verified in Mailjet,
+though sender-domain alignment may improve deliverability. Users must verify their
+Gmail address before receiving password-reset codes or monthly summaries. The monthly
+summary runs on the first day of each month and reports the previous month's flagged
+domains; it is skipped when there are no flagged domains. Code requests retain their
+existing per-address/IP and global rate limits.
 
 For background browser notifications, generate one VAPID key pair and configure
 `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` (for example,
@@ -296,8 +301,9 @@ PY
 
 Treat the private key output as a secret and set it only server-side. Users subscribe
 per browser; disabling browser notifications removes that device's subscription.
-No paid push vendor is required. The weekly cron runs once a week; on Vercel Hobby,
-keep scheduled jobs within the plan's daily schedule limit.
+No paid push vendor is required. Vercel Cron sends weekly browser-push campaign notices
+and runs the opted-in flagged-domain email summary once a month; both jobs share the
+server-side `CRON_SECRET`.
 
 
 ### 4. Deploy with Docker (the recommended way to keep a stable link)

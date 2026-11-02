@@ -8,7 +8,6 @@ import hmac
 import json
 import os
 import traceback
-import uuid
 from datetime import datetime, timedelta, timezone
 
 from flask import Flask, jsonify, make_response, render_template, request, send_from_directory
@@ -44,6 +43,7 @@ PUBLIC_API_PATHS = {
     "/api/auth/forgot-password/email/reset",
     "/api/auth/logout",
     "/api/cron/cluster-digest",
+    "/api/cron/monthly-scan-summary",
 }
 
 
@@ -118,47 +118,51 @@ def _session_response(user: dict, token: str):
     return response
 
 
-def _send_scan_email(username: str, result: dict, channel: str) -> None:
-    """Best-effort push and opted-in email summary; never breaks a scan."""
+def _record_flagged_scan(username: str, result: dict, channel: str) -> None:
+    """Store only flagged domains for accounts opted in to monthly summaries."""
     account = store.get_auth_account(username)
-    if not account:
+    if not account or not account["notify_monthly_summary"]:
+        return
+    scan_time = str(result.get("generated_at") or datetime.now(timezone.utc).isoformat())
+    score = int(result.get("score") or 0)
+    if channel == "url":
+        if result.get("label") not in {"malicious", "suspicious"}:
+            return
+        domain = (result.get("facts") or {}).get("registrable_domain") or ""
+        if domain:
+            store.record_flagged_scan(
+                account["user_id"], scan_time, "url", domain,
+                str(result.get("label")), score,
+            )
+        return
+
+    # For email scans, retain only domains of links that crossed the suspicious
+    # threshold; never store the message, subject, sender, full URL, or attachment.
+    for link in result.get("links") or []:
+        if int(link.get("score") or 0) < 30:
+            continue
+        domain = link.get("registrable_domain") or ""
+        if domain:
+            store.record_flagged_scan(
+                account["user_id"], scan_time, "email", domain,
+                "malicious" if int(link.get("score") or 0) >= 65 else "suspicious",
+                int(link.get("score") or 0),
+            )
+
+
+def _send_scan_push(username: str, result: dict, channel: str) -> None:
+    """Best-effort browser push; email is reserved for monthly summaries."""
+    account = store.get_auth_account(username)
+    if not account or not account["notify_push_scan"]:
         return
     label = str(result.get("label") or "unknown").replace("_", " ")[:40]
-    score = result.get("score", "not available")
-    facts = result.get("facts") or {}
-    target = (facts.get("registrable_domain") or
-              (result.get("email") or {}).get("from_domain") or "not available")
-    if account["notify_push_scan"]:
-        try:
-            push.send_to_user(
-                account["user_id"], "PhishGuard scan complete",
-                f"{channel.title()} scan: {label}. Review the evidence in PhishGuard.", "/",
-            )
-        except Exception as exc:
-            app.logger.info("Optional browser push was not delivered (%s)", type(exc).__name__)
-    if (not mailer.configured() or not account["email"]
-            or not account["email_verified_at"] or not account["notify_email_delivery"]):
-        return
-    now = datetime.now(timezone.utc)
-    since = (now - timedelta(days=1)).isoformat(timespec="seconds")
-    if (store.count_notification_deliveries_since(since, "scan:") >= 100
-            or store.count_notification_deliveries_since(since, f"scan:{account['user_id']}:") >= 5):
-        return
-    event_key = f"scan:{account['user_id']}:{uuid.uuid4().hex}"
-    body = (
-        "PhishGuard finished a scan you requested.\n\n"
-        f"Type: {'link' if channel == 'url' else 'email'}\n"
-        f"Result: {label}\n"
-        f"Score: {score}\n"
-        f"Domain: {str(target)[:253]}\n\n"
-        "This is a summary only; open your PhishGuard workspace to review evidence. "
-        "Provider matches are additional signals and no match is not proof of safety.\n"
-    )
     try:
-        mailer.send_email(account["email"], f"PhishGuard {channel} scan complete: {label}", body)
-        store.create_notification_delivery(account["user_id"], event_key, now.isoformat(timespec="seconds"))
+        push.send_to_user(
+            account["user_id"], "PhishGuard scan complete",
+            f"{channel.title()} scan: {label}. Review the evidence in PhishGuard.", "/",
+        )
     except Exception as exc:
-        app.logger.info("Optional scan email was not delivered (%s)", type(exc).__name__)
+        app.logger.info("Optional browser push was not delivered (%s)", type(exc).__name__)
 
 
 @app.post("/api/auth/register")
@@ -169,7 +173,8 @@ def register():
             data.get("username", ""), data.get("password", ""),
             data.get("mobile", ""), data.get("email", ""),
             data.get("recovery_question", ""), data.get("recovery_answer", ""),
-            request.remote_addr or "unknown", request.headers.get("User-Agent", "")
+            request.remote_addr or "unknown", request.headers.get("User-Agent", ""),
+            data.get("monthly_summary", False),
         )
         return _session_response(user, token)
     except auth.AuthError as exc:
@@ -532,10 +537,11 @@ def check_url():
             )
         result["cluster_hint"] = (result.get("facts") or {}).get(
             "registrable_domain") or "unknown"
-        if mode != "quick":
-            scan_user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
-            if scan_user:
-                _send_scan_email(scan_user["username"], result, "url")
+        scan_user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+        if scan_user:
+            _record_flagged_scan(scan_user["username"], result, "url")
+            if mode != "quick":
+                _send_scan_push(scan_user["username"], result, "url")
         return jsonify(result)
     except Exception as exc:
         traceback.print_exc()
@@ -561,7 +567,8 @@ def check_email():
         result = emailscan.scan_eml(raw)
         scan_user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
         if scan_user:
-            _send_scan_email(scan_user["username"], result, "email")
+            _record_flagged_scan(scan_user["username"], result, "email")
+            _send_scan_push(scan_user["username"], result, "email")
         return jsonify(result)
     except Exception as exc:
         traceback.print_exc()
@@ -570,50 +577,23 @@ def check_email():
 
 @app.get("/api/cron/cluster-digest")
 def cluster_digest_cron():
-    """Send a weekly, privacy-minimized digest of new campaign clusters."""
+    """Send weekly campaign-cluster notices through opted-in browser push only."""
     secret = os.environ.get("CRON_SECRET", "").strip()
     if not secret:
         return jsonify({"error": "CRON_SECRET is not configured."}), 503
-    supplied = request.headers.get("Authorization", "")
-    expected = f"Bearer {secret}"
-    if not hmac.compare_digest(supplied, expected):
+    if not hmac.compare_digest(request.headers.get("Authorization", ""), f"Bearer {secret}"):
         return jsonify({"error": "unauthorized"}), 401
     now = datetime.now(timezone.utc)
     since = (now - timedelta(days=7)).isoformat(timespec="seconds")
     cluster_count = store.count_report_clusters_since(since)
     if not cluster_count:
-        return jsonify({"ok": True, "sent": 0, "push_sent": 0, "new_clusters": 0})
+        return jsonify({"ok": True, "push_sent": 0, "new_clusters": 0})
     iso_year, iso_week, _ = now.isocalendar()
-    event_key = f"cluster-digest:{iso_year}-W{iso_week:02d}"
-    app_url = os.environ.get("PUBLIC_APP_URL", "https://phisguard-five.vercel.app/").strip()
-    sent = 0
+    event_key = f"cluster-push-digest:{iso_year}-W{iso_week:02d}"
     push_sent = 0
-    email_recipients = store.list_email_notification_accounts() if mailer.configured() else []
-    for recipient in email_recipients:
-        if store.has_notification_delivery(recipient["user_id"], event_key):
-            continue
-        if store.count_notification_deliveries_since(since) >= 100:
-            break
-        body = (
-            f"There were {cluster_count} reported campaign cluster(s) in PhishGuard "
-            "during the last seven days.\n\n"
-            "This is an aggregate count only; it does not include other users’ "
-            "submitted email content or report details. Community reports are leads, "
-            "not proof. Open PhishGuard to review your workspace.\n\n"
-            f"{app_url}\n"
-        )
-        try:
-            mailer.send_email(recipient["email"], "PhishGuard weekly campaign digest", body)
-            if store.create_notification_delivery(
-                recipient["user_id"], event_key, now.isoformat(timespec="seconds")
-            ):
-                sent += 1
-        except Exception as exc:
-            app.logger.info("Optional weekly digest was not delivered (%s)", type(exc).__name__)
-    push_event_key = f"cluster-push-digest:{iso_year}-W{iso_week:02d}"
     for subscribed in store.list_push_user_ids():
         user_id = subscribed["user_id"]
-        if store.has_notification_delivery(user_id, push_event_key):
+        if store.has_notification_delivery(user_id, event_key):
             continue
         if store.count_notification_deliveries_since(since) >= 100:
             break
@@ -623,13 +603,76 @@ def cluster_digest_cron():
                 f"{cluster_count} campaign cluster(s) were reported this week. Review in PhishGuard.", "/",
             )
             if delivered and store.create_notification_delivery(
-                user_id, push_event_key, now.isoformat(timespec="seconds")
+                user_id, event_key, now.isoformat(timespec="seconds")
             ):
                 push_sent += delivered
         except Exception as exc:
             app.logger.info("Optional push digest was not delivered (%s)", type(exc).__name__)
-    return jsonify({"ok": True, "sent": sent, "push_sent": push_sent,
+    return jsonify({"ok": True, "push_sent": push_sent,
                     "new_clusters": cluster_count})
+
+
+@app.get("/api/cron/monthly-scan-summary")
+def monthly_scan_summary_cron():
+    """Email opted-in users a domain-only summary of flagged scans from last month."""
+    secret = os.environ.get("CRON_SECRET", "").strip()
+    if not secret:
+        return jsonify({"error": "CRON_SECRET is not configured."}), 503
+    if not hmac.compare_digest(request.headers.get("Authorization", ""), f"Bearer {secret}"):
+        return jsonify({"error": "unauthorized"}), 401
+    if not mailer.configured():
+        return jsonify({"ok": True, "sent": 0, "skipped": "Mailjet is not configured."})
+
+    now = datetime.now(timezone.utc)
+    current_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    previous_month = current_month - timedelta(days=1)
+    month_key = previous_month.strftime("%Y-%m")
+    month_label = previous_month.strftime("%B %Y")
+    event_key = f"monthly-flagged-scans:{month_key}"
+    daily_since = (now - timedelta(days=1)).isoformat(timespec="seconds")
+    sent = 0
+    skipped_empty = 0
+    recipients = store.list_email_notification_accounts()
+    for recipient in recipients:
+        if store.has_notification_delivery(recipient["user_id"], event_key):
+            continue
+        rows = store.list_monthly_flagged_scans(recipient["user_id"], month_key)
+        if not rows:
+            skipped_empty += 1
+            continue
+        if store.count_notification_deliveries_since(daily_since) >= 100:
+            break
+        lines = [
+            f"PhishGuard flagged-site summary for {month_label}",
+            "",
+            "These are domains from your own scans that PhishGuard marked suspicious or malicious:",
+            "",
+        ]
+        for row in rows:
+            checked = str(row["last_scanned_at"] or "")[:10]
+            lines.append(
+                f"{row['domain']} — {row['verdict']} (score {row['score']}/100; "
+                f"{row['scan_type']} scan; {row['scan_count']} check(s); last seen {checked})"
+            )
+        lines.extend([
+            "",
+            "This message contains domains only—not full URLs, message contents, or attachments.",
+            "A flag is a warning signal, not proof; no match is not proof of safety.",
+            "You can turn off monthly summaries in PhishGuard Settings → Notifications.",
+        ])
+        try:
+            mailer.send_email(
+                recipient["email"], f"Your PhishGuard flagged-site summary — {month_label}",
+                "\n".join(lines),
+            )
+            if store.create_notification_delivery(
+                recipient["user_id"], event_key, now.isoformat(timespec="seconds")
+            ):
+                sent += 1
+        except Exception as exc:
+            app.logger.info("Monthly flagged-site email was not delivered (%s)", type(exc).__name__)
+    return jsonify({"ok": True, "sent": sent, "skipped_empty": skipped_empty,
+                    "month": month_key})
 
 
 @app.post("/api/report")

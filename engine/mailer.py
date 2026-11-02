@@ -1,14 +1,15 @@
-"""Low-volume Gmail SMTP delivery for account recovery and opt-in notices.
+"""Low-volume Mailjet delivery for account security and opted-in summaries.
 
-This only activates when server-side Gmail credentials are configured. It never
-logs message bodies, recipient addresses, usernames, or credential values.
+Secrets are read only from server-side environment variables and are never
+logged. Mailjet delivery uses its HTTPS Send API (no SMTP egress dependency).
 """
 from __future__ import annotations
 
 import os
-import smtplib
-import ssl
-from email.message import EmailMessage
+
+import requests
+
+MAILJET_SEND_URL = "https://api.mailjet.com/v3.1/send"
 
 
 class MailDeliveryError(RuntimeError):
@@ -16,37 +17,45 @@ class MailDeliveryError(RuntimeError):
 
 
 def _settings() -> dict[str, str]:
-    username = os.environ.get("GMAIL_SMTP_USERNAME", "").strip()
-    password = os.environ.get("GMAIL_SMTP_APP_PASSWORD", "").replace(" ", "").strip()
     return {
-        "host": os.environ.get("GMAIL_SMTP_HOST", "smtp.gmail.com").strip(),
-        "port": os.environ.get("GMAIL_SMTP_PORT", "587").strip(),
-        "username": username,
-        "password": password,
-        "sender": os.environ.get("GMAIL_FROM_ADDRESS", username).strip(),
+        "api_key": os.environ.get("MAILJET_API_KEY", "").strip(),
+        "secret_key": os.environ.get("MAILJET_SECRET_KEY", "").strip(),
+        "sender": os.environ.get("MAILJET_FROM_EMAIL", "").strip(),
+        "sender_name": os.environ.get("MAILJET_FROM_NAME", "PhishGuard").strip() or "PhishGuard",
     }
 
 
 def configured() -> bool:
     settings = _settings()
-    return bool(settings["username"] and settings["password"] and settings["sender"])
+    return bool(settings["api_key"] and settings["secret_key"] and settings["sender"])
 
 
 def send_email(recipient: str, subject: str, text: str) -> None:
     settings = _settings()
     if not configured():
-        raise MailDeliveryError("Gmail SMTP is not configured.")
-    message = EmailMessage()
-    message["From"] = settings["sender"]
-    message["To"] = recipient
-    message["Subject"] = subject[:180]
-    message.set_content(text[:12000])
+        raise MailDeliveryError("Mailjet is not configured.")
+    payload = {
+        "Messages": [{
+            "From": {"Email": settings["sender"], "Name": settings["sender_name"]},
+            "To": [{"Email": recipient}],
+            "Subject": subject[:180],
+            "TextPart": text[:12000],
+        }]
+    }
     try:
-        with smtplib.SMTP(settings["host"], int(settings["port"]), timeout=8) as smtp:
-            smtp.ehlo()
-            smtp.starttls(context=ssl.create_default_context())
-            smtp.ehlo()
-            smtp.login(settings["username"], settings["password"])
-            smtp.send_message(message)
+        response = requests.post(
+            MAILJET_SEND_URL,
+            auth=(settings["api_key"], settings["secret_key"]),
+            json=payload,
+            timeout=8,
+        )
+        if response.status_code >= 400:
+            raise MailDeliveryError(f"Mailjet delivery failed (HTTP {response.status_code}).")
+        result = response.json()
+        messages = result.get("Messages", []) if isinstance(result, dict) else []
+        if not messages or messages[0].get("Status") != "success":
+            raise MailDeliveryError("Mailjet did not accept the message.")
+    except MailDeliveryError:
+        raise
     except Exception as exc:
-        raise MailDeliveryError(f"Gmail SMTP delivery failed ({type(exc).__name__}).") from exc
+        raise MailDeliveryError(f"Mailjet delivery failed ({type(exc).__name__}).") from exc

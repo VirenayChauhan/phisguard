@@ -190,7 +190,7 @@ def _public_user(account) -> dict:
         "has_recovery_question": bool(_value(account, "recovery_answer_hash")),
         "notifications": {
             "security": bool(_value(account, "notify_security", 1)),
-            "email": bool(_value(account, "notify_email_delivery", 0)),
+            "email": bool(_value(account, "notify_monthly_summary", 0)),
             "push_scan": bool(_value(account, "notify_push_scan", 1)),
             "tips": bool(_value(account, "notify_tips", 1)),
         },
@@ -213,11 +213,14 @@ def _create_session(account, request_ip: str = "", user_agent: str = "") -> tupl
 def register_account(username: str, password: str, mobile: str,
                      email: str = "", recovery_question: str = "",
                      recovery_answer: str = "", request_ip: str = "",
-                     user_agent: str = "") -> tuple[dict, str]:
+                     user_agent: str = "", monthly_summary: bool = False) -> tuple[dict, str]:
     username = normalize_username(username)
     password = validate_password(password)
     mobile = normalize_mobile(mobile)
     email = normalize_gmail(email, required=False)
+    monthly_summary = monthly_summary is True
+    if monthly_summary and not email:
+        raise AuthError("Add a Gmail address to receive monthly flagged-site summaries.", 400)
     recovery_question = normalize_recovery_question(recovery_question)
     recovery_answer = normalize_recovery_answer(recovery_answer)
     if store.get_auth_account(username):
@@ -239,6 +242,7 @@ def register_account(username: str, password: str, mobile: str,
         "recovery_answer_hash": generate_password_hash(recovery_answer),
         "notify_security": 1,
         "notify_email": 1,
+        "notify_monthly_summary": int(monthly_summary),
         "notify_tips": 1,
         "created_at": created_at,
     }
@@ -248,6 +252,7 @@ def register_account(username: str, password: str, mobile: str,
             account["mobile"], created_at, account["email"],
             account["display_name"], account["avatar_initials"], created_at,
             account["recovery_question"], account["recovery_answer_hash"],
+            bool(account["notify_monthly_summary"]),
         )
     except sqlite3.IntegrityError as exc:
         raise AuthError("That username is already registered. Please log in.", 409) from exc
@@ -480,9 +485,12 @@ def update_preferences(username: str, preferences: dict) -> dict:
     account = store.get_auth_account(username)
     if not account:
         raise AuthError("Account not found.", 404)
+    requested_email = preferences.get("email", bool(_value(account, "notify_monthly_summary", 0)))
+    if requested_email is True and not _value(account, "email"):
+        raise AuthError("Add a Gmail address before enabling monthly summaries.", 400)
     values = {
         "security": bool(preferences.get("security", _value(account, "notify_security", 1))),
-        "email": bool(preferences.get("email", _value(account, "notify_email_delivery", 0))),
+        "email": requested_email is True,
         "tips": bool(preferences.get("tips", _value(account, "notify_tips", 1))),
         "push_scan": bool(preferences.get("push_scan", _value(account, "notify_push_scan", 1))),
     }

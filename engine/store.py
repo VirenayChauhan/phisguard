@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import threading
 import uuid
@@ -86,6 +87,13 @@ CREATE INDEX IF NOT EXISTS idx_auth_otp_email_created
 CREATE TABLE IF NOT EXISTS notification_deliveries(
   user_id TEXT NOT NULL, event_key TEXT NOT NULL, created_at TEXT NOT NULL,
   PRIMARY KEY(user_id, event_key));
+CREATE TABLE IF NOT EXISTS account_flagged_scans(
+  user_id TEXT NOT NULL, scan_month TEXT NOT NULL, domain TEXT NOT NULL,
+  scan_type TEXT NOT NULL, verdict TEXT NOT NULL, score INTEGER NOT NULL,
+  last_scanned_at TEXT NOT NULL, scan_count INTEGER NOT NULL DEFAULT 1,
+  PRIMARY KEY(user_id, scan_month, domain, scan_type));
+CREATE INDEX IF NOT EXISTS idx_account_flagged_scans_month
+  ON account_flagged_scans(scan_month, user_id);
 CREATE TABLE IF NOT EXISTS push_subscriptions(
   endpoint TEXT PRIMARY KEY, user_id TEXT NOT NULL, subscription_json TEXT NOT NULL,
   created_at TEXT NOT NULL, last_used_at TEXT);
@@ -103,6 +111,7 @@ CREATE TABLE IF NOT EXISTS auth_accounts(
   notify_security INTEGER NOT NULL DEFAULT 1,
   notify_email INTEGER NOT NULL DEFAULT 1,
   notify_email_delivery INTEGER NOT NULL DEFAULT 0,
+  notify_monthly_summary INTEGER NOT NULL DEFAULT 0,
   notify_push_scan INTEGER NOT NULL DEFAULT 1,
   notify_tips INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL, last_login_at TEXT);
@@ -167,6 +176,7 @@ def init():
             ("auth_accounts", "notify_security INTEGER NOT NULL DEFAULT 1"),
             ("auth_accounts", "notify_email INTEGER NOT NULL DEFAULT 1"),
             ("auth_accounts", "notify_email_delivery INTEGER NOT NULL DEFAULT 0"),
+            ("auth_accounts", "notify_monthly_summary INTEGER NOT NULL DEFAULT 0"),
             ("auth_accounts", "notify_push_scan INTEGER NOT NULL DEFAULT 1"),
             ("auth_accounts", "notify_tips INTEGER NOT NULL DEFAULT 1"),
             ("auth_login_sessions", "ip_address TEXT"),
@@ -309,17 +319,18 @@ def create_auth_account(user_id: str, username: str, password_hash: str,
                         avatar_initials: str | None = None,
                         password_changed_at: str | None = None,
                         recovery_question: str | None = None,
-                        recovery_answer_hash: str | None = None) -> None:
+                        recovery_answer_hash: str | None = None,
+                        notify_monthly_summary: bool = False) -> None:
     with _LOCK, _conn() as c:
         c.execute(
             "INSERT INTO auth_accounts "
             "(user_id,username,password_hash,mobile,email,display_name,avatar_initials,"
-            "password_changed_at,recovery_question,recovery_answer_hash,created_at) "
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            "password_changed_at,recovery_question,recovery_answer_hash,created_at,"
+            "notify_monthly_summary) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
             (user_id, username, password_hash, mobile, email or None,
              display_name or None, avatar_initials or None,
              password_changed_at or created_at, recovery_question or None,
-             recovery_answer_hash or None, created_at),
+             recovery_answer_hash or None, created_at, int(bool(notify_monthly_summary))),
         )
 
 
@@ -391,8 +402,65 @@ def list_email_notification_accounts():
         return c.execute(
             "SELECT user_id, username, email FROM auth_accounts "
             "WHERE email IS NOT NULL AND email<>'' AND email_verified_at IS NOT NULL "
-            "AND notify_email_delivery=1 ORDER BY created_at"
+            "AND notify_monthly_summary=1 ORDER BY created_at"
         ).fetchall()
+
+
+def record_flagged_scan(user_id: str, scanned_at: str, scan_type: str,
+                        domain: str, verdict: str, score: int) -> bool:
+    """Upsert a minimal opted-in flagged-domain record, aggregated by month."""
+    domain = (domain or "").strip().lower().rstrip(".")
+    verdict = (verdict or "").strip().lower()
+    scan_type = (scan_type or "").strip().lower()
+    try:
+        score = max(0, min(100, int(score)))
+        scan_month = scanned_at[:7]
+        datetime.strptime(scan_month, "%Y-%m")
+    except (TypeError, ValueError):
+        return False
+    domain_pattern = (r"(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)"
+                      r"(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*")
+    if (not user_id or not re.fullmatch(domain_pattern, domain) or len(domain) > 253
+            or scan_type not in {"url", "email"}
+            or verdict not in {"malicious", "suspicious"}):
+        return False
+    with _LOCK, _conn() as c:
+        account = c.execute(
+            "SELECT notify_monthly_summary FROM auth_accounts WHERE user_id=?",
+            (user_id,),
+        ).fetchone()
+        if not account or not account["notify_monthly_summary"]:
+            return False
+        c.execute(
+            "INSERT INTO account_flagged_scans "
+            "(user_id,scan_month,domain,scan_type,verdict,score,last_scanned_at,scan_count) "
+            "VALUES(?,?,?,?,?,?,?,1) ON CONFLICT(user_id,scan_month,domain,scan_type) "
+            "DO UPDATE SET "
+            "verdict=CASE WHEN excluded.score>=account_flagged_scans.score "
+            "THEN excluded.verdict ELSE account_flagged_scans.verdict END, "
+            "score=CASE WHEN excluded.score>account_flagged_scans.score "
+            "THEN excluded.score ELSE account_flagged_scans.score END, "
+            "last_scanned_at=CASE WHEN excluded.last_scanned_at>account_flagged_scans.last_scanned_at "
+            "THEN excluded.last_scanned_at ELSE account_flagged_scans.last_scanned_at END, "
+            "scan_count=account_flagged_scans.scan_count+1",
+            (user_id, scan_month, domain, scan_type, verdict, score, scanned_at),
+        )
+    return True
+
+
+def list_monthly_flagged_scans(user_id: str, scan_month: str):
+    with _LOCK, _conn() as c:
+        return c.execute(
+            "SELECT domain, scan_type, verdict, score, last_scanned_at, scan_count "
+            "FROM account_flagged_scans WHERE user_id=? AND scan_month=? "
+            "ORDER BY score DESC, domain, scan_type",
+            (user_id, scan_month),
+        ).fetchall()
+
+
+def delete_user_flagged_scans(user_id: str) -> None:
+    with _LOCK, _conn() as c:
+        c.execute("DELETE FROM account_flagged_scans WHERE user_id=?", (user_id,))
 
 
 def save_push_subscription(endpoint: str, user_id: str, subscription_json: str,
@@ -487,10 +555,12 @@ def update_auth_preferences(user_id: str, notify_security: bool,
     with _LOCK, _conn() as c:
         c.execute(
             "UPDATE auth_accounts SET notify_security=?, notify_email=?, "
-            "notify_email_delivery=?, notify_tips=?, notify_push_scan=? WHERE user_id=?",
+            "notify_monthly_summary=?, notify_tips=?, notify_push_scan=? WHERE user_id=?",
             (int(notify_security), int(notify_email), int(notify_email),
              int(notify_tips), int(notify_push_scan), user_id),
         )
+        if not notify_email:
+            c.execute("DELETE FROM account_flagged_scans WHERE user_id=?", (user_id,))
 
 
 def create_login_session(token_hash: str, user_id: str, username: str,
@@ -564,6 +634,9 @@ def clear_user_activity(username: str) -> None:
     with _LOCK, _conn() as c:
         c.execute("DELETE FROM assistant_requests WHERE username=?", (username,))
         c.execute("DELETE FROM reports WHERE reporter=?", (username,))
+        account = c.execute("SELECT user_id FROM auth_accounts WHERE username=?", (username,)).fetchone()
+        if account:
+            c.execute("DELETE FROM account_flagged_scans WHERE user_id=?", (account["user_id"],))
 
 
 def delete_auth_account(user_id: str, username: str) -> None:
@@ -574,6 +647,7 @@ def delete_auth_account(user_id: str, username: str) -> None:
         c.execute("DELETE FROM auth_login_sessions WHERE user_id=?", (user_id,))
         c.execute("DELETE FROM push_subscriptions WHERE user_id=?", (user_id,))
         c.execute("DELETE FROM notification_deliveries WHERE user_id=?", (user_id,))
+        c.execute("DELETE FROM account_flagged_scans WHERE user_id=?", (user_id,))
         c.execute("DELETE FROM auth_login_attempts WHERE username=?", (username,))
         c.execute("DELETE FROM auth_recovery_attempts WHERE username=?", (username,))
         c.execute("DELETE FROM assistant_requests WHERE username=?", (username,))

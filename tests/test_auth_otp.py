@@ -48,6 +48,25 @@ class AuthOtpTests(unittest.TestCase):
             auth.issue_email_otp(email, "password_reset", "127.0.0.3")
         self.assertEqual(raised.exception.status, 429)
 
+    def test_monthly_summary_opt_in_requires_a_gmail_address(self):
+        with self.assertRaises(auth.AuthError):
+            auth.register_account(
+                "summary_no_email", "StrongPass123", "9876543210",
+                recovery_question="What is your favorite game?",
+                recovery_answer="Chess", monthly_summary=True,
+            )
+
+    def test_monthly_summary_registration_is_opt_in_and_persisted(self):
+        user, _ = auth.register_account(
+            "summary_optin", "StrongPass123", "9876543211",
+            email="summary-optin@gmail.com",
+            recovery_question="What is your favorite game?",
+            recovery_answer="Chess", monthly_summary=True,
+        )
+        self.assertTrue(user["notifications"]["email"])
+        account = store.get_auth_account("summary_optin")
+        self.assertEqual(account["notify_monthly_summary"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

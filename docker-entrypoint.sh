@@ -37,8 +37,8 @@ else
   log "no reputation keys — using local analysis only until per-scan providers are configured"
 fi
 
-if [ -n "${GMAIL_SMTP_USERNAME:-}${GMAIL_SMTP_APP_PASSWORD:-}" ]; then
-  log "optional Gmail SMTP configuration detected"
+if [ -n "${MAILJET_API_KEY:-}${MAILJET_SECRET_KEY:-}${MAILJET_FROM_EMAIL:-}" ]; then
+  log "optional Mailjet email configuration detected"
 fi
 
 log "starting gunicorn on 0.0.0.0:${PORT:-8000}"

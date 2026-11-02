@@ -934,6 +934,7 @@ $('#register-form').onsubmit = (event) => {
       email: $('#register-email').value.trim(),
       recovery_question: $('#register-recovery-question').value,
       recovery_answer: $('#register-recovery-answer').value,
+      monthly_summary: $('#register-monthly-summary').checked,
     },
   );
 };
@@ -943,6 +944,7 @@ $('#btn-logout').onclick = async () => {
   $('#register-password').value = '';
   $('#register-password-confirm').value = '';
   $('#register-email').value = '';
+  $('#register-monthly-summary').checked = false;
   $('#register-recovery-question').value = '';
   $('#register-recovery-answer').value = '';
   setAuthMessage('You have been logged out.', 'success');

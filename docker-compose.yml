@@ -12,18 +12,16 @@ services:
       VT_API_KEY: ${VT_API_KEY:-}
       URLHAUS_AUTH_KEY: ${URLHAUS_AUTH_KEY:-}
       PHISHTANK_APP_KEY: ${PHISHTANK_APP_KEY:-}
-      # Optional Gmail SMTP delivery (use an App Password, never the main password).
-      GMAIL_SMTP_USERNAME: ${GMAIL_SMTP_USERNAME:-}
-      GMAIL_SMTP_APP_PASSWORD: ${GMAIL_SMTP_APP_PASSWORD:-}
-      GMAIL_FROM_ADDRESS: ${GMAIL_FROM_ADDRESS:-}
-      GMAIL_SMTP_HOST: ${GMAIL_SMTP_HOST:-smtp.gmail.com}
-      GMAIL_SMTP_PORT: ${GMAIL_SMTP_PORT:-587}
+      # Optional Mailjet API delivery; credentials remain server-side.
+      MAILJET_API_KEY: ${MAILJET_API_KEY:-}
+      MAILJET_SECRET_KEY: ${MAILJET_SECRET_KEY:-}
+      MAILJET_FROM_EMAIL: ${MAILJET_FROM_EMAIL:-}
+      MAILJET_FROM_NAME: ${MAILJET_FROM_NAME:-PhishGuard}
       # Optional Web Push VAPID and scheduled digest settings.
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-}
       CRON_SECRET: ${CRON_SECRET:-}
-      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-0}
       PORT: 8000
     volumes:

@@ -193,9 +193,10 @@ FAQS = [
         "keywords": {"otp", "gmail", "verification", "code", "verify", "email"},
         "answer": (
             "Gmail verification is optional. After signing in, open Settings → Sign-in & security "
-            "and verify an address you control. A verified Gmail can be used for one-time password "
-            "recovery codes and, if email delivery is configured, opted-in scan or campaign updates. "
-            "Mobile numbers are format-checked but are not OTP-verified."
+            "and verify an address you control. A verified Gmail can receive one-time password "
+            "recovery codes. If you opt in to monthly summaries, PhishGuard emails only flagged "
+            "domains from your own scans—not full URLs or submitted email contents. Mobile numbers "
+            "are format-checked but are not OTP-verified."
         ),
     },
     {
