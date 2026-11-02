@@ -64,9 +64,9 @@
         </defs>
         <rect x="35" y="28" width="550" height="440" rx="34" fill="#e7e8d9"/>
         <rect x="35" y="28" width="550" height="440" rx="34" fill="url(#landing-dots)"/>
-        <circle cx="491" cy="91" r="82" fill="#d7ddc8" opacity=".68"/>
-        <circle cx="113" cy="406" r="72" fill="#d7ddc8" opacity=".54"/>
-        <path d="M107 266 C181 266 175 167 247 167 S318 283 391 283 S440 192 510 192" fill="none" stroke="#869881" stroke-width="2" stroke-dasharray="5 8" opacity=".8"/>
+        <circle class="landing-orb landing-orb-one" cx="491" cy="91" r="82" fill="#d7ddc8" opacity=".68"/>
+        <circle class="landing-orb landing-orb-two" cx="113" cy="406" r="72" fill="#d7ddc8" opacity=".54"/>
+        <path class="landing-signal-path" d="M107 266 C181 266 175 167 247 167 S318 283 391 283 S440 192 510 192" fill="none" stroke="#869881" stroke-width="2" stroke-dasharray="5 8" opacity=".8"/>
         <g filter="url(#landing-shadow)">
           <rect x="113" y="86" width="397" height="321" rx="24" fill="url(#landing-card)"/>
           <path d="M137 129h349" stroke="#31443a"/>
@@ -86,8 +86,8 @@
           <text x="190" y="353" fill="#263b2d" font-size="9.5" font-family="Arial,sans-serif" font-weight="700">A verdict with reasons</text>
           <text x="190" y="367" fill="#5e715e" font-size="8" font-family="Arial,sans-serif">Signals stay visible. You stay in control.</text>
         </g>
-        <circle cx="106" cy="265" r="6" fill="#bb8b5d"/><circle cx="247" cy="167" r="6" fill="#879d80"/><circle cx="391" cy="283" r="6" fill="#879d80"/><circle cx="510" cy="192" r="6" fill="#bb8b5d"/>
-        <circle cx="497" cy="376" r="26" fill="#d1d9c2" stroke="#9bab8e"/><path d="m489 376 6 6 11-13" fill="none" stroke="#536a53" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle class="landing-path-node landing-path-node-one" cx="106" cy="265" r="6" fill="#bb8b5d"/><circle class="landing-path-node landing-path-node-two" cx="247" cy="167" r="6" fill="#879d80"/><circle class="landing-path-node landing-path-node-three" cx="391" cy="283" r="6" fill="#879d80"/><circle class="landing-path-node landing-path-node-four" cx="510" cy="192" r="6" fill="#bb8b5d"/>
+        <g class="landing-approval-badge"><circle cx="497" cy="376" r="26" fill="#d1d9c2" stroke="#9bab8e"/><path d="m489 376 6 6 11-13" fill="none" stroke="#536a53" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
       </svg>
       <figcaption id="landing-visual-caption"><span>01 — Inspect</span><span>02 — Corroborate</span><span>03 — Understand</span></figcaption>
     </figure>
@@ -99,7 +99,7 @@
     </div>
   </section>
 
-  <section class="landing-section landing-how" id="landing-how">
+  <section class="landing-section landing-how" id="landing-how" data-motion-reveal>
     <div class="landing-section-heading">
       <span class="landing-kicker">A SIMPLE, TRANSPARENT FLOW</span>
       <h2>From “is this real?”<br><em>to a clearer answer.</em></h2>
@@ -112,7 +112,7 @@
     </div>
   </section>
 
-  <section class="landing-section landing-capabilities" id="landing-capabilities">
+  <section class="landing-section landing-capabilities" id="landing-capabilities" data-motion-reveal>
     <div class="landing-section-heading landing-section-heading-row">
       <div><span class="landing-kicker">BUILT FOR REAL-WORLD MESSAGES</span><h2>Signals, not guesswork.</h2></div>
       <p>One workspace for the checks people actually need—organized around clear evidence.</p>
@@ -125,14 +125,14 @@
     </div>
   </section>
 
-  <section class="landing-section landing-approach" id="landing-approach">
+  <section class="landing-section landing-approach" id="landing-approach" data-motion-reveal>
     <div class="landing-approach-copy"><span class="landing-kicker">DESIGNED AROUND TRUST</span><h2>Explain the answer.<br><em>Never pretend.</em></h2><p>A clean green tick can be misleading when a check did not run. PhishGuard makes uncertainty visible and keeps each decision tied to evidence.</p>
       <ul class="landing-principles"><li><span>✓</span><div><b>Reasons over mystery scores</b><small>Named signals and a receipt you can review.</small></div></li><li><span>✓</span><div><b>“Unknown” is a valid result</b><small>Missing information is not silently treated as safe.</small></div></li><li><span>✓</span><div><b>Safe-by-design previews</b><small>Page scripts are not executed and links are not made clickable.</small></div></li></ul>
     </div>
     <div class="landing-limit-card"><div class="landing-limit-head"><span class="landing-lamp"></span> HONEST LIMITS</div><h3>What it doesn’t do</h3><ul><li>No JavaScript execution or form submission during link previews.</li><li>No image or QR-code decoding yet.</li><li>Email file input is for <code>.eml</code>; Outlook <code>.msg</code> is not supported.</li><li>The built-in public-suffix list is compact and India-focused.</li></ul><p>Knowing a tool’s boundaries is part of using it safely.</p></div>
   </section>
 
-  <section class="landing-cta-band">
+  <section class="landing-cta-band" data-motion-reveal>
     <div><span class="landing-kicker">YOUR NEXT MESSAGE CAN WAIT A MOMENT</span><h2>Make the next click a considered one.</h2><p>Create an account to save scan history and return to important evidence.</p></div>
     <a class="landing-button landing-button-primary" href="/login?mode=register">Get started <span aria-hidden="true">→</span></a>
   </section>

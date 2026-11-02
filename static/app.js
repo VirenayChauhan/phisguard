@@ -253,10 +253,32 @@ function updateProfileUI(user) {
   syncNotificationUI();
 }
 
+function setupLandingReveals() {
+  const landing = $('#landing-page');
+  const motionPreference = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  if (!landing || !motionPreference || motionPreference.matches || !('IntersectionObserver' in window)) return;
+
+  const targets = $$('[data-motion-reveal]', landing);
+  if (!targets.length || landing.dataset.motionObserved === 'true') return;
+  landing.dataset.motionObserved = 'true';
+  landing.classList.add('landing-motion-ready');
+
+  const observer = new IntersectionObserver((entries, currentObserver) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      currentObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -7% 0px' });
+
+  requestAnimationFrame(() => targets.forEach((target) => observer.observe(target)));
+}
+
 function showLanding() {
   $('#landing-page').hidden = false;
   $('#auth-screen').hidden = true;
   $('#dashboard').hidden = true;
+  setupLandingReveals();
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
