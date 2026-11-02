@@ -148,12 +148,30 @@ def urlhaus_url(url: str) -> dict:
         try:
             response = requests.post(
                 "https://urlhaus-api.abuse.ch/v1/url/",
-                data={"url": url}, headers={"Auth-Key": URLHAUS_KEY},
+                data={"url": url},
+                headers={"Auth-Key": URLHAUS_KEY, "User-Agent": "PhishGuard/0.9"},
                 timeout=TIMEOUT,
             )
+            try:
+                data = response.json()
+            except ValueError:
+                data = {}
+            status_code = getattr(response, "status_code", 200)
+            if not isinstance(status_code, int):
+                status_code = 200
+            query_status = data.get("query_status", "") if isinstance(data, dict) else ""
+            if status_code in (401, 403) or query_status == "auth_error":
+                return {"ok": False, "configured": True, "hit": False,
+                        "note": f"URLhaus rejected the Auth-Key (HTTP {status_code}); "
+                                "check the Preview URLHAUS_AUTH_KEY value"}
+            if status_code == 429:
+                return {"ok": False, "configured": True, "hit": False,
+                        "note": "URLhaus rate limit reached (HTTP 429); retry later"}
+            if status_code >= 400:
+                return {"ok": False, "configured": True, "hit": False,
+                        "note": f"URLhaus request failed (HTTP {status_code})"}
             response.raise_for_status()
-            data = response.json()
-            status = data.get("query_status", "")
+            status = query_status
             hit = status == "ok"
             threat = data.get("threat", "malware URL") if hit else ""
             online = data.get("url_status", "unknown") if hit else ""

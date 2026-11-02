@@ -63,6 +63,29 @@ class ReputationProviderTests(unittest.TestCase):
         self.assertIn("malware_download", result["note"])
         self.assertEqual(post.call_args.kwargs["headers"]["Auth-Key"], "test-key")
 
+    def test_urlhaus_rejected_auth_key_has_actionable_safe_diagnostic(self):
+        response = Mock(status_code=401)
+        response.json.return_value = {"query_status": "auth_error"}
+        with patch.object(intel, "URLHAUS_KEY", "test-secret"), \
+             patch.object(intel.requests, "post", return_value=response):
+            result = intel.urlhaus_url("https://example.com/")
+        self.assertFalse(result["ok"])
+        self.assertFalse(result["hit"])
+        self.assertIn("HTTP 401", result["note"])
+        self.assertIn("Preview URLHAUS_AUTH_KEY", result["note"])
+        self.assertNotIn("test-secret", result["note"])
+
+    def test_urlhaus_rate_limit_is_reported_without_treating_as_no_match(self):
+        response = Mock(status_code=429)
+        response.json.return_value = {}
+        with patch.object(intel, "URLHAUS_KEY", "test-secret"), \
+             patch.object(intel.requests, "post", return_value=response):
+            result = intel.urlhaus_url("https://example.com/")
+        self.assertFalse(result["ok"])
+        self.assertFalse(result["hit"])
+        self.assertIn("rate limit", result["note"])
+        self.assertIn("HTTP 429", result["note"])
+
     def test_phishtank_requires_verified_match(self):
         response = Mock()
         response.raise_for_status.return_value = None
