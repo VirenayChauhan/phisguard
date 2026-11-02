@@ -1,17 +1,172 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" {% if ui_trial|default(false) %}data-ui-trial="split"{% endif %}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
 <title>PhishGuard — link &amp; email checker with receipts</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f7cff'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='white' text-anchor='middle'>PG</text></svg>">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23496d50'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='white' text-anchor='middle'>PG</text></svg>">
+<script>
+  if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
+    document.documentElement.dataset.uiTrial = 'split';
+  }
+</script>
 </head>
 <body>
-<!-- Authentication is shown before any dashboard data or analysis controls. -->
-<section class="auth-screen" id="auth-screen" aria-labelledby="auth-title">
+<div class="ui-trial-banner" role="note">
+  <span><b>UI trial 01</b><span class="ui-trial-banner-detail">Editorial split-screen</span></span>
+  <a href="/" aria-label="Return to the current PhishGuard design">Back to current UI <span aria-hidden="true">↗</span></a>
+</div>
+<main class="landing-page" id="landing-page"{% if login_page|default(false) or ui_trial|default(false) %} hidden{% endif %}>
+  <header class="landing-nav">
+    <a class="landing-brand" href="/" aria-label="PhishGuard home">
+      <span class="landing-brand-mark" aria-hidden="true">PG</span>
+      <span><b>PhishGuard</b><small>Link &amp; email protection</small></span>
+    </a>
+    <nav class="landing-links" aria-label="Page sections">
+      <a href="#landing-how">How it works</a>
+      <a href="#landing-capabilities">Capabilities</a>
+      <a href="#landing-approach">Our approach</a>
+    </nav>
+    <div class="landing-nav-actions">
+      <a class="landing-signin" href="/login">Sign in</a>
+      <a class="landing-nav-cta" href="/login?mode=register">Create account <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <section class="landing-hero" aria-labelledby="landing-title">
+    <div class="landing-hero-copy">
+      <div class="landing-eyebrow"><span class="landing-eyebrow-dot"></span> PHISHING DEFENCE, MADE CLEAR</div>
+      <h1 id="landing-title">Pause before<br>you <em>trust.</em></h1>
+      <p class="landing-lede">A suspicious link or email deserves more than a guess. PhishGuard checks the signals, explains what they mean, and keeps the evidence close at hand.</p>
+      <div class="landing-hero-actions">
+        <a class="landing-button landing-button-primary" href="/login?mode=register">Create your workspace <span aria-hidden="true">→</span></a>
+        <a class="landing-button landing-button-secondary" href="#landing-how">Explore how it works <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="landing-proofline"><span aria-hidden="true">✳</span> No opaque scores. No silent “safe” verdicts. Reasons you can inspect.</div>
+    </div>
+
+    <figure class="landing-visual" aria-labelledby="landing-visual-caption">
+      <svg class="landing-illustration" viewBox="0 0 620 500" role="img" aria-labelledby="landing-visual-title landing-visual-desc">
+        <title id="landing-visual-title">PhishGuard evidence-check illustration</title>
+        <desc id="landing-visual-desc">A suspicious link passes through layered security checks and becomes an evidence-backed verdict.</desc>
+        <defs>
+          <pattern id="landing-dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#60745f" opacity=".27"/></pattern>
+          <linearGradient id="landing-card" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20342a"/><stop offset="1" stop-color="#17251e"/></linearGradient>
+          <linearGradient id="landing-orbit" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b5c7a0"/><stop offset="1" stop-color="#bf8c5c"/></linearGradient>
+          <filter id="landing-shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#142219" flood-opacity=".16"/></filter>
+        </defs>
+        <rect x="35" y="28" width="550" height="440" rx="34" fill="#e7e8d9"/>
+        <rect x="35" y="28" width="550" height="440" rx="34" fill="url(#landing-dots)"/>
+        <circle cx="491" cy="91" r="82" fill="#d7ddc8" opacity=".68"/>
+        <circle cx="113" cy="406" r="72" fill="#d7ddc8" opacity=".54"/>
+        <path d="M107 266 C181 266 175 167 247 167 S318 283 391 283 S440 192 510 192" fill="none" stroke="#869881" stroke-width="2" stroke-dasharray="5 8" opacity=".8"/>
+        <g filter="url(#landing-shadow)">
+          <rect x="113" y="86" width="397" height="321" rx="24" fill="url(#landing-card)"/>
+          <path d="M137 129h349" stroke="#31443a"/>
+          <circle cx="139" cy="108" r="4" fill="#bd8e60"/><circle cx="154" cy="108" r="4" fill="#95ae8e"/><circle cx="169" cy="108" r="4" fill="#566a59"/>
+          <text x="194" y="113" fill="#91a493" font-size="9" font-family="Arial,sans-serif" letter-spacing="1.8">PHISHGUARD · EVIDENCE MAP</text>
+          <rect x="145" y="154" width="333" height="58" rx="12" fill="#25392e" stroke="#3a5141"/>
+          <circle cx="170" cy="183" r="12" fill="#314c3d"/><path d="M166 183h8m-4-4 4 4-4 4" fill="none" stroke="#c0cda9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="193" y="179" fill="#e4e9dc" font-size="10" font-family="Arial,sans-serif">Suspicious message</text>
+          <text x="193" y="195" fill="#9bac9a" font-size="8.5" font-family="Arial,sans-serif">A closer look at the signals</text>
+          <g transform="translate(149 239)">
+            <rect width="98" height="73" rx="11" fill="#1c2b22" stroke="#35483a"/><circle cx="19" cy="20" r="9" fill="#31483a"/><path d="m15 20 3 3 5-6" fill="none" stroke="#b7cba4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><text x="12" y="45" fill="#dbe5d8" font-size="8.5" font-family="Arial,sans-serif">Domain</text><text x="12" y="58" fill="#93a594" font-size="7.5" font-family="Arial,sans-serif">Lookalike signal</text>
+            <rect x="112" width="98" height="73" rx="11" fill="#1c2b22" stroke="#35483a"/><circle cx="131" cy="20" r="9" fill="#4b392c"/><path d="M131 15v6m0 3v.2" fill="none" stroke="#d4aa78" stroke-width="1.5" stroke-linecap="round"/><text x="124" y="45" fill="#dbe5d8" font-size="8.5" font-family="Arial,sans-serif">Redirect</text><text x="124" y="58" fill="#93a594" font-size="7.5" font-family="Arial,sans-serif">Needs review</text>
+            <rect x="224" width="98" height="73" rx="11" fill="#1c2b22" stroke="#35483a"/><circle cx="243" cy="20" r="9" fill="#31483a"/><path d="M239 20h8m-4-4v8" fill="none" stroke="#b7cba4" stroke-width="1.5" stroke-linecap="round"/><text x="236" y="45" fill="#dbe5d8" font-size="8.5" font-family="Arial,sans-serif">Evidence</text><text x="236" y="58" fill="#93a594" font-size="7.5" font-family="Arial,sans-serif">Review the reasons</text>
+          </g>
+          <rect x="145" y="332" width="333" height="48" rx="12" fill="#d8e0ce"/>
+          <circle cx="169" cy="356" r="11" fill="#b7c7a8"/><path d="m164 356 3 3 6-7" fill="none" stroke="#284333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="190" y="353" fill="#263b2d" font-size="9.5" font-family="Arial,sans-serif" font-weight="700">A verdict with reasons</text>
+          <text x="190" y="367" fill="#5e715e" font-size="8" font-family="Arial,sans-serif">Signals stay visible. You stay in control.</text>
+        </g>
+        <circle cx="106" cy="265" r="6" fill="#bb8b5d"/><circle cx="247" cy="167" r="6" fill="#879d80"/><circle cx="391" cy="283" r="6" fill="#879d80"/><circle cx="510" cy="192" r="6" fill="#bb8b5d"/>
+        <circle cx="497" cy="376" r="26" fill="#d1d9c2" stroke="#9bab8e"/><path d="m489 376 6 6 11-13" fill="none" stroke="#536a53" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <figcaption id="landing-visual-caption"><span>01 — Inspect</span><span>02 — Corroborate</span><span>03 — Understand</span></figcaption>
+    </figure>
+
+    <div class="landing-signal-strip" aria-label="PhishGuard capabilities">
+      <span><b>LINKS</b> Domain and redirect signals</span>
+      <i></i><span><b>EMAIL</b> Sender and header checks</span>
+      <i></i><span><b>RECEIPTS</b> Reasons behind each verdict</span>
+    </div>
+  </section>
+
+  <section class="landing-section landing-how" id="landing-how">
+    <div class="landing-section-heading">
+      <span class="landing-kicker">A SIMPLE, TRANSPARENT FLOW</span>
+      <h2>From “is this real?”<br><em>to a clearer answer.</em></h2>
+      <p>PhishGuard brings useful signals together without hiding how it reached a conclusion.</p>
+    </div>
+    <div class="landing-steps">
+      <article><span class="landing-step-num">01</span><div class="landing-step-icon">↗</div><h3>Bring the message</h3><p>Paste a link or inspect an <code>.eml</code> message. The browser never opens suspicious URLs.</p></article>
+      <article><span class="landing-step-num">02</span><div class="landing-step-icon">⌁</div><h3>Check the signals</h3><p>Review domain, DNS, redirect, sender-authentication, and message-pattern evidence.</p></article>
+      <article><span class="landing-step-num">03</span><div class="landing-step-icon">◉</div><h3>Decide with context</h3><p>See a reasoned verdict, keep an audit receipt, and save important results for later.</p></article>
+    </div>
+  </section>
+
+  <section class="landing-section landing-capabilities" id="landing-capabilities">
+    <div class="landing-section-heading landing-section-heading-row">
+      <div><span class="landing-kicker">BUILT FOR REAL-WORLD MESSAGES</span><h2>Signals, not guesswork.</h2></div>
+      <p>One workspace for the checks people actually need—organized around clear evidence.</p>
+    </div>
+    <div class="landing-capability-grid">
+      <article class="landing-capability-card landing-capability-featured"><div class="landing-card-icon">↗</div><span class="landing-card-index">01 / LINKS</span><h3>Spot the telltale details</h3><p>Look for IDN and homoglyph tricks, brand lookalikes, deceptive @ signs, ports, risky TLDs, shorteners, double extensions, and open redirects. Registration age, DNS, TLS, and a guarded redirect preview add context.</p><div class="landing-tags"><span>Domain signals</span><span>DNS &amp; TLS</span><span>Redirect preview</span></div></article>
+      <article class="landing-capability-card"><div class="landing-card-icon">✉</div><span class="landing-card-index">02 / EMAIL</span><h3>Look beyond the display name</h3><p>Review SPF, DKIM, and DMARC; Received-chain and Reply-To mismatches; display-name spoofing; BEC language; links; attachment hashes; and bank-detail changes.</p></article>
+      <article class="landing-capability-card"><div class="landing-card-icon">▤</div><span class="landing-card-index">03 / MEMORY</span><h3>Keep useful context</h3><p>Save scans, remember first-contact senders and domains, track time-of-click URL snapshots, compare vendor bank details, and group related reports by subject, sender, and link hosts.</p></article>
+      <article class="landing-capability-card"><div class="landing-card-icon">⌕</div><span class="landing-card-index">04 / REPUTATION</span><h3>Know when a signal is missing</h3><p>Optional Safe Browsing and VirusTotal checks use your own API keys. If a provider is not configured, PhishGuard labels it unavailable rather than calling the message safe.</p></article>
+    </div>
+  </section>
+
+  <section class="landing-section landing-approach" id="landing-approach">
+    <div class="landing-approach-copy"><span class="landing-kicker">DESIGNED AROUND TRUST</span><h2>Explain the answer.<br><em>Never pretend.</em></h2><p>A clean green tick can be misleading when a check did not run. PhishGuard makes uncertainty visible and keeps each decision tied to evidence.</p>
+      <ul class="landing-principles"><li><span>✓</span><div><b>Reasons over mystery scores</b><small>Named signals and a receipt you can review.</small></div></li><li><span>✓</span><div><b>“Unknown” is a valid result</b><small>Missing information is not silently treated as safe.</small></div></li><li><span>✓</span><div><b>Safe-by-design previews</b><small>Page scripts are not executed and links are not made clickable.</small></div></li></ul>
+    </div>
+    <div class="landing-limit-card"><div class="landing-limit-head"><span class="landing-lamp"></span> HONEST LIMITS</div><h3>What it doesn’t do</h3><ul><li>No JavaScript execution or form submission during link previews.</li><li>No image or QR-code decoding yet.</li><li>Email file input is for <code>.eml</code>; Outlook <code>.msg</code> is not supported.</li><li>The built-in public-suffix list is compact and India-focused.</li></ul><p>Knowing a tool’s boundaries is part of using it safely.</p></div>
+  </section>
+
+  <section class="landing-cta-band">
+    <div><span class="landing-kicker">YOUR NEXT MESSAGE CAN WAIT A MOMENT</span><h2>Make the next click a considered one.</h2><p>Create an account to save scan history and return to important evidence.</p></div>
+    <a class="landing-button landing-button-primary" href="/login?mode=register">Get started <span aria-hidden="true">→</span></a>
+  </section>
+  <footer class="landing-footer"><a class="landing-brand" href="/" aria-label="PhishGuard home"><span class="landing-brand-mark">PG</span><span><b>PhishGuard</b><small>Security, with evidence.</small></span></a><span>Clear signals for safer decisions.</span><a href="/login">Sign in</a></footer>
+</main>
+
+<!-- Authentication is shown after a visitor chooses to sign in or register. -->
+<section class="auth-screen" id="auth-screen"{% if not (login_page|default(false) or ui_trial|default(false)) %} hidden{% endif %} aria-labelledby="auth-title">
+  <aside class="auth-story" aria-label="About PhishGuard">
+    <div class="auth-story-brand">
+      <div class="auth-story-brand-mark" aria-hidden="true">PG</div>
+      <div><b>PhishGuard</b><span>PERSONAL SECURITY</span></div>
+    </div>
+    <div class="auth-story-main">
+      <div class="auth-story-eyebrow"><span></span> SECURITY, WITH EVIDENCE</div>
+      <h2>Confidence<br>before the <em>click.</em></h2>
+      <p class="auth-story-lede">Check suspicious links and emails, then see the signals behind every verdict.</p>
+      <div class="auth-story-flow" aria-label="How PhishGuard checks a message">
+        <div class="auth-story-flow-label">A clearer way to check</div>
+        <div class="auth-story-flow-steps">
+          <span><b>01</b> Inspect</span><i aria-hidden="true">→</i>
+          <span><b>02</b> Verify</span><i aria-hidden="true">→</i>
+          <span><b>03</b> Decide</span>
+        </div>
+      </div>
+      <div class="auth-story-features">
+        <div><span class="auth-story-feature-icon" aria-hidden="true">↗</span><p><b>Link checks</b><small>Spot suspicious domains and redirects.</small></p></div>
+        <div><span class="auth-story-feature-icon" aria-hidden="true">✉</span><p><b>Email checks</b><small>Review headers, links, and sender signals.</small></p></div>
+        <div><span class="auth-story-feature-icon" aria-hidden="true">▤</span><p><b>Saved history</b><small>Keep scan results in one workspace.</small></p></div>
+      </div>
+    </div>
+    <div class="auth-story-footer"><span>PHISHGUARD</span><span>Clear signals. Safer decisions.</span></div>
+  </aside>
   <div class="auth-card">
+    <a class="auth-back" href="/">← Back to PhishGuard</a>
     <div class="auth-brand-mark" aria-hidden="true">PG</div>
     <div class="auth-eyebrow">SECURE WORKSPACE</div>
     <h1 id="auth-title">Sign in to PhishGuard</h1>
@@ -149,7 +304,7 @@
 <div class="app" id="dashboard" hidden>
 
   <!-- ============================== SIDEBAR ============================== -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="app-sidebar">
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">PG</div>
       <div>
@@ -159,7 +314,7 @@
     </div>
 
     <nav class="nav" aria-label="Main">
-      <div class="nav-label">Workspace</div>
+      <div class="nav-label">HOME BASE</div>
       <button class="nav-item" data-route="overview" aria-current="page">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         Overview
@@ -168,8 +323,8 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-3-6 3Z"/><path d="M9 7h6"/></svg>
         Saved scans
       </button>
-      <div class="nav-label">Check</div>
-      <button class="nav-item" data-route="link" aria-current="page">
+      <div class="nav-label">ANALYSIS TOOLS</div>
+      <button class="nav-item" data-route="link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
         Check a link <span class="kbd">1</span>
       </button>
@@ -178,26 +333,20 @@
         Check an email <span class="kbd">2</span>
       </button>
 
-      <div class="nav-label">Organisation</div>
+      <div class="nav-label">CAMPAIGN INTELLIGENCE</div>
       <button class="nav-item" data-route="sweep">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/><circle cx="12" cy="12" r="3"/></svg>
-        Org sweep <span class="kbd">3</span>
+        Campaigns <span class="kbd">3</span>
       </button>
-      <button class="nav-item" data-route="coverage">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
-        Coverage &amp; design
-      </button>
-
-      <div class="nav-label">Recent</div>
+      <div class="nav-label">RECENT CHECKS</div>
       <div class="recent" id="recent"></div>
     </nav>
 
-    <div class="side-foot">
-      <div class="engine-card">
-        <div class="row"><span class="k">engine</span><span class="v" id="engine-ver">–</span></div>
-        <div class="row"><span class="k">intel</span><span class="v" id="engine-intel">–</span></div>
-        <div class="row"><span class="k">domains seen</span><span class="v" id="engine-domains">–</span></div>
-        <div class="row"><span class="k">reports</span><span class="v" id="engine-reports">–</span></div>
+      <div class="side-foot">
+      <div class="sidebar-guide">
+        <span class="sidebar-guide-mark" aria-hidden="true">✳</span>
+        <div><b>Before you click</b><p>Check the link here first. It won’t open in your browser.</p></div>
+        <button type="button" data-route="link">Check a link <span aria-hidden="true">→</span></button>
       </div>
       <button class="nav-item" id="theme-toggle" aria-live="polite">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
@@ -209,13 +358,15 @@
   <!-- =============================== MAIN =============================== -->
   <div class="main">
     <header class="topbar">
+      <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Hide navigation panel" aria-expanded="true" aria-controls="app-sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+        <span id="sidebar-toggle-label">Hide panel</span>
+      </button>
       <div>
-        <h1 id="page-title">Check a link</h1>
+        <h1 id="page-title">Overview</h1>
         <div class="crumb" id="page-crumb">Instant lexical verdict, then infrastructure, reputation and a click preview</div>
       </div>
       <div class="topbar-actions">
-        <div class="chip" id="chip-intel"><span class="dot"></span> intel <b>–</b></div>
-        <div class="chip" id="chip-clusters"><span class="dot"></span> clusters <b>–</b></div>
         <div class="user-menu">
           <button class="profile-trigger" id="btn-profile" type="button" aria-haspopup="menu" aria-expanded="false">
             <span class="profile-avatar" id="profile-avatar">?</span>
@@ -243,9 +394,9 @@
       <section class="view" id="view-overview">
         <div class="dashboard-welcome card">
           <div>
-            <div class="auth-eyebrow">PERSONAL SECURITY CENTER</div>
+            <div class="auth-eyebrow">YOUR PHISHGUARD WORKSPACE</div>
             <h2 class="hero-title">Welcome back, <span id="dashboard-user-name">–</span></h2>
-            <p class="hero-sub">Keep your links, email checks, and account safety in one place.</p>
+            <p class="hero-sub">Review your recent checks, keep evidence you need, and choose what to inspect next.</p>
           </div>
           <div class="dashboard-quick-actions">
             <button class="btn btn-primary" data-dashboard-route="link">＋ Check a link</button>
@@ -254,31 +405,51 @@
           </div>
         </div>
         <div class="kpis" id="personal-kpis" style="margin-top:16px"></div>
-        <div class="grid grid-2" style="margin-top:16px">
-          <div class="card">
-            <div class="card-head"><h3 class="card-title">Your security score</h3><div class="spacer"></div><span class="chip" id="dashboard-score-label">–</span></div>
-            <div class="card-body dashboard-score-body">
-              <div class="dashboard-score-ring" id="dashboard-score">–</div>
-              <div><b id="dashboard-score-title">Complete your security profile</b><div class="sub" id="dashboard-score-help">Add your account details to improve your score.</div></div>
-            </div>
-          </div>
-          <div class="card" id="dashboard-checklist-card">
-            <div class="card-head"><h3 class="card-title">Security checklist</h3></div>
-            <div class="card-body" id="dashboard-checklist"></div>
+        <div class="card overview-status-card" style="margin-top:16px">
+          <div class="card-head"><h3 class="card-title">Analysis status</h3><div class="spacer"></div><span class="faint tiny">signals available to this workspace</span></div>
+          <div class="card-body overview-status-grid">
+            <div class="overview-status-item"><span>Analysis engine</span><b id="engine-ver">–</b></div>
+            <div class="overview-status-item"><span>Reputation providers</span><b id="engine-intel">–</b></div>
+            <div class="overview-status-item"><span>Domains observed</span><b id="engine-domains">–</b></div>
+            <div class="overview-status-item"><span>Campaign reports</span><b id="engine-reports">–</b></div>
+            <div class="overview-status-chips"><span class="chip" id="chip-intel"><span class="dot"></span> reputation <b>–</b></span><span class="chip" id="chip-clusters"><span class="dot"></span> clusters <b>–</b></span></div>
           </div>
         </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-head"><h3 class="card-title">Recently saved scans</h3><div class="spacer"></div><button class="btn btn-ghost btn-sm" data-dashboard-route="saved">View all</button></div>
+        <div class="grid grid-2 overview-panels" style="margin-top:16px">
+          <div class="card overview-activity-card">
+            <div class="card-head"><h3 class="card-title">Recent activity</h3><div class="spacer"></div><span class="faint tiny">on this device</span></div>
+            <div class="card-body" id="dashboard-recent-list"></div>
+          </div>
+          <div class="card overview-guide-card">
+            <div class="card-head"><h3 class="card-title">A good place to start</h3></div>
+            <div class="card-body overview-guide-list">
+              <button type="button" data-dashboard-route="link"><span class="overview-guide-icon">↗</span><span><b>Check a link</b><small>Review domain and redirect signals.</small></span><span class="overview-guide-arrow">→</span></button>
+              <button type="button" data-dashboard-route="email"><span class="overview-guide-icon">✉</span><span><b>Check an email</b><small>Inspect sender, headers, and links.</small></span><span class="overview-guide-arrow">→</span></button>
+              <button type="button" data-dashboard-route="saved"><span class="overview-guide-icon">▤</span><span><b>Open saved scans</b><small>Return to evidence you kept.</small></span><span class="overview-guide-arrow">→</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="card overview-saved-card" style="margin-top:16px">
+          <div class="card-head"><h3 class="card-title">Saved scans</h3><div class="spacer"></div><button class="btn btn-ghost btn-sm" data-dashboard-route="saved">View library</button></div>
           <div id="dashboard-saved-list"></div>
         </div>
       </section>
 
       <!-- ---------------------------------------------------- SAVED VIEW -->
       <section class="view" id="view-saved" hidden>
-        <div class="hero saved-scans-hero">
-          <div class="auth-eyebrow">YOUR SECURITY LIBRARY</div>
-          <h2 class="hero-title">Saved scans</h2>
-          <p class="hero-sub">Keep important link and email results in folders for later review.</p>
+        <div class="hero workspace-view-hero saved-scans-hero">
+          <div class="workspace-hero-copy">
+            <div class="workspace-eyebrow"><span>02</span> YOUR SECURITY LIBRARY</div>
+            <h2 class="hero-title">Keep the evidence<br>that matters.</h2>
+            <p class="hero-sub">Saved checks stay organized here, ready when you want to compare or review a result.</p>
+            <div class="workspace-hero-note"><span>✳</span> Private to your account on this device</div>
+          </div>
+          <div class="workspace-hero-art saved-library-art" aria-hidden="true">
+            <div class="library-orbit library-orbit-one"></div><div class="library-orbit library-orbit-two"></div>
+            <div class="library-sheet library-sheet-back"></div>
+            <div class="library-sheet library-sheet-front"><span class="library-sheet-mark">PG</span><span class="library-sheet-line"></span><span class="library-sheet-line short"></span><span class="library-sheet-tag">SAVED EVIDENCE</span><span class="library-sheet-check">✓</span></div>
+            <span class="library-art-spark">✦</span>
+          </div>
         </div>
         <div class="saved-folder-bar" id="saved-folder-list" aria-label="Saved scan folders"></div>
         <div class="card" style="margin-top:14px">
@@ -289,9 +460,15 @@
 
       <!-- ------------------------------------------------------- LINK VIEW -->
       <section class="view" id="view-link">
-        <div class="hero">
-          <h2 class="hero-title">What did you receive?</h2>
-          <p class="hero-sub">Paste a URL. Nothing is ever rendered clickable, and nothing is fetched from your browser.</p>
+        <div class="hero workspace-tool-hero link-tool-hero">
+          <div class="workspace-tool-head">
+            <div class="workspace-tool-copy">
+              <div class="workspace-eyebrow"><span>01</span> URL INTELLIGENCE</div>
+              <h2 class="hero-title">Check before you click.</h2>
+              <p class="hero-sub">Paste a link to inspect its domain, infrastructure, reputation, and redirect signals. It never opens in your browser.</p>
+            </div>
+            <div class="workspace-tool-art link-tool-art" aria-hidden="true"><div class="tool-art-orbit"></div><div class="tool-art-shield"><svg viewBox="0 0 48 54" fill="none"><path d="M24 3 42 10v13c0 12-8 22-18 28C14 45 6 35 6 23V10L24 3Z" stroke="currentColor" stroke-width="2"/><path d="m16 26 5 5 11-12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="tool-art-node node-a"></span><span class="tool-art-node node-b"></span><span class="tool-art-node node-c"></span><span class="tool-art-label">SIGNALS<br>NOT SHORTCUTS</span></div>
+          </div>
           <div class="input-row">
             <label class="field" for="url-input">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
@@ -325,11 +502,17 @@
 
       <!-- ------------------------------------------------------ EMAIL VIEW -->
       <section class="view" id="view-email" hidden>
-        <div class="hero">
-          <h2 class="hero-title">Check a suspicious email</h2>
-          <p class="hero-sub">Drop a <b>.eml</b> or paste the raw source with headers. SPF, DKIM and DMARC are verified, links are scored, attachments are hashed, and bank details are diffed against the vendor's trusted baseline.</p>
+        <div class="hero workspace-tool-hero email-tool-hero">
+          <div class="workspace-tool-head">
+            <div class="workspace-tool-copy">
+              <div class="workspace-eyebrow"><span>02</span> MESSAGE FORENSICS</div>
+              <h2 class="hero-title">Read the clues in the email.</h2>
+              <p class="hero-sub">Inspect sender authentication, message headers, links, and attachment indicators—without sending the message to a third-party file scanner.</p>
+            </div>
+            <div class="workspace-tool-art email-tool-art" aria-hidden="true"><div class="tool-art-orbit"></div><div class="email-art-envelope"><svg viewBox="0 0 64 48" fill="none"><rect x="4" y="6" width="56" height="38" rx="7" stroke="currentColor" stroke-width="2"/><path d="m7 11 25 18 25-18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m8 40 18-14m30 14L38 26" stroke="currentColor" stroke-width="1.5" opacity=".65"/></svg><span class="email-art-seal">✓</span></div><span class="tool-art-node node-a"></span><span class="tool-art-node node-c"></span><span class="tool-art-label">HEADER<br>ANALYSIS</span></div>
+          </div>
 
-          <div class="grid grid-2" style="gap:16px">
+          <div class="grid grid-2 email-input-grid" style="gap:16px">
             <div class="drop" id="eml-drop" tabindex="0" role="button" aria-label="Choose an .eml file">
               <input type="file" id="eml-file" accept=".eml,.txt,message/rfc822" hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5-5 5 5"/><path d="M12 5v12"/></svg>
@@ -395,58 +578,7 @@
         </div>
       </section>
 
-      <!-- --------------------------------------------------- COVERAGE VIEW -->
-      <section class="view" id="view-coverage" hidden>
-        <div class="stack">
-          <div class="card">
-            <div class="card-head"><h3 class="card-title">What this engine actually does</h3></div>
-            <div class="card-body">
-              <div class="tile-grid">
-                <div class="tile"><div class="n">01</div><h5>Lexical — no network</h5>
-                  <p>IDN &amp; homoglyphs, typosquatting against 180+ brands, brand-in-subdomain, <span class="mono">@</span> decoys, ports, high-abuse TLDs, shorteners, entropy, double extensions, open-redirect wrappers. Runs in ~5&nbsp;ms.</p></div>
-                <div class="tile"><div class="n">02</div><h5>Infrastructure</h5>
-                  <p>RDAP registration age and registrar, DNS (A/MX/NS/SPF/DMARC), TLS issuer and certificate age. A brand-claiming domain with no MX is not a brand.</p></div>
-                <div class="tile"><div class="n">03</div><h5>Reputation</h5>
-                  <p>Google Safe Browsing and VirusTotal with your own key. Missing keys are labelled — never silently treated as clean.</p></div>
-                <div class="tile"><div class="n">04</div><h5>Click preview</h5>
-                  <p>Server-side redirect chain, login-form discovery, and whether a password field POSTs to a different domain. SSRF-guarded, JavaScript never executed.</p></div>
-                <div class="tile"><div class="n">05</div><h5>Email forensics</h5>
-                  <p>SPF/DKIM/DMARC with real signature verification, Received-chain hop analysis, Reply-To and display-name spoofing, BEC lexicon, India scam corpus, attachment flags.</p></div>
-                <div class="tile"><div class="n">06</div><h5>Organisation memory</h5>
-                  <p>First-contact senders and domains, vendor bank-detail diffs against a trusted baseline, time-of-click URL snapshots, and campaign clustering.</p></div>
-              </div>
-            </div>
-          </div>
 
-          <div class="grid grid-2">
-            <div class="card"><div class="card-head"><h3 class="card-title">Deliberate choices</h3></div>
-              <div class="card-body prose"><ul>
-                <li><b>Progressive verdicts.</b> Lexical answer in milliseconds, corroboration streams in after. A slow checker gets bypassed.</li>
-                <li><b>“Unknown” is a real answer.</b> If infrastructure can't corroborate, we say so. An unexpandable short link is never “safe”.</li>
-                <li><b>Every verdict has reasons.</b> Named signals, weights, thresholds and a receipt ID you can paste into a ticket.</li>
-                <li><b>Never clickable.</b> Everything is defanged — <span class="defang">hxxps://evil[.]com</span>.</li>
-                <li><b>Teach, don't scold.</b> Each signal carries the transferable lesson.</li>
-              </ul></div></div>
-            <div class="card"><div class="card-head"><h3 class="card-title">Deliberate non-features</h3></div>
-              <div class="card-body prose"><ul>
-                <li><b>No opaque “risk score 87”.</b> Scores are derived from auditable signals.</li>
-                <li><b>No JS execution, no form submission.</b> The preview reads HTML and describes it.</li>
-                <li><b>No AI chat bubble.</b> An evidence chain with citations beats prose.</li>
-                <li><b>No silent green ticks.</b> Degraded mode is labelled every time.</li>
-                <li><b>No auto-trust of an email's own numbers.</b> A bank detail from an unverified message never becomes the baseline.</li>
-              </ul></div></div>
-          </div>
-
-          <div class="card"><div class="card-head"><h3 class="card-title">Known limits, stated rather than hidden</h3></div>
-            <div class="card-body prose"><ul>
-              <li><b>.eml only</b> — <span class="mono">.msg</span> needs one more parser.</li>
-              <li><b>No image or QR decoding</b> — attachment hashes are reported instead.</li>
-              <li><b>Public-suffix list is small and India-heavy</b> — swap in the full PSL for wider coverage.</li>
-              <li><b>Single HTML GET preview</b> — JS-gated and login-gated pages won't reveal themselves.</li>
-              <li><b>Persistence.</b> Local development can use SQLite; this hosted deployment uses Postgres for accounts and scan history.</li>
-            </ul></div></div>
-        </div>
-      </section>
 
     </main>
   </div>
@@ -490,18 +622,25 @@
       <div class="profile-avatar large" id="settings-avatar">?</div>
       <div><div class="profile-menu-name" id="settings-name">–</div><div class="profile-menu-mobile" id="settings-email">Gmail not added</div></div>
     </div>
-    <nav class="settings-nav" aria-label="Settings sections">
-      <button class="settings-nav-item active" id="settings-tab-profile" type="button" aria-selected="true">
-        <span class="settings-nav-icon" aria-hidden="true">◎</span>
-        <span><b>Profile</b><small>Personal details and appearance</small></span>
-      </button>
-      <button class="settings-nav-item" id="settings-tab-privacy" type="button" aria-selected="false">
-        <span class="settings-nav-icon" aria-hidden="true">▣</span>
-        <span><b>Privacy &amp; authentication</b><small>Password, data and account security</small></span>
-      </button>
-    </nav>
-    <section class="settings-section" id="settings-profile-section">
-    <div class="settings-card">
+    <section class="settings-home" id="settings-home" aria-label="Settings options">
+      <div class="settings-home-intro"><span class="landing-kicker">YOUR ACCOUNT, YOUR CHOICE</span><h3>What would you like to manage?</h3><p>Choose a topic first. The related options will open on the next screen.</p></div>
+      <div class="settings-home-grid">
+        <button class="settings-home-option" type="button" data-settings-open="profile"><span class="settings-home-icon">◎</span><span><b>Profile details</b><small>Name, avatar and account info</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="security"><span class="settings-home-icon">♢</span><span><b>Sign-in &amp; security</b><small>Password, recovery and login activity</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="notifications"><span class="settings-home-icon">◌</span><span><b>Notifications</b><small>Choose what should get your attention</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="privacy"><span class="settings-home-icon">▤</span><span><b>Privacy &amp; data</b><small>Export, clear, or delete account data</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="appearance"><span class="settings-home-icon">◐</span><span><b>Appearance</b><small>Switch between light and dark themes</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="devices"><span class="settings-home-icon">▣</span><span><b>Accounts on this device</b><small>Review saved usernames or add an account</small></span><span class="settings-home-arrow">→</span></button>
+      </div>
+      <div class="settings-help-card"><span>?</span><div><b>Need a hand?</b><small>Open the PhishGuard Help Guide from the workspace for quick answers.</small></div></div>
+    </section>
+    <div class="settings-detail" id="settings-detail" hidden>
+      <div class="settings-detail-head">
+        <button class="settings-back" id="settings-back" type="button">← All settings</button>
+        <div><h3 id="settings-detail-title">Profile details</h3><p id="settings-detail-copy">Manage your PhishGuard account details.</p></div>
+      </div>
+    <section class="settings-section" id="settings-profile-section" hidden>
+    <div class="settings-card" data-settings-category="profile">
       <div class="settings-card-title">Profile appearance</div>
       <div class="settings-help">Customize the name and initials shown in the app. Your password is required to save profile changes.</div>
       <form class="settings-form" id="settings-profile-form">
@@ -514,26 +653,46 @@
         <button class="btn btn-primary" id="settings-profile-submit" type="submit">Save profile</button>
       </form>
     </div>
-    <div class="settings-card">
+    <div class="settings-card" data-settings-category="profile">
+      <div class="settings-card-title">Account at a glance</div>
       <div class="settings-row"><span>Username</span><b id="settings-username">–</b></div>
       <div class="settings-row"><span>Gmail address</span><b id="settings-email-value">Not added</b></div>
       <div class="settings-row"><span>Mobile number</span><b id="settings-mobile-value">–</b></div>
       <div class="settings-row"><span>Session</span><b>Active on this device</b></div>
     </div>
-    <div class="settings-card">
-      <div class="settings-row"><span>Appearance</span><button class="btn btn-ghost btn-sm" id="settings-theme" type="button">Switch theme</button></div>
+    <div class="settings-card" data-settings-category="appearance">
+      <div class="settings-card-title">Workspace appearance</div>
+      <div class="settings-help">Choose the theme that feels comfortable for your workspace.</div>
+      <div class="settings-row"><span>Current theme</span><button class="btn btn-ghost btn-sm" id="settings-theme" type="button">Switch theme</button></div>
+    </div>
+    <div class="settings-card" data-settings-category="devices">
+      <div class="settings-card-title">Accounts on this device</div>
+      <div class="settings-help">Only saved usernames are shown here; a password is always required to sign in.</div>
+      <div class="profile-saved-list" id="settings-saved-list"></div>
+      <button class="btn btn-primary" id="settings-add-account" type="button">＋ Add another account</button>
     </div>
     </section>
     <section class="settings-section" id="settings-privacy-section" hidden>
-    <div class="privacy-hero">
+    <div class="privacy-hero" data-settings-category="security">
       <div class="privacy-hero-icon" aria-hidden="true">✓</div>
       <div><div class="auth-eyebrow">PROTECTED ACCOUNT</div><h3>Privacy &amp; authentication</h3><p>Control your sign-in details, notifications, and personal data from one secure place.</p></div>
     </div>
-    <details class="privacy-group" id="privacy-security-group" open>
+    <details class="privacy-group" id="privacy-security-group" data-settings-category="security">
       <summary><span class="privacy-group-icon">♢</span><span><b>Account security</b><small>Gmail, mobile number, password and login activity</small></span><span class="privacy-chevron">⌄</span></summary>
       <div class="privacy-group-body">
-      <div class="settings-help">Sensitive account changes always require your current password.</div>
-    <div class="settings-card">
+      <div class="settings-help">Choose one setting to edit. Sensitive account changes ask for your current password.</div>
+      <div class="settings-action-menu" id="security-action-menu">
+        <button type="button" data-security-action="email" data-security-title="Gmail address"><span>✉</span><span><b>Gmail address</b><small>Add or update your contact email</small></span><i>→</i></button>
+        <button type="button" data-security-action="mobile" data-security-title="Mobile number"><span>⌕</span><span><b>Mobile number</b><small>Update your recovery contact</small></span><i>→</i></button>
+        <button type="button" data-security-action="recovery" data-security-title="Recovery question"><span>?</span><span><b>Recovery question</b><small>Choose a backup account-recovery answer</small></span><i>→</i></button>
+        <button type="button" data-security-action="password" data-security-title="Change password"><span>⌑</span><span><b>Password</b><small>Change the password for this account</small></span><i>→</i></button>
+        <button type="button" data-security-action="activity" data-security-title="Account activity"><span>◷</span><span><b>Login activity</b><small>Review recent sign-ins to your account</small></span><i>→</i></button>
+      </div>
+      <div class="security-action-detail" id="security-action-detail" hidden>
+        <button class="settings-back" id="security-action-back" type="button">← Security options</button>
+        <h4 id="security-action-title">Account setting</h4>
+      </div>
+    <div class="settings-card" data-security-action-card="email" hidden>
       <div class="settings-card-title" id="settings-email-title">Add Gmail address</div>
       <div class="settings-help">Use a Gmail address you control. This local app saves the address but does not send email verification codes.</div>
       <form class="settings-form" id="settings-email-form">
@@ -544,7 +703,7 @@
         <button class="btn btn-primary" id="settings-email-submit" type="submit">Add Gmail address</button>
       </form>
     </div>
-    <div class="settings-card">
+    <div class="settings-card" data-security-action-card="recovery" hidden>
       <div class="settings-card-title">Password recovery question</div>
       <div class="settings-help">Use this only if you cannot log in. Your answer is stored as a secure hash and is never shown back to you.</div>
       <form class="settings-form" id="settings-recovery-form">
@@ -564,7 +723,7 @@
         <button class="btn btn-primary" id="settings-recovery-submit" type="submit">Save recovery question</button>
       </form>
     </div>
-    <div class="settings-card">
+    <div class="settings-card" data-security-action-card="mobile" hidden>
       <div class="settings-card-title">Change mobile number</div>
       <form class="settings-form" id="settings-mobile-form">
         <label for="settings-mobile-input">New mobile number</label>
@@ -574,7 +733,7 @@
         <button class="btn btn-primary" id="settings-mobile-submit" type="submit">Save mobile number</button>
       </form>
     </div>
-    <div class="settings-card">
+    <div class="settings-card" data-security-action-card="password" hidden>
       <div class="settings-card-title">Change password</div>
       <div class="settings-help">Confirm your old password before choosing a new one.</div>
       <form class="settings-form" id="settings-password-form">
@@ -588,7 +747,7 @@
         <button class="btn btn-primary" id="settings-password-submit" type="submit">Change password</button>
       </form>
     </div>
-    <div class="settings-card">
+    <div class="settings-card" data-security-action-card="activity" hidden>
       <div class="settings-card-title">Account activity</div>
       <div class="settings-row"><span>Last password changed</span><b id="settings-password-changed">–</b></div>
       <div class="settings-row"><span>Account created</span><b id="settings-account-created">–</b></div>
@@ -597,7 +756,7 @@
     </div>
       </div>
     </details>
-    <details class="privacy-group" id="privacy-notifications-group" open>
+    <details class="privacy-group" id="privacy-notifications-group" data-settings-category="notifications">
       <summary><span class="privacy-group-icon">◌</span><span><b>Notifications</b><small>Choose how PhishGuard keeps you informed</small></span><span class="privacy-chevron">⌄</span></summary>
       <div class="privacy-group-body">
     <div class="settings-card notification-card">
@@ -623,7 +782,7 @@
     </div>
       </div>
     </details>
-    <details class="privacy-group" id="privacy-data-group" open>
+    <details class="privacy-group" id="privacy-data-group" data-settings-category="privacy">
       <summary><span class="privacy-group-icon">▤</span><span><b>Privacy &amp; data</b><small>Download or clear the information connected to your account</small></span><span class="privacy-chevron">⌄</span></summary>
       <div class="privacy-group-body">
     <div class="settings-card">
@@ -643,7 +802,7 @@
     </div>
       </div>
     </details>
-    <details class="privacy-group privacy-danger-group" id="privacy-danger-group">
+    <details class="privacy-group privacy-danger-group" id="privacy-danger-group" data-settings-category="privacy">
       <summary><span class="privacy-group-icon">!</span><span><b>Danger zone</b><small>Permanent account removal</small></span><span class="privacy-chevron">⌄</span></summary>
       <div class="privacy-group-body">
     <div class="settings-card settings-danger-card">
@@ -659,12 +818,8 @@
       </div>
     </details>
     </section>
-    <div class="settings-message" id="settings-message" role="status" aria-live="polite"></div>
-    <div class="settings-card">
-      <div class="settings-card-title">Accounts on this device</div>
-      <div class="profile-saved-list" id="settings-saved-list"></div>
-      <button class="btn btn-primary" id="settings-add-account" type="button">＋ Add another account</button>
     </div>
+    <div class="settings-message" id="settings-message" role="status" aria-live="polite"></div>
   </div>
 </aside>
 

@@ -253,9 +253,23 @@ function updateProfileUI(user) {
   syncNotificationUI();
 }
 
+function showLanding() {
+  $('#landing-page').hidden = false;
+  $('#auth-screen').hidden = true;
+  $('#dashboard').hidden = true;
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
 function showLogin(tab = 'login', username = '') {
+  $('#landing-page').hidden = true;
   $('#auth-screen').hidden = false;
   $('#dashboard').hidden = true;
+  if (location.pathname !== '/ui-trial') {
+    const loginUrl = tab === 'register' ? '/login?mode=register' : '/login';
+    if (location.pathname !== '/login' || location.search !== (tab === 'register' ? '?mode=register' : '')) {
+      history.replaceState(null, '', loginUrl);
+    }
+  }
   const isRegister = tab === 'register';
   $('#auth-title').textContent = 'Sign in to PhishGuard';
   $('#auth-lede').textContent = 'Create a secure account or log in to access the phishing protection workspace.';
@@ -281,8 +295,10 @@ function showLogin(tab = 'login', username = '') {
 }
 
 function showForgotPassword(username = '') {
+  $('#landing-page').hidden = true;
   $('#auth-screen').hidden = false;
   $('#dashboard').hidden = true;
+  if (location.pathname !== '/login' && location.pathname !== '/ui-trial') history.replaceState(null, '', '/login');
   $('#auth-title').textContent = 'Reset your password';
   $('#auth-lede').textContent = 'Answer the recovery question you chose when creating your account.';
   $('#auth-tabs').hidden = true;
@@ -331,6 +347,7 @@ function validateRegisterStep(step) {
 }
 
 function enterDashboard(user) {
+  $('#landing-page').hidden = true;
   $('#auth-screen').hidden = true;
   $('#dashboard').hidden = false;
   updateProfileUI(user);
@@ -338,7 +355,8 @@ function enterDashboard(user) {
   setSettingsMessage('');
   renderSavedAccounts();
   loadHeader();
-  go(location.hash.slice(1) || 'overview');
+  const requestedRoute = location.hash.slice(1);
+  go(ROUTES[requestedRoute] ? requestedRoute : 'overview');
 }
 
 function closeProfileMenu() {
@@ -346,26 +364,57 @@ function closeProfileMenu() {
   $('#btn-profile').setAttribute('aria-expanded', 'false');
 }
 
-function setSettingsSection(section = 'profile') {
-  const privacy = section === 'privacy';
-  $('#settings-profile-section').hidden = privacy;
-  $('#settings-privacy-section').hidden = !privacy;
-  $('#settings-tab-profile').classList.toggle('active', !privacy);
-  $('#settings-tab-privacy').classList.toggle('active', privacy);
-  $('#settings-tab-profile').setAttribute('aria-selected', String(!privacy));
-  $('#settings-tab-privacy').setAttribute('aria-selected', String(privacy));
+const SETTINGS_CATEGORIES = {
+  profile: { title: 'Profile details', copy: 'Update how your account appears in PhishGuard.', section: 'profile' },
+  security: { title: 'Sign-in & security', copy: 'Choose a specific sign-in or recovery setting to manage.', section: 'privacy' },
+  notifications: { title: 'Notifications', copy: 'Choose which browser and account notifications you want.', section: 'privacy' },
+  privacy: { title: 'Privacy & data', copy: 'Review, export, or remove information linked to your account.', section: 'privacy' },
+  appearance: { title: 'Appearance', copy: 'Set the workspace theme that feels right for you.', section: 'profile' },
+  devices: { title: 'Accounts on this device', copy: 'Manage remembered usernames on this browser.', section: 'profile' },
+};
+
+function resetSecurityActionPicker() {
+  $('#security-action-menu').hidden = false;
+  $('#security-action-detail').hidden = true;
+  $$('[data-security-action-card]').forEach((card) => { card.hidden = true; });
+}
+
+function openSettingsCategory(category) {
+  const settings = SETTINGS_CATEGORIES[category];
+  if (!settings) return;
+  $('#settings-home').hidden = true;
+  $('#settings-detail').hidden = false;
+  $('#settings-detail-title').textContent = settings.title;
+  $('#settings-detail-copy').textContent = settings.copy;
+  $('#settings-profile-section').hidden = settings.section !== 'profile';
+  $('#settings-privacy-section').hidden = settings.section !== 'privacy';
+  $$('#settings-detail [data-settings-category]').forEach((item) => {
+    item.hidden = item.dataset.settingsCategory !== category;
+  });
+  $$('#settings-detail details.privacy-group').forEach((group) => { group.open = false; });
+  resetSecurityActionPicker();
+  setSettingsMessage('');
+  $('#account-panel').scrollTop = 0;
+  if (category === 'notifications') syncNotificationUI();
+  if (category === 'devices') renderSavedAccounts();
+}
+
+function showSettingsHome() {
+  $('#settings-home').hidden = false;
+  $('#settings-detail').hidden = true;
+  $('#settings-profile-section').hidden = true;
+  $('#settings-privacy-section').hidden = true;
+  resetSecurityActionPicker();
+  setSettingsMessage('');
   $('#account-panel').scrollTop = 0;
 }
 
 function openSettings() {
   closeProfileMenu();
-  setSettingsMessage('');
-  setSettingsSection('profile');
+  showSettingsHome();
   $('#account-panel').hidden = false;
   $('#account-scrim').hidden = false;
   renderSavedAccounts();
-  syncNotificationUI();
-  loadLoginHistory();
 }
 
 function closeSettings() {
@@ -401,10 +450,31 @@ document.addEventListener('click', (event) => {
 $('#btn-settings').onclick = openSettings;
 $('#account-panel-close').onclick = closeSettings;
 $('#account-scrim').onclick = closeSettings;
+$('#settings-back').onclick = showSettingsHome;
+$$('[data-settings-open]').forEach((button) => {
+  button.onclick = () => openSettingsCategory(button.dataset.settingsOpen);
+});
+$$('[data-security-action]').forEach((button) => {
+  button.onclick = () => {
+    const action = button.dataset.securityAction;
+    const card = $(`[data-security-action-card="${action}"]`);
+    if (!card) return;
+    $('#security-action-menu').hidden = true;
+    $('#security-action-detail').hidden = false;
+    $('#security-action-title').textContent = button.dataset.securityTitle || button.textContent.trim();
+    $$('[data-security-action-card]').forEach((item) => { item.hidden = item !== card; });
+    $('#account-panel').scrollTop = 0;
+    setSettingsMessage('');
+    if (action === 'activity') loadLoginHistory();
+  };
+});
+$('#security-action-back').onclick = () => {
+  resetSecurityActionPicker();
+  setSettingsMessage('');
+  $('#account-panel').scrollTop = 0;
+};
 $('#settings-theme').onclick = () =>
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
-$('#settings-tab-profile').onclick = () => setSettingsSection('profile');
-$('#settings-tab-privacy').onclick = () => setSettingsSection('privacy');
 $('#settings-enable-notifications').onclick = enableBrowserNotifications;
 $('#notify-browser').onchange = (event) => {
   if (event.target.checked) enableBrowserNotifications();
@@ -711,13 +781,20 @@ $('#btn-logout').onclick = async () => {
 };
 
 async function checkSession() {
+  const isLoginRoute = location.pathname === '/login' || location.pathname === '/ui-trial';
+  const requestedMode = new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login';
   try {
     const result = await api('/api/auth/session');
     if (result.authenticated) enterDashboard(result.user);
-    else showLogin('login');
+    else if (isLoginRoute) showLogin(requestedMode);
+    else showLanding();
   } catch (error) {
-    showLogin('login');
-    setAuthMessage('Unable to reach the authentication service. Please try again.', 'error');
+    if (isLoginRoute) {
+      showLogin(requestedMode);
+      setAuthMessage('Unable to reach the authentication service. Please try again.', 'error');
+    } else {
+      showLanding();
+    }
   }
 }
 
@@ -821,17 +898,34 @@ applyTheme(localStorage.getItem('pg-theme') || 'dark');
 $('#theme-toggle').onclick = () =>
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 
+const sidebarToggle = $('#sidebar-toggle');
+function setSidebarHidden(hidden, persist = true) {
+  const sidebar = $('#app-sidebar');
+  $('#dashboard').classList.toggle('sidebar-hidden', hidden);
+  sidebar.hidden = hidden;
+  sidebar.setAttribute('aria-hidden', String(hidden));
+  sidebarToggle.setAttribute('aria-expanded', String(!hidden));
+  sidebarToggle.setAttribute('aria-label', hidden ? 'Show navigation panel' : 'Hide navigation panel');
+  $('#sidebar-toggle-label').textContent = hidden ? 'Show panel' : 'Hide panel';
+  if (persist) {
+    try { localStorage.setItem('pg-sidebar-hidden', hidden ? '1' : '0'); } catch { /* optional preference */ }
+  }
+}
+let sidebarStartsHidden = false;
+try { sidebarStartsHidden = localStorage.getItem('pg-sidebar-hidden') === '1'; } catch { /* storage may be unavailable */ }
+setSidebarHidden(sidebarStartsHidden, false);
+sidebarToggle.onclick = () => setSidebarHidden(!$('#dashboard').classList.contains('sidebar-hidden'));
+
 /* ----------------------------------------------------------------- routing */
 const ROUTES = {
-  overview: { title: 'Overview', crumb: 'Your personal security score, saved scans and account activity' },
+  overview: { title: 'Overview', crumb: 'Your recent checks, saved evidence and next steps' },
   saved: { title: 'Saved scans', crumb: 'Organise important link and email checks into folders' },
-  link: { title: 'Check a link', crumb: 'Instant lexical verdict, then infrastructure, reputation and a click preview' },
-  email: { title: 'Check an email', crumb: 'Authentication, header forensics, BEC language, links, attachments and bank-detail diffs' },
-  sweep: { title: 'Org sweep', crumb: 'Report-to-sweep: one report protects everyone who received the same campaign' },
-  coverage: { title: 'Coverage & design', crumb: 'What the engine does, what it deliberately does not, and where its limits are' },
+  link: { title: 'Check a link', crumb: 'Review domain, infrastructure, reputation and redirect signals' },
+  email: { title: 'Check an email', crumb: 'Review sender authentication, headers, links and attachments' },
+  sweep: { title: 'Campaigns', crumb: 'Related reports, shared signals and campaign activity' },
 };
 function go(route) {
-  if (!ROUTES[route]) route = 'link';
+  if (!ROUTES[route]) route = 'overview';
   $$('.view').forEach((v) => { v.hidden = v.id !== `view-${route}`; });
   $$('.nav-item[data-route]').forEach((b) =>
     b.setAttribute('aria-current', b.dataset.route === route ? 'page' : 'false'));
@@ -844,9 +938,11 @@ function go(route) {
   window.scrollTo({ top: 0, behavior: 'instant' });
   if (route === 'link') $('#url-input').focus({ preventScroll: true });
 }
-$$('.nav-item[data-route]').forEach((b) => { b.onclick = () => go(b.dataset.route); });
+$$('[data-route]').forEach((b) => { b.onclick = () => go(b.dataset.route); });
 $$('[data-dashboard-route]').forEach((b) => { b.onclick = () => go(b.dataset.dashboardRoute); });
-window.addEventListener('hashchange', () => go(location.hash.slice(1)));
+window.addEventListener('hashchange', () => {
+  if (!$('#dashboard').hidden) go(location.hash.slice(1));
+});
 
 /* ------------------------------------------------------- recent checks ---- */
 function getRecent() {
@@ -995,41 +1091,51 @@ function renderPersonalDashboard() {
   $('#dashboard-user-name').textContent = displayName;
   const saved = getSavedScans();
   const recent = getRecent();
-  const risky = saved.filter((item) => ['malicious', 'suspicious'].includes(item.tier)).length;
-  const scoreParts = [
-    [Boolean(activeUser.email), 20],
-    [Boolean(activeUser.mobile), 20],
-    [Boolean(activeUser.notifications?.security), 20],
-    [Boolean(activeUser.display_name && activeUser.avatar_initials), 20],
-    [saved.length > 0, 20],
-  ];
-  const score = scoreParts.reduce((total, [done, points]) => total + (done ? points : 0), 0);
-  const scoreLabel = score >= 80 ? 'Strong profile' : score >= 50 ? 'Good start' : 'Needs attention';
+  const needsReview = saved.filter((item) => ['malicious', 'suspicious'].includes(item.tier)).length;
+
   $('#personal-kpis').innerHTML = `
-    <div class="kpi accent"><div class="label">Security score</div><div class="value mono">${score}%</div><div class="foot">${scoreLabel}</div></div>
-    <div class="kpi"><div class="label">Recent checks</div><div class="value mono">${num(recent.length)}</div><div class="foot">on this browser</div></div>
+    <div class="kpi"><div class="label">Recent checks</div><div class="value mono">${num(recent.length)}</div><div class="foot">on this device</div></div>
     <div class="kpi"><div class="label">Saved scans</div><div class="value mono">${num(saved.length)}</div><div class="foot">in your library</div></div>
-    <div class="kpi"><div class="label">Needs review</div><div class="value mono">${num(risky)}</div><div class="foot">suspicious or malicious</div></div>`;
-  $('#dashboard-score').innerHTML = `<span>${score}%</span>`;
-  $('#dashboard-score').style.setProperty('--score', `${score * 3.6}deg`);
-  $('#dashboard-score-label').textContent = scoreLabel;
-  $('#dashboard-score-title').textContent = score >= 80 ? 'Your profile is well protected' : 'Complete your security profile';
-  $('#dashboard-score-help').textContent = score >= 80
-    ? 'Keep reviewing suspicious messages and checking saved scans.'
-    : 'Add your Gmail, profile details, and a saved scan to improve your score.';
-  const checklist = [
-    ['Gmail address added', Boolean(activeUser.email)],
-    ['Mobile number added', Boolean(activeUser.mobile)],
-    ['Security alerts enabled', Boolean(activeUser.notifications?.security)],
-    ['Profile appearance customized', Boolean(activeUser.display_name && activeUser.avatar_initials)],
-    ['First scan saved for review', saved.length > 0],
-  ];
-  const remaining = checklist.filter(([, done]) => !done);
-  const checklistCard = $('#dashboard-checklist-card');
-  checklistCard.hidden = remaining.length === 0;
-  $('#dashboard-checklist').innerHTML = remaining.map(([label]) => `<div class="dashboard-check"><span>○</span><span>${label}</span></div>`).join('');
+    <div class="kpi"><div class="label">Flagged to review</div><div class="value mono">${num(needsReview)}</div><div class="foot">from saved results</div></div>`;
+
+  const recentBox = $('#dashboard-recent-list');
+  recentBox.innerHTML = recent.length
+    ? recent.slice(0, 5).map((item, index) => {
+        const tier = tierOf(item.tier);
+        const name = item.short || item.label || (item.kind === 'email' ? 'Email scan' : 'Link scan');
+        const kindLabel = item.kind === 'email' ? 'Email check' : 'Link check';
+        return `<button class="overview-recent-item" type="button" data-overview-recent="${index}">
+          <span class="overview-recent-dot" style="--activity-color:${tier.color}"></span>
+          <span class="overview-recent-copy"><b>${esc(kindLabel)}</b><small>${esc(name)}</small></span>
+          <span class="overview-recent-tier">${esc(tier.label)}</span><span class="overview-guide-arrow" aria-hidden="true">→</span>
+        </button>`;
+      }).join('')
+    : '<div class="overview-empty"><span class="overview-empty-mark">✳</span><b>Your activity starts with a check.</b><span>Try a link or email to see its signals and evidence here.</span><button class="btn btn-primary btn-sm" type="button" data-dashboard-route="link">Check your first link →</button></div>';
+
+  $$('[data-overview-recent]', recentBox).forEach((button) => {
+    button.onclick = () => {
+      const item = recent[Number(button.dataset.overviewRecent)];
+      if (!item) return;
+      if (item.kind === 'email') {
+        go('email');
+        $('#eml-raw').value = item.payload || '';
+        setEmailMode('paste');
+        if (item.payload) analyseEmail(item.payload, false);
+      } else {
+        go('link');
+        $('#url-input').value = item.payload || '';
+        if (item.payload) analyseUrl(item.payload);
+      }
+    };
+  });
+  $$('[data-dashboard-route]', recentBox).forEach((button) => {
+    button.onclick = () => go(button.dataset.dashboardRoute);
+  });
+
   const box = $('#dashboard-saved-list');
-  box.innerHTML = saved.length ? saved.slice(0, 4).map((item) => savedScanMarkup(item, true)).join('') : '<div class="saved-empty"><b>Your saved library is empty.</b><span>Save important results into folders so you can review them later.</span></div>';
+  box.innerHTML = saved.length
+    ? saved.slice(0, 4).map((item) => savedScanMarkup(item, true)).join('')
+    : '<div class="saved-empty"><b>Your saved library is empty.</b><span>Save important results into folders so you can review them later.</span></div>';
   bindSavedScanButtons(box);
 }
 
@@ -1038,11 +1144,12 @@ async function loadHeader() {
   try {
     const h = await api('/api/health');
     const keys = Object.entries(h.intel || {}).filter(([, v]) => v).map(([k]) => k);
+    const reputationStatus = keys.length ? keys.join(', ') : 'No reputation keys configured';
     $('#engine-ver').textContent = '0.9.0';
-    $('#engine-intel').textContent = keys.length ? keys.join(', ') : 'BYO-key';
+    $('#engine-intel').textContent = reputationStatus;
     $('#engine-domains').textContent = num(h.stats.domains_seen);
     $('#engine-reports').textContent = num(h.stats.reports);
-    $('#chip-intel').innerHTML = `<span class="dot" style="background:${keys.length ? 'var(--ok)' : 'var(--warn)'}"></span> intel <b>${esc(keys.length ? keys.join(' + ') : 'BYO-key')}</b>`;
+    $('#chip-intel').innerHTML = `<span class="dot" style="background:${keys.length ? 'var(--ok)' : 'var(--warn)'}"></span> reputation <b>${esc(keys.length ? keys.join(' + ') : 'BYO key needed')}</b>`;
     $('#chip-clusters').innerHTML = `<span class="dot" style="background:var(--accent)"></span> clusters <b>${num(h.stats.clusters)}</b>`;
     return h;
   } catch { return null; }

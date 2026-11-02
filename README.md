@@ -19,15 +19,18 @@ what to check before pointing it at real mail.
 
 ## UI
 
-A real app shell, not a debug page: persistent sidebar navigation, a verdict
-dashboard, a receipt drawer, dark + light themes, and a mobile layout that holds up
-at 390 px.
+A public-first product landing page, then a signed-in workspace with persistent
+navigation, evidence-first verdicts, a receipt drawer, dark + light themes, and a
+mobile layout that holds up at 390 px. The workspace sidebar can be hidden when it
+isn't needed.
 
 ![PhishGuard link verdict](docs/screenshot-link.png)
 
 **Structure**
-- **Sidebar** — routes (Check a link / Check an email / Org sweep / Coverage), recent
-  checks persisted in `localStorage`, live engine state (version, intel keys, counters).
+- **Public landing page** — explains link checks, email forensics, reputation keys,
+  safe-preview behavior, evidence receipts, and current limitations before sign-in.
+- **Workspace sidebar** — routes (Overview / Saved scans / Check a link / Check an email /
+  Campaigns), recent checks persisted in `localStorage`, and a hide/show control.
 - **Verdict hero** — score gauge, plain-language headline, confidence as a *range*,
   two honesty chips (`naming evidence only — payload not observed`, `degraded — lexical
   only`), and a facts strip (domain, age, DNS, TLS, intel).
@@ -168,27 +171,27 @@ password signs out other sessions. Multiple accounts can be
 remembered on one browser by username only; switching accounts logs out the
 current session and requires the selected account's password.
 
-Settings are separated into **Profile** and **Privacy & authentication** sections.
-Privacy & authentication includes Gmail/mobile updates, password changes, data
-export, clearing personal activity, login history, and password-confirmed account
-deletion. Clearing personal data keeps the account and security login history;
-deleting the account removes the account and its personal activity permanently.
+Settings opens with a choice-first hub: **Profile**, **Security**, **Notifications**,
+**Privacy & data**, **Appearance**, and **Device & accounts**. Selecting a category
+shows only its relevant controls. Security actions are progressive: choose an
+account-security group, then choose a specific action such as updating Gmail or
+mobile, changing a password, managing a recovery question, or reviewing login
+activity. Privacy & data includes export, clearing personal activity, and
+password-confirmed account deletion. Clearing personal data keeps the account and
+security login history; deleting the account removes the account and its personal
+activity permanently. Browser notifications can be enabled for completed scans,
+with optional sound. Notifications work while the browser tab remains open or
+minimized; closing the browser requires a future server push-notification service.
 
-The Privacy & authentication page is organised into expandable groups for Account
-security, Notifications, Privacy & data, and Danger zone. Browser notifications
-can be enabled for completed scans, with optional sound. Notifications work while
-the browser tab remains open or minimized; closing the browser requires a future
-server push-notification service.
+The public landing page is shown before sign-in. The signed-in **Overview** page
+shows recent checks on this device, saved scans, items flagged for review, and
+clear next actions—there is no speculative account or website security score.
+Link and email verdicts can be saved into named folders from the **Saved scans**
+library. Saved scans are kept per username in that browser's local storage;
+passwords and session tokens are never stored there.
 
-The dashboard opens with a personalized **Overview** page showing the signed-in
-user's security score, profile checklist, recent checks, saved scans, and quick
-actions. Link and email verdicts can be saved into named folders from the
-**Saved scans** library. Saved scans are kept per username in that browser's
-local storage; passwords and session tokens are never stored there.
-
-The dark theme uses a calm, low-contrast palette with muted accents and softer
-surfaces for comfortable everyday use. The light theme remains available from
-the theme toggle.
+The visual system uses warm evergreen, sage, and brass accents instead of a blue
+palette. Dark and light themes remain available from the theme toggle.
 
 Gmail is format-checked and stored as an account detail; this local version does
 not send an email verification code. Existing accounts are upgraded automatically

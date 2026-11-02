@@ -58,6 +58,18 @@ def index():
     return render_template("index.html")
 
 
+@app.get("/login")
+def login_page():
+    """Serve the sign-in view as a distinct route from the public landing page."""
+    return render_template("index.html", login_page=True)
+
+
+@app.get("/ui-trial")
+def ui_trial():
+    """Render the isolated editorial split-screen sign-in trial."""
+    return render_template("index.html", ui_trial=True)
+
+
 @app.get("/api/health")
 def health():
     from engine import intel
