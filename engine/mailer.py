@@ -30,6 +30,24 @@ def configured() -> bool:
     return bool(settings["api_key"] and settings["secret_key"] and settings["sender"])
 
 
+def _provider_error_reference(response: requests.Response) -> str:
+    """Return only non-sensitive Mailjet error identifiers, never its body."""
+    try:
+        body = response.json()
+    except (ValueError, TypeError):
+        return ""
+    if not isinstance(body, dict):
+        return ""
+    parts = []
+    for field in ("ErrorCode", "ErrorIdentifier"):
+        value = body.get(field)
+        if isinstance(value, str) and value and len(value) <= 80:
+            # Avoid reflecting arbitrary provider text into the user-facing error.
+            if all(char.isalnum() or char in "-_" for char in value):
+                parts.append(f"{field}={value}")
+    return "; ".join(parts)
+
+
 def send_email(recipient: str, subject: str, text: str) -> None:
     settings = _settings()
     if not configured():
@@ -50,7 +68,11 @@ def send_email(recipient: str, subject: str, text: str) -> None:
             timeout=8,
         )
         if response.status_code >= 400:
-            raise MailDeliveryError(f"Mailjet delivery failed (HTTP {response.status_code}).")
+            reference = _provider_error_reference(response)
+            suffix = f"; {reference}" if reference else ""
+            raise MailDeliveryError(
+                f"Mailjet delivery failed (HTTP {response.status_code}{suffix})."
+            )
         result = response.json()
         messages = result.get("Messages", []) if isinstance(result, dict) else []
         if not messages or messages[0].get("Status") != "success":

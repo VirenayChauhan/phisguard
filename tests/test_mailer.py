@@ -47,11 +47,21 @@ class MailjetMailerTests(unittest.TestCase):
         self.assertEqual(kwargs["timeout"], 8)
 
     @patch("engine.mailer.requests.post")
-    def test_provider_failure_does_not_expose_credentials_or_body(self, post):
-        post.return_value = Mock(status_code=401)
+    def test_provider_failure_shows_safe_reference_without_exposing_credentials_or_body(self, post):
+        response = Mock(status_code=401)
+        response.json.return_value = {
+            "ErrorCode": "mj-0001",
+            "ErrorIdentifier": "abc123-request-id",
+            "ErrorMessage": "Do not expose this provider message",
+        }
+        post.return_value = response
         with self.assertRaises(mailer.MailDeliveryError) as raised:
             mailer.send_email("person@example.test", "Subject", "Sensitive body")
         message = str(raised.exception)
+        self.assertIn("HTTP 401", message)
+        self.assertIn("ErrorCode=mj-0001", message)
+        self.assertIn("ErrorIdentifier=abc123-request-id", message)
+        self.assertNotIn("Do not expose this provider message", message)
         self.assertNotIn("test-api-key", message)
         self.assertNotIn("test-secret-key", message)
         self.assertNotIn("Sensitive body", message)
