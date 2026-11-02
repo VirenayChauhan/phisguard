@@ -6,6 +6,7 @@ sent to an LLM, search engine, or other external service.
 from __future__ import annotations
 
 import re
+from difflib import get_close_matches
 from datetime import datetime, timedelta, timezone
 
 from engine import store
@@ -14,13 +15,60 @@ RATE_WINDOW_SECONDS = 600
 RATE_MAX_REQUESTS = 30
 MAX_QUESTION_LENGTH = 1200
 
-# A single distinctive app term can select an answer. Generic terms such as
-# "password" or "email" alone are not enough to answer unrelated questions.
+# App-oriented words allow short natural questions, while synonym and phrase
+# hints cover common ways people describe the same task without exact FAQ terms.
 DISTINCTIVE_TERMS = {
-    "urlhaus", "virustotal", "phishtank", "safebrowsing",
-    "otp", "gmail", "recovery", "signup", "register", "login", "log", "signin",
-    "link", "url", "eml", "scan", "phishing", "suspicious",
+    "urlhaus", "virustotal", "phishtank", "safebrowsing", "otp", "gmail",
+    "recovery", "signup", "register", "login", "signin", "link", "url",
+    "eml", "scan", "phishing", "suspicious",
 }
+TOKEN_SYNONYMS = {
+    "signin": {"login"}, "sign-in": {"login"}, "logged": {"login"},
+    "access": {"login"}, "enter": {"login"}, "locked": {"login"},
+    "blocked": {"login"}, "unlock": {"login"},
+    "forgotten": {"forgot"}, "lost": {"forgot"}, "recover": {"recovery"},
+    "retrieve": {"recovery"}, "passcode": {"password"}, "passphrase": {"password"},
+    "secret": {"password"}, "signup": {"register"}, "join": {"register"},
+    "setup": {"create"}, "make": {"create"}, "start": {"create"},
+    "inspect": {"check"}, "review": {"check"}, "test": {"check"},
+    "analyze": {"check"}, "analyse": {"check"}, "examine": {"check"},
+    "website": {"link"}, "site": {"link"}, "webpage": {"link"},
+    "address": {"url"}, "mail": {"email"}, "message": {"email"},
+    "inbox": {"email"}, "preferences": {"settings"}, "options": {"settings"},
+    "option": {"settings"}, "history": {"data"}, "records": {"data"},
+    "stored": {"data"}, "alerts": {"notifications"}, "notify": {"notifications"},
+    "broken": {"problem"}, "issue": {"problem"}, "trouble": {"problem"},
+    "stuck": {"problem"}, "wrong": {"problem"}, "confused": {"help"},
+}
+PHRASE_HINTS = [
+    (re.compile(r"\b(?:log|sign)\s+in(?:to|\s+to)?\b"), {"login", "signin", "access", "phishguard"}),
+    (re.compile(r"\b(?:can't|cannot|can not|unable to|won't|will not)\s+(?:log|sign)\s+in(?:to|\s+to)?\b"), {"login", "signin", "access", "phishguard", "problem"}),
+    (re.compile(r"\b(?:can't|cannot|can not|unable to|won't|will not)\s+(?:get in|access|enter)\b"), {"login", "signin", "access", "phishguard", "problem"}),
+    (re.compile(r"\b(?:locked out|lockout|can't get into|cannot get into|won't let me in)\b"), {"login", "signin", "access", "phishguard", "problem"}),
+    (re.compile(r"\b(?:password|passcode)\b.{0,30}\b(?:not working|isn't working|wrong|rejected|keeps failing)\b"), {"login", "password", "problem", "phishguard"}),
+    (re.compile(r"\b(?:forgot|forgotten|lost|can't remember|cannot remember)\b.{0,35}\b(?:password|passcode|secret|log in|sign in)\b"), {"forgot", "password", "reset"}),
+    (re.compile(r"\b(?:reset|change|update)\b.{0,30}\b(?:password|passcode)\b"), {"reset", "password"}),
+    (re.compile(r"\b(?:set up|make|open|start)\b.{0,20}\b(?:new\s+)?account\b"), {"create", "register", "account"}),
+    (re.compile(r"\b(?:email|mail|message)\b.{0,35}\b(?:looks?|seems?)?\s*(?:weird|odd|fake|off|suspicious|strange)\b"), {"suspicious", "email", "message", "check"}),
+    (re.compile(r"\b(?:weird|odd|fake|off|suspicious|strange)\s+(?:email|mail|message)\b"), {"suspicious", "email", "message", "check"}),
+    (re.compile(r"\b(?:link|url|website|site)\b.{0,35}\b(?:looks?|seems?)?\s*(?:weird|odd|fake|off|suspicious|strange)\b"), {"suspicious", "link", "url", "check"}),
+    (re.compile(r"\b(?:weird|odd|fake|off|suspicious|strange)\s+(?:link|url|website|site)\b"), {"suspicious", "link", "url", "check"}),
+]
+VAGUE_WORDS = {"help", "problem", "issue", "trouble", "stuck", "wrong", "confused", "something", "anything", "thing", "isn", "working"}
+STOP_WORDS = {
+    "a", "about", "am", "an", "and", "are", "can", "could", "do", "does", "for",
+    "give", "have", "i", "in", "is", "it", "me", "my", "of", "please", "the",
+    "to", "what", "when", "where", "which", "who", "why", "with", "would", "you",
+    "your", "need", "want", "just", "some", "s", "t", "there", "this", "that",
+}
+SUGGESTED_QUESTIONS = [
+    "How do I log in to PhishGuard?",
+    "How do I reset my PhishGuard password?",
+    "How do I create a PhishGuard account?",
+    "How do I check a suspicious link?",
+    "How do I check an email in PhishGuard?",
+    "How do I manage PhishGuard settings?",
+]
 
 
 class AssistantError(Exception):
@@ -194,29 +242,69 @@ def _tokens(text: str) -> set[str]:
     return set(re.findall(r"[a-z0-9]+", text.lower()))
 
 
-def _best_answer(question: str) -> str:
+def _expanded_tokens(question: str) -> set[str]:
     tokens = _tokens(question)
-    best = None
+    expanded = set(tokens)
+    for token in tokens:
+        expanded.update(TOKEN_SYNONYMS.get(token, ()))
+
+    normalized = question.lower().replace("’", "'")
+    for pattern, hints in PHRASE_HINTS:
+        if pattern.search(normalized):
+            expanded.update(hints)
+
+    vocabulary = {word for item in FAQS for word in item["keywords"]}
+    for token in tokens:
+        if len(token) < 5 or token in vocabulary:
+            continue
+        close = get_close_matches(token, vocabulary, n=1, cutoff=0.82)
+        if close:
+            expanded.add(close[0])
+    return expanded
+
+
+def _best_answer(question: str) -> tuple[str, list[str]]:
+    tokens = _tokens(question)
+    expanded = _expanded_tokens(question)
+    best_answer = None
     best_score = 0
     for item in FAQS:
-        score = len(tokens & item["keywords"])
+        score = len(expanded & item["keywords"])
         if score > best_score:
-            best = item["answer"]
+            best_answer = item["answer"]
             best_score = score
-    matched_terms = tokens & DISTINCTIVE_TERMS
-    if best and (best_score >= 2 or matched_terms):
-        return best
+
+    # If the wording is vague, ask one simple follow-up instead of guessing.
+    meaningful = tokens - STOP_WORDS
+    if best_score < 2 and (not meaningful or meaningful <= VAGUE_WORDS):
+        return (
+            "Sure — which part of PhishGuard do you need help with? Pick one of these, "
+            "or tell me a little more:",
+            SUGGESTED_QUESTIONS,
+        )
+
+    matched_terms = expanded & DISTINCTIVE_TERMS
+    if best_answer and (best_score >= 2 or matched_terms):
+        return best_answer, []
+
     return (
-        "I can answer only PhishGuard questions, such as how to log in, recover an account, "
-        "check a link or email, manage settings, or understand optional scan signals. I can't "
-        "help with general topics. Please rephrase your question about the app."
+        "I can answer only PhishGuard questions. I may have missed what you mean — try "
+        "rephrasing it, or choose one of these common topics:",
+        SUGGESTED_QUESTIONS,
     )
 
 
 def answer_public(question: str) -> dict:
     """Answer a pre-login help request without storing it or requiring an account."""
     question = _validate_question(question)
-    return {"answer": _best_answer(question), "sources": [], "searched": False, "mode": "offline"}
+    answer_text, suggestions = _best_answer(question)
+    return {
+        "answer": answer_text,
+        "suggestions": suggestions,
+        "sources": [],
+        "searched": False,
+        "mode": "offline",
+    }
 
 
 def answer(question: str, username: str, request_ip: str) -> dict:
@@ -226,4 +314,11 @@ def answer(question: str, username: str, request_ip: str) -> dict:
     if store.count_recent_assistant_requests(username, request_ip, since) >= RATE_MAX_REQUESTS:
         raise AssistantError("Help Guide rate limit reached. Please try again later.", 429)
     store.record_assistant_request(username, request_ip, _iso(_now()))
-    return {"answer": _best_answer(question), "sources": [], "searched": False, "mode": "offline"}
+    answer_text, suggestions = _best_answer(question)
+    return {
+        "answer": answer_text,
+        "suggestions": suggestions,
+        "sources": [],
+        "searched": False,
+        "mode": "offline",
+    }

@@ -210,11 +210,13 @@ existing databases.
 
 The sign-in screens and workspace include a built-in, app-scoped Help Guide. It selects
 answers from a PhishGuard FAQ about account creation and recovery, settings, link and
-email checks, saved data, and optional reputation signals. It is not a
-cloud-hosted generative LLM: questions are not sent to an AI or web-search provider,
-and no AI API key or paid service is required. Pre-login questions are not saved to
-account help history. Out-of-scope questions receive a refusal instead of a general
-answer. The rest of PhishGuard can still use the internet for user-requested checks.
+email checks, saved data, and optional reputation signals. Common synonyms, fuzzy
+word matching, and everyday descriptions help it understand less exact phrasing. If
+a question is too vague, it asks what you mean and offers tappable sample questions.
+It is not a cloud-hosted generative LLM: questions are not sent to an AI or web-search
+provider, and no AI API key or paid service is required. Pre-login questions are not
+saved to account help history. Out-of-scope questions get a refusal rather than a
+general answer. The rest of PhishGuard can still use the internet for user-requested checks.
 
 ### 1. Local (2 minutes)
 ```bash

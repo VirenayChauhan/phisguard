@@ -313,6 +313,9 @@ a:hover { text-decoration: underline; }
 .assistant-suggestions { display: flex; gap: 6px; overflow-x: auto; padding: 0 15px 10px; scrollbar-width: thin; }
 .assistant-suggestions button { flex: none; padding: 6px 9px; border: 1px solid var(--border-strong); border-radius: 999px; background: transparent; color: var(--text-dim); cursor: pointer; font-size: 10.5px; }
 .assistant-suggestions button:hover { color: var(--text); background: var(--surface-3); }
+.assistant-followups { display: grid; gap: 6px; margin-top: 9px; }
+.assistant-followup { width: 100%; padding: 7px 9px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 11px; line-height: 1.4; text-align: left; }
+.assistant-followup:hover { border-color: var(--accent); color: var(--text); background: var(--surface-3); }
 .assistant-form { display: flex; align-items: flex-end; gap: 8px; padding: 11px; border-top: 1px solid var(--border); background: var(--surface-2); }
 .assistant-form textarea { min-width: 0; flex: 1; resize: none; padding: 9px 10px; border: 1px solid var(--border-strong); border-radius: 9px; outline: none; background: var(--surface); color: var(--text); font-size: 12.5px; }
 .assistant-form textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }

@@ -973,7 +973,7 @@ function scrollAssistant() {
   box.scrollTop = box.scrollHeight;
 }
 
-function appendAssistantBubble(text, kind = 'ai', sources = []) {
+function appendAssistantBubble(text, kind = 'ai', sources = [], suggestions = []) {
   const bubble = document.createElement('div');
   bubble.className = `assistant-bubble assistant-bubble-${kind}`;
   bubble.innerHTML = esc(text).replace(/\n/g, '<br>');
@@ -984,6 +984,20 @@ function appendAssistantBubble(text, kind = 'ai', sources = []) {
       `<a class="assistant-source" href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.title || source.url)}</a>`
     ).join('')}`;
     bubble.appendChild(sourceBox);
+  }
+  if (Array.isArray(suggestions) && suggestions.length) {
+    const followups = document.createElement('div');
+    followups.className = 'assistant-followups';
+    suggestions.slice(0, 6).forEach((question) => {
+      if (typeof question !== 'string' || !question.trim()) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'assistant-followup';
+      button.textContent = question;
+      button.onclick = () => askAssistant(question);
+      followups.appendChild(button);
+    });
+    if (followups.childElementCount) bubble.appendChild(followups);
   }
   $('#assistant-messages').appendChild(bubble);
   scrollAssistant();
@@ -1002,7 +1016,7 @@ function closeAssistant() {
 
 async function askAssistant(question) {
   const value = (question || '').trim();
-  if (!value) return;
+  if (!value || $('#assistant-send').disabled) return;
   $('#assistant-input').value = '';
   appendAssistantBubble(value, 'user');
   const loading = appendAssistantBubble('Checking the built-in app guide…', 'ai assistant-bubble-loading');
@@ -1010,7 +1024,7 @@ async function askAssistant(question) {
   try {
     const result = await postJSON('/api/assistant', { question: value });
     loading.remove();
-    appendAssistantBubble(result.answer, 'ai', result.sources || []);
+    appendAssistantBubble(result.answer, 'ai', result.sources || [], result.suggestions || []);
   } catch (error) {
     loading.remove();
     appendAssistantBubble(error.message, 'ai');

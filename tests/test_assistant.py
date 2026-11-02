@@ -25,6 +25,25 @@ class AssistantTests(unittest.TestCase):
     def test_off_topic_question_gets_a_scope_refusal(self):
         result = assistant.answer_public("What is the capital of France?")
         self.assertIn("only PhishGuard questions", result["answer"])
+        self.assertTrue(result["suggestions"])
+
+    def test_vague_login_wording_maps_to_the_login_answer(self):
+        result = assistant.answer_public("I can't get into my account")
+        self.assertIn("PhishGuard login screen", result["answer"])
+
+    def test_synonyms_and_misspellings_are_understood(self):
+        result = assistant.answer_public("I forgot my passwrod")
+        self.assertIn("one-time code", result["answer"])
+
+    def test_everyday_description_routes_to_the_right_check(self):
+        result = assistant.answer_public("This email looks fake")
+        self.assertIn("Check an email", result["answer"])
+
+    def test_vague_request_returns_clickable_question_choices(self):
+        result = assistant.answer_public("help me")
+        self.assertIn("which part of PhishGuard", result["answer"])
+        self.assertGreaterEqual(len(result["suggestions"]), 5)
+        self.assertIn("How do I check a suspicious link?", result["suggestions"])
 
     def test_public_questions_are_not_saved_in_account_help_history(self):
         with patch.object(assistant.store, "record_assistant_request", side_effect=AssertionError):
