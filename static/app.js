@@ -1340,7 +1340,7 @@ function renderPersonalDashboard() {
         const tier = tierOf(item.tier);
         const name = item.short || item.label || (item.kind === 'email' ? 'Email scan' : 'Link scan');
         const kindLabel = item.kind === 'email' ? 'Email check' : 'Link check';
-        return `<button class="overview-recent-item" type="button" data-overview-recent="${index}">
+        return `<button class="overview-recent-item" type="button" data-overview-recent="${index}" data-tier="${esc(item.tier)}">
           <span class="overview-recent-dot" style="--activity-color:${tier.color}"></span>
           <span class="overview-recent-copy"><b>${esc(kindLabel)}</b><small>${esc(name)}</small></span>
           <span class="overview-recent-tier">${esc(tier.label)}</span><span class="overview-guide-arrow" aria-hidden="true">→</span>
