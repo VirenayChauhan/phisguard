@@ -20,9 +20,9 @@ what to check before pointing it at real mail.
 ## UI
 
 A public-first product landing page, then a signed-in workspace with persistent
-navigation, evidence-first verdicts, a receipt drawer, dark + light themes, and a
-mobile layout that holds up at 390 px. The workspace sidebar can be hidden when it
-isn't needed.
+navigation, evidence-first verdicts, a receipt drawer, a near-black magenta/violet/blue
+visual system, and a mobile layout that holds up at 390 px. The workspace sidebar can be
+hidden when it isn't needed.
 
 ![PhishGuard link verdict](docs/screenshot-link.png)
 
@@ -31,9 +31,10 @@ isn't needed.
   safe-preview behavior, evidence receipts, and current limitations before sign-in.
 - **Workspace sidebar** — routes (Overview / Saved scans / Check a link / Check an email /
   Campaigns), recent checks persisted in `localStorage`, and a hide/show control.
-- **Verdict hero** — score gauge, plain-language headline, confidence as a *range*,
-  two honesty chips (`naming evidence only — payload not observed`, `degraded — lexical
-  only`), and a facts strip (domain, age, DNS, TLS, intel).
+- **Verdict hero** — score gauge, plain-language headline, categorical evidence strength
+  (not a statistically calibrated probability), honesty chips (`naming evidence only —
+  payload not observed`, `degraded — lexical only`), and a facts strip (domain, age, DNS,
+  TLS, intel).
 - **Progressive rendering** — skeleton → instant lexical verdict → full corroboration,
   with a five-stage pipeline that lights up as each stage completes.
 - **Evidence chain** — severity rail per signal, weight + category metadata, filter
@@ -116,9 +117,14 @@ scripts/seed_demo.py    seeds vendor baselines + report clusters
 2. Score = weighted sum with **positional decay** (1.0, 0.75, 0.6, …) so one critical
    signal is not diluted by ten weak ones, and ten weak ones can't add up to "malicious".
 3. Tier: `≥65 malicious · ≥30 suspicious · ≥12 low · else safe`.
-4. Two independent categories agreeing → confidence rises. No infrastructure data →
-   confidence is `low` and the label becomes `unknown` rather than a clearance.
+4. Independent signal categories agreeing can raise evidence strength. Without
+   infrastructure data, confidence stays `low`; thin evidence may be labelled
+   `unknown` rather than cleared. A decisive signal can still produce a warning
+   while corroboration is unavailable.
 5. Everything is written to an audit receipt.
+
+The score is a rule-based risk indicator, not a probability. Evidence-strength
+categories are qualitative heuristics, not calibrated likelihood estimates.
 
 ---
 
@@ -134,9 +140,9 @@ scripts/seed_demo.py    seeds vendor baselines + report clusters
 | `javascript:…` / `data:…` | critical — dangerous scheme | 40 |
 | `bit.ly/…` (unexpandable) | **unknown**, not safe | 37 |
 | `google.com`, `sbi.co.in`, `icicibank.com`, `incometax.gov.in`, `amazonaws.com` | likely safe | 0–2 |
-| BEC sample: DMARC fail + Reply-To swap + bank change + `.docm` | malicious, high confidence | 100 |
-| India UPI/KYC sample | malicious, high confidence | 94 |
-| Digital-arrest sample | malicious, high confidence | 100 |
+| BEC sample: DMARC fail + Reply-To swap + bank change + `.docm` | malicious, strong corroboration | 100 |
+| India UPI/KYC sample | malicious, strong evidence | 94 |
+| Digital-arrest sample | malicious, strong evidence | 100 |
 | Clean internal mail | likely safe | 0 |
 
 ---
@@ -152,14 +158,14 @@ question and answer. The answer is normalized and stored only as a one-way hash.
 Passwords are never saved as plain text. Successful login creates an HttpOnly,
 SameSite session cookie. Failed logins are rate-limited for 15 minutes.
 
-The login screen includes **Forgot password?**. A user enters their username,
-answers the saved recovery question, and chooses a new password. Recovery answers
-are rate-limited, the new password signs out older sessions, and the user is then
-signed in on the current device. This is a convenient local recovery method, not
-proof of Gmail or mobile ownership; for production deployment, use verified email
-or mobile recovery as an additional factor. Existing accounts without a recovery
-question can add one from Settings → Privacy & authentication after confirming
-their current password.
+The login screen includes **Forgot password?**. A user can either answer the
+saved recovery question or request a one-time code sent to their verified email
+address. Email codes expire after 10 minutes; delivery requires the optional
+server-side email provider configuration. Recovery attempts and code requests are
+rate-limited. A successful reset revokes older login sessions and signs the user
+in on the current device. The recovery question is a convenient alternative, not
+proof of email or mobile ownership. Existing accounts without a recovery question
+can add one from Settings after confirming their current password.
 
 #### Optional Google sign-in
 
@@ -201,7 +207,8 @@ restarts so the short-lived OAuth state/nonce can be checked when Google returns
 
 Copy `.env.example` to `.env`. Keep `AUTH_COOKIE_SECURE=0` for local HTTP use and
 set it to `1` when serving through HTTPS. Mobile numbers are format-validated only;
-phone ownership is not verified because this version intentionally has no OTP.
+phone ownership is not verified because PhishGuard does not send SMS codes. Email
+verification and email password-reset codes are separate, optional email features.
 
 The top-right profile menu shows the active username and mobile number, opens
 settings, and provides Add account and Log out actions. The **Privacy &
@@ -230,8 +237,8 @@ Link and email verdicts can be saved into named folders from the **Saved scans**
 library. Saved scans are kept per username in that browser's local storage;
 passwords and session tokens are never stored there.
 
-The visual system uses warm evergreen, sage, and brass accents instead of a blue
-palette. Dark and light themes remain available from the theme toggle.
+The visual system uses a near-black base with magenta, violet, and blue accents.
+The appearance control switches between the standard and soft-contrast treatments.
 
 Gmail is optional during registration. An account can add an address later from
 Settings → Sign-in & security and verify it with a one-time code when email delivery
@@ -433,16 +440,19 @@ authenticating reverse proxy in front of it first, because there is no login by 
 - Wire `POST /api/report` from your mail gateway so reporting happens before anyone clicks.
 - Feed `report.json` clusters into your SIEM/SOAR; `GET /api/receipt/<id>` is the artifact.
 
-### 6. Before you trust it in production
-- [ ] Replace the dev server with gunicorn/uWSGI (the Dockerfile already does).
-- [ ] Put the preview fetcher in an isolated egress-only container or a real sandbox VM.
-- [ ] Add auth, rate limiting and a per-tenant data-retention policy (emails are PII).
-- [ ] Run an eval: PhishTank/OpenPhish/URLhaus for recall, **Tranco top-1M for false
-      positives**. Report precision/recall at a fixed FPR ≤ 0.1%, not "99% accuracy".
-- [ ] Add adversarial tests: cloaking (different page per User-Agent), redirect chains,
-      delayed payloads, QR codes in images, `.msg` support.
-- [ ] Decide retention: this build stores hashes and counts, plus full receipts — trim
-      `receipts` on a schedule.
+### 6. Production operations and future research
+
+PhishGuard is already deployed on Vercel with persistent Postgres, authenticated
+accounts, rate-limited recovery, security headers, and isolated Preview database
+configuration. Use the beginner-friendly [Production readiness checklist](docs/PRODUCTION-READINESS.md)
+for routine, read-only checks. Do not reset or seed the live database.
+
+For a larger organizational deployment, the remaining research/engineering work is
+separate: independently evaluate detection precision/recall against representative
+benign and malicious datasets; broaden adversarial coverage (cloaking, delayed
+payloads, QR codes, and `.msg`); and review data-retention requirements with the
+operators. Those are not prerequisites for the current personal, non-commercial
+production site.
 
 ---
 
@@ -464,9 +474,10 @@ authenticating reverse proxy in front of it first, because there is no login by 
 
 ## Deploy to Vercel
 
-Vercel's serverless filesystem is temporary. Before deploying the app for real use,
-connect a persistent Postgres database (for example, a free Neon database through
-Vercel Marketplace) and set `DATABASE_URL` in the Vercel project environment. The
-app keeps SQLite as its local-development default and uses Postgres when that
-variable is present. If the database is not configured, the Vercel function returns
-a setup-required response rather than storing account data in ephemeral storage.
+Vercel's serverless filesystem is temporary, so the live app requires a persistent
+Postgres database (for example, Neon connected through Vercel Marketplace). The
+integration supplies its database connection variables; **do not manually edit,
+remove, or rotate integration-managed Neon variables**. The app keeps SQLite as its
+local-development default and uses Postgres when a supported database URL is present.
+If the database is not configured, the Vercel function returns a setup-required
+response rather than storing account data in ephemeral storage.

@@ -1461,7 +1461,7 @@ function verdictHero(v, opts = {}) {
           <span class="chip"><span class="dot" style="background:${v.intel_ok ? 'var(--ok)' : 'var(--warn)'}"></span>
             ${v.intel_ok ? 'corroborated'
               : (v.provisional ? 'instant pass · verifying' : 'degraded — lexical only')}</span>
-          <span class="chip">confidence <b>${esc(v.confidence)}</b></span>
+          <span class="chip">evidence strength <b>${esc(v.confidence)}</b></span>
           <span class="chip" title="${esc(v.confidence_text)}">${esc(v.confidence_text)}</span>
           ${trust}
           ${v.receipt_id ? `<span class="chip mono">${esc(v.receipt_id)}</span>` : ''}

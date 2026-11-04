@@ -56,7 +56,7 @@ def judge(signals: list[dict], *, intel_ok: bool, intel_notes: list[str] | None 
         confidence = "high"
     elif crit or (len(high) >= 2 and intel_ok):
         confidence = "medium" if intel_ok else "low"
-    elif intel_ok and len(signals) <= 1:
+    elif intel_ok and len(signals) == 1:
         confidence = "medium"
     else:
         confidence = "low"
@@ -99,7 +99,7 @@ def judge(signals: list[dict], *, intel_ok: bool, intel_notes: list[str] | None 
         "label": label,
         "headline": headline,
         "confidence": confidence,
-        "confidence_text": _confidence_text(score, confidence),
+        "confidence_text": _confidence_text(confidence),
         "intel_ok": intel_ok,
         # A verdict produced before corroboration is provisional: the UI says
         # "verifying", not "cleared" or "unknown".
@@ -120,20 +120,18 @@ def judge(signals: list[dict], *, intel_ok: bool, intel_notes: list[str] | None 
     }
 
 
-def _confidence_text(score: int, confidence: str) -> str:
-    """Express confidence in the VERDICT, as a range.
+def _confidence_text(confidence: str) -> str:
+    """Describe evidence strength without implying statistically calibrated odds.
 
-    Deliberately not derived from the risk score: "risk 20/100" and "80% sure" are
-    different quantities, and arithmetic mixing them produced nonsense ranges like
-    "55–15% likely correct". These bands describe evidential strength only.
+    Confidence categories are heuristic summaries of corroboration, not measured
+    probabilities. Showing a percentage would imply validation data this engine does
+    not have, so the UI uses plain-language evidence strength instead.
     """
-    bands = {
-        "high": ("85–95%", "corroborated by independent signal categories"),
-        "medium": ("65–85%", "limited corroboration"),
-        "low": ("45–65%", "insufficient corroboration — do not treat as a clearance"),
-    }
-    pct, why = bands.get(confidence, bands["low"])
-    return f"{pct} confident ({why})"
+    return {
+        "high": "strong corroboration across independent signal categories",
+        "medium": "some corroboration; check the evidence before acting",
+        "low": "limited corroboration — do not treat this as a clearance",
+    }.get(confidence, "limited corroboration — do not treat this as a clearance")
 
 
 def _explain(signals, score, tier) -> str:

@@ -180,22 +180,23 @@ class TestScoring(unittest.TestCase):
         self.assertEqual(v["label"], "unknown")
         self.assertNotEqual(v["label"], "likely_safe")
 
-    def test_confidence_range_is_never_inverted(self):
-        """Regression: '55-15% likely correct' shipped once. A range must ascend."""
-        import re
+    def test_evidence_strength_avoids_uncalibrated_probability_claims(self):
+        """Evidence categories are heuristic; avoid presenting them as measured odds."""
         for intel in (True, False):
             for score_signals in ([], lexical.analyze_url(
                     "https://paypa1.com/login")["signals"], lexical.analyze_url(
                     "http://paypal.com.secure-login-verify.top/a")["signals"]):
                 v = verdict.judge(score_signals, intel_ok=intel)
-                nums = [int(n) for n in re.findall(r"(\d+)%", v["confidence_text"])]
-                if len(nums) == 2:
-                    self.assertLessEqual(nums[0], nums[1],
-                                         f"inverted range: {v['confidence_text']}")
+                self.assertNotRegex(v["confidence_text"], r"\d+%")
+                self.assertTrue(v["confidence_text"])
+        self.assertIn("not treat this as a clearance",
+                      verdict.judge([], intel_ok=False)["confidence_text"])
 
     def test_confidence_text_does_not_describe_signals_it_doesnt_have(self):
         v = verdict.judge([], intel_ok=True)
+        self.assertEqual(v["confidence"], "low")
         self.assertNotIn("single strong signal", v["confidence_text"])
+        self.assertIn("limited corroboration", v["confidence_text"])
 
     def test_every_signal_has_evidence(self):
         v = verdict.judge(lexical.analyze_url(
