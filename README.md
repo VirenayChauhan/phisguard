@@ -161,6 +161,44 @@ or mobile recovery as an additional factor. Existing accounts without a recovery
 question can add one from Settings → Privacy & authentication after confirming
 their current password.
 
+#### Optional Google sign-in
+
+The login screen can also use Google OpenID sign-in. It requests only `openid`,
+`email`, and `profile`; it does not ask for access to Gmail, Drive, or other Google
+data, and the basic OAuth sign-in flow does not require a paid Google API plan. A
+verified Google email links to an existing PhishGuard account with that email, or
+creates a new account. New Google accounts receive an automatically generated
+PhishGuard username and can add other profile details later. PhishGuard stores the
+Google account identifier and verified email, not Google access or refresh tokens.
+
+To configure it:
+
+1. In Google Cloud Console, create/select a project and configure the OAuth consent
+   screen (Google Auth Platform). For initial testing, add your Google account as a
+   test user if the consent screen is in Testing mode.
+2. Create an OAuth Client ID with application type **Web application**.
+3. Add these **Authorized JavaScript origins**:
+   - Production: `https://phisguard-five.vercel.app`
+   - Local Docker (optional): `http://localhost:8000`
+4. Add these **Authorized redirect URIs**:
+   - Production: `https://phisguard-five.vercel.app/auth/google/callback`
+   - Local Docker (optional): `http://localhost:8000/auth/google/callback`
+5. Copy the Client ID and Client Secret into the server environment—never into
+   browser code or a message. On Vercel, add new `GOOGLE_CLIENT_ID`,
+   `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and `FLASK_SECRET_KEY` environment
+   variables for Production. Set `GOOGLE_REDIRECT_URI` to the Production callback
+   above. Generate a long random `FLASK_SECRET_KEY` locally, for example with
+   `python -c "import secrets; print(secrets.token_urlsafe(48))"`. Do not change any
+   Neon-managed database variables.
+6. For local Docker, put the same Client ID/Secret and a separate stable Flask
+   secret in your uncommitted `.env`; set `GOOGLE_REDIRECT_URI` to the localhost
+   callback. Then restart with `docker compose up -d --build`.
+
+The Google button appears on the login and registration screens. If server
+credentials are missing, sign-in safely returns to the login screen with a setup
+message. Keep `.env` out of Git. `FLASK_SECRET_KEY` must remain stable across
+restarts so the short-lived OAuth state/nonce can be checked when Google returns.
+
 Copy `.env.example` to `.env`. Keep `AUTH_COOKIE_SECURE=0` for local HTTP use and
 set it to `1` when serving through HTTPS. Mobile numbers are format-validated only;
 phone ownership is not verified because this version intentionally has no OTP.

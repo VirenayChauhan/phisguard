@@ -423,6 +423,7 @@ function showLogin(tab = 'login', username = '') {
   $('#auth-title').textContent = 'Sign in to PhishGuard';
   $('#auth-lede').textContent = 'Create a secure account or log in to access the phishing protection workspace.';
   $('#auth-tabs').hidden = false;
+  $('#google-auth-option').hidden = false;
   $('#login-form').hidden = isRegister;
   $('#register-form').hidden = !isRegister;
   $('#forgot-lookup-form').hidden = true;
@@ -453,6 +454,7 @@ function showForgotPassword(username = '') {
   $('#auth-title').textContent = 'Reset your password';
   $('#auth-lede').textContent = 'Answer the recovery question you chose when creating your account.';
   $('#auth-tabs').hidden = true;
+  $('#google-auth-option').hidden = true;
   $('#login-form').hidden = true;
   $('#register-form').hidden = true;
   $('#forgot-lookup-form').hidden = false;
@@ -1008,12 +1010,23 @@ $('#btn-logout').onclick = async () => {
 
 async function checkSession() {
   const isLoginRoute = location.pathname === '/login' || location.pathname === '/ui-trial';
-  const requestedMode = new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login';
+  const query = new URLSearchParams(location.search);
+  const requestedMode = query.get('mode') === 'register' ? 'register' : 'login';
+  const googleError = query.get('google_error');
+  const googleErrorMessages = {
+    setup: 'Google sign-in is not configured for this deployment yet.',
+    cancelled: 'Google sign-in was cancelled.',
+    state: 'The sign-in session expired. Please try again.',
+    account: 'Google could not securely link this account. Check that your Google email is verified, then try again.',
+    failed: 'Google sign-in could not be completed. Please try again.',
+  };
   try {
     const result = await api('/api/auth/session');
     if (result.authenticated) enterDashboard(result.user);
-    else if (isLoginRoute) showLogin(requestedMode);
-    else showLanding();
+    else if (isLoginRoute) {
+      showLogin(requestedMode);
+      if (googleErrorMessages[googleError]) setAuthMessage(googleErrorMessages[googleError], googleError === 'cancelled' ? '' : 'error');
+    } else showLanding();
   } catch (error) {
     if (isLoginRoute) {
       showLogin(requestedMode);

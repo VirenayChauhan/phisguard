@@ -7,10 +7,12 @@ from __future__ import annotations
 import hmac
 import json
 import os
+import secrets
 import traceback
 from datetime import datetime, timedelta, timezone
 
-from flask import Flask, jsonify, make_response, render_template, request, send_from_directory
+from authlib.integrations.flask_client import OAuth
+from flask import Flask, jsonify, make_response, redirect, render_template, request, send_from_directory, session, url_for
 
 try:
     from dotenv import load_dotenv
@@ -26,10 +28,36 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD
 app.config["AUTH_COOKIE_SECURE"] = os.environ.get("AUTH_COOKIE_SECURE", "0").lower() in {"1", "true", "yes"}
 app.config["AUTH_COOKIE_NAME"] = "__Host-pg_session" if app.config["AUTH_COOKIE_SECURE"] else "pg_session"
+# Flask's signed session carries only OAuth state/nonce for the short Google redirect.
+# Configure FLASK_SECRET_KEY persistently in every production/container environment.
+app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "").strip() or secrets.token_urlsafe(48)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = app.config["AUTH_COOKIE_SECURE"]
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
+app.config["GOOGLE_REDIRECT_URI"] = os.environ.get("GOOGLE_REDIRECT_URI", "").strip()
 # Templates/CSS are edited during pilots; never serve a stale cached page.
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
+_oauth = OAuth(app)
+_google = _oauth.register(
+    name="google",
+    client_id=app.config["GOOGLE_CLIENT_ID"],
+    client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
 store.init()
+
+
+def google_auth_configured() -> bool:
+    return bool(
+        app.config["GOOGLE_CLIENT_ID"]
+        and app.config["GOOGLE_CLIENT_SECRET"]
+        and app.config["GOOGLE_REDIRECT_URI"]
+        and os.environ.get("FLASK_SECRET_KEY", "").strip()
+    )
 
 
 PUBLIC_API_PATHS = {
@@ -94,6 +122,51 @@ def ui_trial():
     return render_template("index.html", ui_trial=True)
 
 
+@app.get("/auth/google/start")
+def google_sign_in_start():
+    if not google_auth_configured():
+        return redirect(url_for("login_page", google_error="setup"))
+    nonce = secrets.token_urlsafe(32)
+    session["google_oauth_nonce"] = nonce
+    try:
+        return _google.authorize_redirect(app.config["GOOGLE_REDIRECT_URI"], nonce=nonce)
+    except Exception as exc:
+        session.pop("google_oauth_nonce", None)
+        app.logger.warning("Could not start Google sign-in (%s)", type(exc).__name__)
+        return redirect(url_for("login_page", google_error="failed"))
+
+
+@app.get("/auth/google/callback")
+def google_sign_in_callback():
+    if not google_auth_configured():
+        return redirect(url_for("login_page", google_error="setup"))
+    if request.args.get("error") == "access_denied":
+        session.pop("google_oauth_nonce", None)
+        return redirect(url_for("login_page", google_error="cancelled"))
+    nonce = session.pop("google_oauth_nonce", None)
+    if not nonce:
+        return redirect(url_for("login_page", google_error="state"))
+    try:
+        token = _google.authorize_access_token()
+        profile = token.get("userinfo")
+        if not profile:
+            profile = _google.parse_id_token(token, nonce=nonce)
+        user, raw_token = auth.google_login_account(
+            profile.get("sub", ""), profile.get("email", ""),
+            profile.get("email_verified") is True, profile.get("name", ""),
+            request.remote_addr or "unknown", request.headers.get("User-Agent", ""),
+        )
+        session.clear()
+        response = redirect("/")
+        return _set_auth_cookie(response, raw_token)
+    except auth.AuthError as exc:
+        app.logger.info("Google account sign-in was declined (status %s)", exc.status)
+        return redirect(url_for("login_page", google_error="account"))
+    except Exception as exc:
+        app.logger.warning("Google sign-in failed (%s)", type(exc).__name__)
+        return redirect(url_for("login_page", google_error="failed"))
+
+
 @app.get("/api/health")
 def health():
     from engine import intel
@@ -112,8 +185,7 @@ def auth_session():
     return jsonify({"authenticated": bool(user), "user": user})
 
 
-def _session_response(user: dict, token: str):
-    response = make_response(jsonify({"ok": True, "user": user}))
+def _set_auth_cookie(response, token: str):
     response.set_cookie(
         app.config["AUTH_COOKIE_NAME"], token,
         max_age=auth.SESSION_TTL_SECONDS,
@@ -123,6 +195,11 @@ def _session_response(user: dict, token: str):
         path="/",
     )
     return response
+
+
+def _session_response(user: dict, token: str):
+    response = make_response(jsonify({"ok": True, "user": user}))
+    return _set_auth_cookie(response, token)
 
 
 def _record_flagged_scan(username: str, result: dict, channel: str) -> None:

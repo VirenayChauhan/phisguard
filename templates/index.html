@@ -8,16 +8,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <title>PhishGuard — link &amp; email checker with receipts</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-mobileworkspace1">
-<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-mobileworkspace1">
-<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-mobileworkspace1">
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-mobileworkspace1">
-<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-mobileworkspace1">
-<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-mobileworkspace1">
-<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-mobileworkspace1">
-<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-mobileworkspace1">
-<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-mobileworkspace1">
-<link rel="stylesheet" href="{{ url_for('static', filename='mobile-workspace.css') }}?v=20261104-mobileworkspace1">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='mobile-workspace.css') }}?v=20261104-googleauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='google-auth.css') }}?v=20261104-googleauth1">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23B84AA4'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='%23FFF8FF' text-anchor='middle'>PG</text></svg>">
 <script>
   if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
@@ -175,6 +176,20 @@
     <div class="auth-eyebrow">SECURE WORKSPACE</div>
     <h1 id="auth-title">Sign in to PhishGuard</h1>
     <p class="auth-lede" id="auth-lede">Create a secure account or log in to access the phishing protection workspace.</p>
+
+    <div class="google-auth-option" id="google-auth-option">
+      <a class="google-auth-button" href="/auth/google/start">
+        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+          <path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.1v5.1h6.6c3.9-3.6 6.1-8.8 6.1-14.9Z"/>
+          <path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/>
+          <path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4V15H5.8a20 20 0 0 0 0 18l6.8-5.3Z"/>
+          <path fill="#EA4335" d="M24 11.9c3 0 5.7 1 7.8 3.1l5.9-5.9C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.8 15l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z"/>
+        </svg>
+        <span>Continue with Google</span>
+        <span class="google-auth-arrow" aria-hidden="true">↗</span>
+      </a>
+      <div class="auth-divider" aria-hidden="true"><span>OR USE PHISHGUARD</span></div>
+    </div>
 
     <div class="auth-tabs" id="auth-tabs" role="tablist" aria-label="Account access">
       <button class="auth-tab active" id="tab-login" type="button" role="tab" aria-selected="true">Log in</button>
@@ -903,7 +918,7 @@
 </aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="{{ url_for('static', filename='app.js') }}?v=20261104-mobileworkspace1"></script>
-<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-mobileworkspace1"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=20261104-googleauth1"></script>
+<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-googleauth1"></script>
 </body>
 </html>

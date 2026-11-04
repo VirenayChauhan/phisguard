@@ -259,6 +259,91 @@ def register_account(username: str, password: str, mobile: str,
     return _create_session(account, request_ip, user_agent)
 
 
+def google_login_account(subject: str, email: str, email_verified: bool,
+                        display_name: str, request_ip: str = "",
+                        user_agent: str = "") -> tuple[dict, str]:
+    """Find or create an account from Google's verified OpenID identity."""
+    subject = subject.strip() if isinstance(subject, str) else ""
+    email = email.strip().lower() if isinstance(email, str) else ""
+    display_name = normalize_display_name(display_name)
+    if not subject or len(subject) > 255:
+        raise AuthError("Google did not provide a valid account identifier.", 400)
+    if email_verified is not True or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise AuthError("Use a Google account with a verified email address.", 400)
+    if not display_name:
+        display_name = email.split("@", 1)[0][:60]
+
+    provider = "google"
+    identity = store.get_oauth_identity(provider, subject)
+    account = store.get_auth_account_by_user_id(identity["user_id"]) if identity else None
+    if identity and not account:
+        raise AuthError("This Google sign-in is no longer linked to an account.", 409)
+
+    if not account:
+        account = store.get_auth_account_by_email(email)
+        if account:
+            try:
+                store.link_oauth_identity(provider, subject, account["user_id"], email, _iso(_now()))
+            except Exception as exc:
+                identity = store.get_oauth_identity(provider, subject)
+                if not identity or identity["user_id"] != account["user_id"]:
+                    if isinstance(exc, sqlite3.IntegrityError) or getattr(exc, "sqlstate", None) == "23505":
+                        raise AuthError(
+                            "This PhishGuard account is already linked to a different Google account.", 409
+                        ) from exc
+                    raise
+            if not _value(account, "email_verified_at"):
+                store.mark_auth_email_verified(account["user_id"], _iso(_now()))
+            account = store.get_auth_account_by_user_id(account["user_id"])
+        else:
+            local_part = email.split("@", 1)[0]
+            stem = re.sub(r"[^a-z0-9_]+", "_", local_part.lower()).strip("_")[:16] or "user"
+            account = None
+            for _ in range(5):
+                username = f"g_{stem}_{secrets.token_hex(3)}"
+                user_id = secrets.token_urlsafe(18)
+                created_at = _iso(_now())
+                try:
+                    store.create_oauth_auth_account(
+                        user_id, username, generate_password_hash(secrets.token_urlsafe(48)),
+                        email, display_name, _default_initials(display_name, username),
+                        created_at, provider, subject,
+                    )
+                    account = store.get_auth_account(username)
+                    break
+                except Exception as exc:
+                    identity = store.get_oauth_identity(provider, subject)
+                    if identity:
+                        account = store.get_auth_account_by_user_id(identity["user_id"])
+                        break
+                    existing = store.get_auth_account_by_email(email)
+                    if existing:
+                        try:
+                            store.link_oauth_identity(provider, subject, existing["user_id"], email, created_at)
+                        except Exception as link_exc:
+                            identity = store.get_oauth_identity(provider, subject)
+                            if not identity or identity["user_id"] != existing["user_id"]:
+                                if isinstance(link_exc, sqlite3.IntegrityError) or getattr(link_exc, "sqlstate", None) == "23505":
+                                    raise AuthError(
+                                        "This PhishGuard account is already linked to a different Google account.", 409
+                                    ) from link_exc
+                                raise
+                        if not _value(existing, "email_verified_at"):
+                            store.mark_auth_email_verified(existing["user_id"], _iso(_now()))
+                        account = store.get_auth_account_by_user_id(existing["user_id"])
+                        break
+                    if isinstance(exc, sqlite3.IntegrityError) or getattr(exc, "sqlstate", None) == "23505":
+                        continue
+                    raise
+            if not account:
+                raise AuthError("Could not create a PhishGuard account for this Google login. Please retry.", 503)
+
+    if not _value(account, "email_verified_at"):
+        store.mark_auth_email_verified(account["user_id"], _iso(_now()))
+        account = store.get_auth_account_by_user_id(account["user_id"])
+    return _create_session(account, request_ip, user_agent)
+
+
 def login_account(username: str, password: str, request_ip: str,
                   user_agent: str = "") -> tuple[dict, str]:
     username = normalize_username(username)

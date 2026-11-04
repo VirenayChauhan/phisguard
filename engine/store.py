@@ -115,6 +115,12 @@ CREATE TABLE IF NOT EXISTS auth_accounts(
   notify_push_scan INTEGER NOT NULL DEFAULT 1,
   notify_tips INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL, last_login_at TEXT);
+CREATE TABLE IF NOT EXISTS auth_oauth_identities(
+  provider TEXT NOT NULL, subject TEXT NOT NULL, user_id TEXT NOT NULL,
+  email TEXT NOT NULL, created_at TEXT NOT NULL,
+  PRIMARY KEY(provider, subject), UNIQUE(user_id, provider));
+CREATE INDEX IF NOT EXISTS idx_auth_oauth_identities_user
+  ON auth_oauth_identities(user_id);
 CREATE TABLE IF NOT EXISTS auth_login_sessions(
   token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL, username TEXT NOT NULL,
   created_at TEXT NOT NULL, expires_at TEXT NOT NULL, revoked_at TEXT,
@@ -200,6 +206,10 @@ def init():
         c.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_auth_accounts_email "
             "ON auth_accounts(email) WHERE email IS NOT NULL AND email <> ''"
+        )
+        c.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_auth_accounts_email_nocase "
+            "ON auth_accounts(LOWER(email)) WHERE email IS NOT NULL AND email <> ''"
         )
 
 
@@ -344,8 +354,50 @@ def get_auth_account(username: str) -> sqlite3.Row | None:
 def get_auth_account_by_email(email: str) -> sqlite3.Row | None:
     with _LOCK, _conn() as c:
         return c.execute(
-            "SELECT * FROM auth_accounts WHERE email=?", (email,)
+            "SELECT * FROM auth_accounts WHERE LOWER(email)=LOWER(?) LIMIT 1", (email,)
         ).fetchone()
+
+
+def get_auth_account_by_user_id(user_id: str) -> sqlite3.Row | None:
+    with _LOCK, _conn() as c:
+        return c.execute(
+            "SELECT * FROM auth_accounts WHERE user_id=?", (user_id,)
+        ).fetchone()
+
+
+def get_oauth_identity(provider: str, subject: str):
+    with _LOCK, _conn() as c:
+        return c.execute(
+            "SELECT * FROM auth_oauth_identities WHERE provider=? AND subject=?",
+            (provider, subject),
+        ).fetchone()
+
+
+def link_oauth_identity(provider: str, subject: str, user_id: str,
+                        email: str, created_at: str) -> None:
+    with _LOCK, _conn() as c:
+        c.execute(
+            "INSERT INTO auth_oauth_identities(provider,subject,user_id,email,created_at) "
+            "VALUES(?,?,?,?,?)", (provider, subject, user_id, email, created_at),
+        )
+
+
+def create_oauth_auth_account(user_id: str, username: str, password_hash: str,
+                              email: str, display_name: str, avatar_initials: str,
+                              created_at: str, provider: str, subject: str) -> None:
+    """Create a verified-email account and its provider identity atomically."""
+    with _LOCK, _conn() as c:
+        c.execute(
+            "INSERT INTO auth_accounts "
+            "(user_id,username,password_hash,mobile,email,email_verified_at,display_name,"
+            "avatar_initials,password_changed_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (user_id, username, password_hash, "", email, created_at, display_name or None,
+             avatar_initials or None, created_at, created_at),
+        )
+        c.execute(
+            "INSERT INTO auth_oauth_identities(provider,subject,user_id,email,created_at) "
+            "VALUES(?,?,?,?,?)", (provider, subject, user_id, email, created_at),
+        )
 
 
 def mark_auth_account_login(user_id: str, logged_in_at: str) -> None:
@@ -645,6 +697,7 @@ def delete_auth_account(user_id: str, username: str) -> None:
         if account and account["email"]:
             c.execute("DELETE FROM auth_otp_challenges WHERE email=?", (account["email"],))
         c.execute("DELETE FROM auth_login_sessions WHERE user_id=?", (user_id,))
+        c.execute("DELETE FROM auth_oauth_identities WHERE user_id=?", (user_id,))
         c.execute("DELETE FROM push_subscriptions WHERE user_id=?", (user_id,))
         c.execute("DELETE FROM notification_deliveries WHERE user_id=?", (user_id,))
         c.execute("DELETE FROM account_flagged_scans WHERE user_id=?", (user_id,))

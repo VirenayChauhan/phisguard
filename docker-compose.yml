@@ -18,6 +18,11 @@ services:
       MAILJET_SECRET_KEY: ${MAILJET_SECRET_KEY:-}
       MAILJET_FROM_EMAIL: ${MAILJET_FROM_EMAIL:-}
       MAILJET_FROM_NAME: ${MAILJET_FROM_NAME:-PhishGuard}
+      # Optional Google OpenID sign-in. Keep FLASK_SECRET_KEY stable across restarts.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-}
       # Optional Web Push VAPID and scheduled digest settings.
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
