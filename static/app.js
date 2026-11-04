@@ -1686,18 +1686,29 @@ function resetStages() {
   $$('#url-pipeline .stage').forEach((s) => { s.dataset.state = ''; });
 }
 
-function skeletonVerdict() {
-  return `<div class="card card-pad">
-    <div style="display:flex;gap:20px;align-items:center">
-      <div class="skel" style="width:104px;height:104px;border-radius:50%"></div>
-      <div style="flex:1">
-        <div class="skel skel-line" style="width:120px"></div>
-        <div class="skel skel-line" style="width:52%;height:22px;margin:12px 0"></div>
-        <div class="skel skel-line" style="width:80%"></div>
-        <div class="skel skel-line" style="width:64%"></div>
-      </div>
+function scanMeterState(state = 'idle', includeReputation = false) {
+  const loading = state === 'loading';
+  const description = loading
+    ? `Checking the URL structure, domain registration, DNS and TLS${includeReputation ? ', plus the reputation providers you selected' : ''}. Your result card will appear when the analysis is complete.`
+    : 'Paste a link above and select Analyse. PhishGuard checks its structure and available infrastructure signals without opening the page.';
+  return `<section class="scan-meter-state ${loading ? 'is-loading' : 'is-idle'}"
+      ${loading ? 'role="status" aria-live="polite" aria-busy="true"' : 'aria-label="Link scan meter"'}>
+    <div class="scan-meter-visual" aria-hidden="true">
+      <svg class="scan-meter-ring" viewBox="0 0 120 120">
+        <circle class="scan-meter-track" cx="60" cy="60" r="47" />
+        <circle class="scan-meter-active" cx="60" cy="60" r="47" />
+      </svg>
+      <span class="scan-meter-needle"></span>
+      <span class="scan-meter-hub"></span>
+      <div class="scan-meter-readout"><b>${loading ? '···' : '—'}</b><small>${loading ? 'ANALYZING' : 'READY'}</small></div>
     </div>
-  </div>`;
+    <div class="scan-meter-copy">
+      <span class="scan-meter-eyebrow">${loading ? 'LINK ANALYSIS IN PROGRESS' : 'YOUR LINK RISK METER'}</span>
+      <h3>${loading ? 'Reading the signals…' : 'Ready for your first link'}</h3>
+      <p>${description}</p>
+      <div class="scan-meter-foot"><span class="scan-meter-status-dot"></span>${loading ? 'Checking signals now' : 'No scan has started yet'}</div>
+    </div>
+  </section>`;
 }
 
 async function analyseUrl(url) {
@@ -1707,7 +1718,7 @@ async function analyseUrl(url) {
   $('#url-pipeline').hidden = false;
   resetStages();
   $('#btn-url').disabled = true;
-  out.innerHTML = skeletonVerdict();
+  out.innerHTML = scanMeterState('loading', includeReputation);
   setStage('lexical', 'run');
 
   let quick;
@@ -1716,6 +1727,7 @@ async function analyseUrl(url) {
   } catch (e) {
     $('#btn-url').disabled = false;
     setStage('lexical', '');
+    $('#url-pipeline').hidden = true;
     out.innerHTML = `<div class="card card-pad"><div class="callout bad"><b>Could not analyse that.</b>
       <div class="sub">${esc(e.message)}</div></div></div>`;
     toast(e.message, 'err');
@@ -1728,20 +1740,6 @@ async function analyseUrl(url) {
 
   const f = quick.facts || {};
   const quickSaveItem = { kind: 'url', label: f.defanged || url, short: url.replace(/^https?:\/\//, '').slice(0, 32), tier: quick.label, score: quick.score, payload: url };
-  out.innerHTML = verdictHero(quick, {
-    saveScan: true,
-    facts: fact('registrable domain', esc(f.registrable_domain || '—'))
-      + fact('in this workspace', (f.baseline && f.baseline.first_contact)
-        ? '<span style="color:var(--warn)">first contact</span>'
-        : `seen ${esc(f.baseline ? f.baseline.hits : 0)}×`)
-      + fact('pass', 'lexical only')
-      + fact('latency', '~5 ms'),
-  }) + `<div class="callout" style="display:flex;align-items:center;gap:10px">
-      <span class="spinner"></span>
-      <div><b>Instant verdict shown.</b> <span class="muted">Checking registration, DNS and TLS${includeReputation ? ' plus the providers you selected' : '; no third-party reputation lookup will be made'}…</span></div>
-    </div>` + signalsCard(quick);
-  bindFilters(out);
-  receiptButton(quick, out, quickSaveItem);
 
   let full;
   try {
@@ -1750,11 +1748,21 @@ async function analyseUrl(url) {
       include_reputation: includeReputation,
     });
   } catch (e) {
-    ['infra', 'rep', 'preview'].forEach((s) => setStage(s, ''));
+    ['infra', 'rep', 'preview', 'baseline'].forEach((s) => setStage(s, ''));
     $('#btn-url').disabled = false;
-    out.insertAdjacentHTML('afterbegin', `<div class="callout warn" style="margin-bottom:0">
-      <b>Full analysis failed.</b> <span class="muted">${esc(e.message)} — the lexical verdict above stands,
-      and the app reports “unknown” rather than an unearned green tick.</span></div>`);
+    const degradedQuick = { ...quick, provisional: false, intel_ok: false };
+    const quickFacts = fact('registrable domain', esc(f.registrable_domain || '—'))
+      + fact('in this workspace', (f.baseline && f.baseline.first_contact)
+        ? '<span style="color:var(--warn)">first contact</span>'
+        : `seen ${esc(f.baseline ? f.baseline.hits : 0)}×`)
+      + fact('pass', 'lexical only')
+      + fact('latency', '~5 ms');
+    out.innerHTML = verdictHero(degradedQuick, { saveScan: true, facts: quickFacts })
+      + `<div class="callout warn" style="margin-bottom:0">
+        <b>Full analysis could not finish.</b> <span class="muted">${esc(e.message)} The result below uses the instant lexical check only; infrastructure signals are unknown.</span></div>`
+      + signalsCard(quick);
+    bindFilters(out);
+    receiptButton(degradedQuick, out, quickSaveItem);
     toast('Degraded mode: infrastructure lookups unavailable', 'err');
     pushRecent({ kind: 'url', label: quick.facts.defanged, short: url.slice(0, 34), tier: quick.label, payload: url });
     notifyScanComplete('link', quick, url.replace(/^https?:\/\//, '').slice(0, 42));
@@ -1790,6 +1798,8 @@ async function analyseUrl(url) {
   loadHeader();
 }
 
+$('#url-out').innerHTML = scanMeterState('idle');
+
 $('#btn-url').onclick = () => {
   const u = $('#url-input').value.trim();
   if (!u) { toast('Paste a link first', 'err'); $('#url-input').focus(); return; }
@@ -1800,7 +1810,7 @@ $('#url-input').addEventListener('input', (e) => { $('#url-clear').hidden = !e.t
 $('#url-clear').onclick = () => {
   $('#url-input').value = '';
   $('#url-clear').hidden = true;
-  $('#url-out').innerHTML = '';
+  $('#url-out').innerHTML = scanMeterState('idle');
   $('#url-pipeline').hidden = true;
   $('#url-input').focus();
 };

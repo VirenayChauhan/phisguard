@@ -659,3 +659,145 @@ html[data-ui-trial="split"] .auth-story-flow { border-color: rgba(195, 78, 170, 
   .overview-guide-list > button { grid-template-columns: 27px minmax(0, 1fr) 14px; gap: 8px; padding-inline: 8px; }
   .overview-guide-list > button small { white-space: normal; }
 }
+
+
+/* Neutral ready state and animated loading meter for URL analysis. */
+.scan-meter-state {
+  position: relative;
+  display: flex;
+  min-height: 168px;
+  align-items: center;
+  gap: 22px;
+  overflow: hidden;
+  padding: 20px 24px;
+  border: 1px solid rgba(197, 125, 204, .2);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 10% 50%, rgba(195, 78, 170, .1), transparent 34%),
+    linear-gradient(130deg, #111019, #0d0d15 72%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 16px 34px -27px rgba(0, 0, 0, .9);
+}
+.scan-meter-state::after {
+  position: absolute;
+  right: 7%;
+  bottom: -68px;
+  width: 220px;
+  height: 110px;
+  border: 1px solid rgba(118, 82, 179, .12);
+  border-radius: 50%;
+  box-shadow: 0 0 0 16px rgba(118, 82, 179, .025), 0 0 0 34px rgba(195, 78, 170, .02);
+  content: "";
+  pointer-events: none;
+}
+.scan-meter-visual {
+  position: relative;
+  display: grid;
+  width: 126px;
+  height: 126px;
+  flex: none;
+  place-items: center;
+  color: #bf75b9;
+}
+.scan-meter-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.scan-meter-track, .scan-meter-active { fill: none; stroke-width: 5; }
+.scan-meter-track { stroke: rgba(218, 204, 233, .11); }
+.scan-meter-active {
+  stroke: currentColor;
+  stroke-dasharray: 58 237;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  opacity: .54;
+  filter: drop-shadow(0 0 5px rgba(195, 78, 170, .45));
+}
+.scan-meter-needle {
+  position: absolute;
+  z-index: 1;
+  bottom: 50%;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 35px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #f0b1e3, #bd5eaf);
+  box-shadow: 0 0 10px rgba(195, 78, 170, .42);
+  transform: rotate(-54deg);
+  transform-origin: 50% 100%;
+}
+.scan-meter-hub {
+  position: absolute;
+  z-index: 2;
+  top: calc(50% - 4px);
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border: 2px solid #f3d5ee;
+  border-radius: 50%;
+  background: #83539e;
+  box-shadow: 0 0 9px rgba(195, 78, 170, .55);
+}
+.scan-meter-readout {
+  position: absolute;
+  top: 59%;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  color: #e9e0ef;
+}
+.scan-meter-readout b { font: 700 17px/1 var(--mono); letter-spacing: -.05em; }
+.scan-meter-readout small { color: #8e8799; font: 700 7px/1 var(--mono); letter-spacing: .12em; }
+.scan-meter-copy { position: relative; z-index: 1; min-width: 0; max-width: 680px; }
+.scan-meter-eyebrow { color: #d17ac4; font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.scan-meter-copy h3 { margin: 9px 0 5px; color: #f6f3fa; font-size: 19px; font-weight: 720; letter-spacing: -.35px; }
+.scan-meter-copy p { max-width: 64ch; margin: 0; color: #b1aaba; font-size: 11px; line-height: 1.65; }
+.scan-meter-foot { display: flex; align-items: center; gap: 7px; margin-top: 12px; color: #8f8999; font-size: 9px; }
+.scan-meter-status-dot { width: 6px; height: 6px; flex: none; border-radius: 50%; background: #777183; }
+.scan-meter-state.is-loading { border-color: rgba(195, 78, 170, .34); }
+.scan-meter-state.is-loading .scan-meter-active {
+  opacity: .95;
+  animation: scan-meter-sweep 1.45s ease-in-out infinite;
+}
+.scan-meter-state.is-loading .scan-meter-needle { animation: scan-meter-swing 1.25s ease-in-out infinite; }
+.scan-meter-state.is-loading .scan-meter-hub { animation: scan-meter-pulse 1s ease-in-out infinite alternate; }
+.scan-meter-state.is-loading .scan-meter-status-dot { background: #d36abc; box-shadow: 0 0 0 4px rgba(195, 78, 170, .12); animation: scan-meter-pulse 1s ease-in-out infinite alternate; }
+.scan-meter-state.is-loading .scan-meter-foot { color: #d2c7d8; }
+@keyframes scan-meter-sweep {
+  0% { stroke-dashoffset: 215; }
+  50% { stroke-dashoffset: 20; }
+  100% { stroke-dashoffset: -215; }
+}
+@keyframes scan-meter-swing {
+  0%, 100% { transform: rotate(-58deg); }
+  50% { transform: rotate(58deg); }
+}
+@keyframes scan-meter-pulse { to { opacity: .46; transform: scale(.84); } }
+@media (max-width: 560px) {
+  .scan-meter-state { min-height: 0; gap: 15px; padding: 16px; }
+  .scan-meter-visual { width: 104px; height: 104px; }
+  .scan-meter-needle { height: 29px; }
+  .scan-meter-copy h3 { font-size: 17px; }
+}
+@media (max-width: 380px) {
+  .scan-meter-state { align-items: flex-start; flex-direction: column; }
+  .scan-meter-visual { width: 92px; height: 92px; align-self: center; }
+  .scan-meter-needle { height: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-meter-state.is-loading .scan-meter-active,
+  .scan-meter-state.is-loading .scan-meter-needle,
+  .scan-meter-state.is-loading .scan-meter-hub,
+  .scan-meter-state.is-loading .scan-meter-status-dot { animation: none; }
+  .scan-meter-state.is-loading .scan-meter-active { opacity: .95; stroke-dashoffset: 95; }
+}
+
+/* The field wrapper owns focus styling; don't draw a second ring on its input. */
+.workspace-tool-hero .field:focus-within {
+  border-color: #d577c4;
+  box-shadow: 0 0 0 3px rgba(195, 78, 170, .2), 0 8px 22px -16px rgba(213, 119, 196, .8);
+}
+.workspace-tool-hero .field input,
+.workspace-tool-hero .field input:focus,
+.workspace-tool-hero .field input:focus-visible {
+  border: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+}
