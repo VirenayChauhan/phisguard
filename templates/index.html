@@ -3,15 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <title>PhishGuard — link &amp; email checker with receipts</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23496d50'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='white' text-anchor='middle'>PG</text></svg>">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-amber">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-amber">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-amber">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-amber">
+<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-amber">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-amber">
+<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-amber">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23FFC24A'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='%2317120A' text-anchor='middle'>PG</text></svg>">
 <script>
   if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
     document.documentElement.dataset.uiTrial = 'split';
@@ -24,119 +28,91 @@
   <a href="/" aria-label="Return to the current PhishGuard design">Back to current UI <span aria-hidden="true">↗</span></a>
 </div>
 <main class="landing-page" id="landing-page"{% if login_page|default(false) or ui_trial|default(false) %} hidden{% endif %}>
-  <header class="landing-nav">
-    <a class="landing-brand" href="/" aria-label="PhishGuard home">
-      <span class="landing-brand-mark" aria-hidden="true">PG</span>
-      <span><b>PhishGuard</b><small>Link &amp; email protection</small></span>
-    </a>
-    <nav class="landing-links" aria-label="Page sections">
-      <a href="#landing-how">How it works</a>
-      <a href="#landing-capabilities">Capabilities</a>
-      <a href="#landing-approach">Our approach</a>
+  <header class="pg-site-bar">
+    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home">PhishGuard</a>
+    <nav class="pg-site-actions" aria-label="Account">
+      <a href="/login">Sign in</a>
+      <a class="pg-site-join" href="/login?mode=register">Create account <span aria-hidden="true">↗</span></a>
     </nav>
-    <div class="landing-nav-actions">
-      <a class="landing-signin" href="/login">Sign in</a>
-      <a class="landing-nav-cta" href="/login?mode=register">Create account <span aria-hidden="true">↗</span></a>
-    </div>
   </header>
+  <section class="pg-capabilities" id="landing-capabilities" aria-labelledby="pg-cap-title">
+    <div class="pg-cap-guides" aria-hidden="true"></div>
+    <div class="pg-cap-inner">
+      <header class="pg-cap-header">
+        <div class="pg-cap-strip" aria-label="Section 01, capabilities, full visibility">
+          <span class="pg-cap-strip-left"><span class="pg-cap-index">01</span><i class="pg-cap-rule" aria-hidden="true"></i></span>
+          <span class="pg-cap-strip-name">// Capabilities</span>
+          <span class="pg-cap-strip-state">Full Visibility</span>
+        </div>
+        <div class="pg-cap-title-mask"><h2 id="pg-cap-title"><span class="pg-cap-clarity">Clarity</span> across every layer</h2></div>
+        <p class="pg-cap-lede">A clearer view of suspicious links and messages. Detect patterns, understand the evidence, and make safer decisions before problems reach you.</p>
+      </header>
 
-  <section class="landing-hero" aria-labelledby="landing-title">
-    <div class="landing-hero-copy">
-      <div class="landing-eyebrow"><span class="landing-eyebrow-dot"></span> PHISHING DEFENCE, MADE CLEAR</div>
-      <h1 id="landing-title">Pause before<br>you <em>trust.</em></h1>
-      <p class="landing-lede">A suspicious link or email deserves more than a guess. PhishGuard checks the signals, explains what they mean, and keeps the evidence close at hand.</p>
-      <div class="landing-hero-actions">
-        <a class="landing-button landing-button-primary" href="/login?mode=register">Create your workspace <span aria-hidden="true">→</span></a>
-        <a class="landing-button landing-button-secondary" href="#landing-how">Explore how it works <span aria-hidden="true">↓</span></a>
+      <div class="pg-cap-cards">
+        <article class="pg-cap-card" aria-labelledby="pg-cap-signals-title">
+          <div class="pg-cap-stage" aria-hidden="true">
+            <svg class="pg-cap-art pg-cap-radar" viewBox="0 0 360 170" fill="none" focusable="false">
+              <defs>
+                <radialGradient id="pg-radar-orb"><stop stop-color="#FFF1C6"/><stop offset=".28" stop-color="#FFC24A"/><stop offset="1" stop-color="#B85E3E" stop-opacity=".12"/></radialGradient>
+                <filter id="pg-radar-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              </defs>
+              <g class="pg-art-glow" filter="url(#pg-radar-glow)" stroke="#FFC24A" stroke-opacity=".76">
+                <circle cx="180" cy="86" r="23" stroke-width=".9"/><circle cx="180" cy="86" r="48" stroke-width=".8" stroke-opacity=".54"/><circle cx="180" cy="86" r="71" stroke-width=".8" stroke-opacity=".34"/>
+                <path d="M109 86h142M180 15v142M130 36l100 100M230 36 130 136" stroke-width=".55" stroke-opacity=".23"/>
+                <path d="M180 86 231 36" stroke-width="1.2" stroke-opacity=".8"/><circle cx="230.2" cy="35.8" r="3.2" fill="#FFC24A" stroke="none"/>
+              </g>
+              <circle cx="180" cy="86" r="13" fill="url(#pg-radar-orb)" filter="url(#pg-radar-glow)"/>
+              <circle cx="180" cy="86" r="3.3" fill="#FFF4D2"/>
+            </svg>
+          </div>
+          <div class="pg-cap-copy"><h3 id="pg-cap-signals-title">Real-Time Signals</h3><p>Read domain age, DNS, TLS, and redirect clues alongside the links you check.</p></div>
+        </article>
+
+        <article class="pg-cap-card" aria-labelledby="pg-cap-insights-title">
+          <div class="pg-cap-stage" aria-hidden="true">
+            <svg class="pg-cap-art pg-cap-chart" viewBox="0 0 360 170" fill="none" focusable="false">
+              <defs>
+                <filter id="pg-chart-glow" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <radialGradient id="pg-sphere-fill"><stop stop-color="#FFC24A" stop-opacity=".18"/><stop offset="1" stop-color="#FFC24A" stop-opacity="0"/></radialGradient>
+              </defs>
+              <g class="pg-art-glow" filter="url(#pg-chart-glow)" stroke="#FFC24A" stroke-opacity=".78" stroke-width=".85">
+                <path d="M85 119h100" stroke-opacity=".4"/>
+                <g class="pg-chart-bars">
+                  <path d="M101 116V79c0-5 16-5 16 0v37M101 79c0 5 16 5 16 0M101 116c0 5 16 5 16 0"/>
+                  <path d="M128 116V56c0-5 16-5 16 0v60M128 56c0 5 16 5 16 0M128 116c0 5 16 5 16 0"/>
+                  <path d="M155 116V91c0-5 16-5 16 0v25M155 91c0 5 16 5 16 0M155 116c0 5 16 5 16 0"/>
+                </g>
+                <g class="pg-chart-spheres">
+                  <circle cx="226" cy="88" r="34" fill="url(#pg-sphere-fill)"/>
+                  <ellipse cx="226" cy="88" rx="34" ry="13"/><ellipse cx="226" cy="88" rx="13" ry="34"/>
+                  <circle cx="267" cy="79" r="25" fill="url(#pg-sphere-fill)"/><ellipse cx="267" cy="79" rx="25" ry="9"/><ellipse cx="267" cy="79" rx="9" ry="25"/>
+                </g>
+                <path class="pg-chart-dashes" d="M202 34h12m8 0h6m9 0h13" stroke-linecap="round" stroke-width="1.5"/>
+              </g>
+            </svg>
+          </div>
+          <div class="pg-cap-copy"><h3 id="pg-cap-insights-title">Actionable Insights</h3><p>Turn link and email evidence into clear, reasoned verdicts—not opaque scores.</p></div>
+        </article>
+
+        <article class="pg-cap-card" aria-labelledby="pg-cap-records-title">
+          <div class="pg-cap-stage" aria-hidden="true">
+            <svg class="pg-cap-art pg-cap-reports" viewBox="0 0 360 170" fill="none" focusable="false">
+              <defs><filter id="pg-report-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+              <g class="pg-report-sheets pg-art-glow" filter="url(#pg-report-glow)" stroke="#FFC24A" stroke-opacity=".78" stroke-width=".9">
+                <path d="m121 48 94-20 43 23v91l-94 20-43-23z" fill="#FFC24A" fill-opacity=".025"/>
+                <path d="m121 48 43 23 94-20M164 71v91" stroke-opacity=".42"/>
+                <path d="m139 55 59-13m-48 22 75-16m-60 28 74-16m-75 29 75-16m-68 30 56-12" stroke-linecap="round"/>
+                <path d="m108 57-18 5v89l68 36 92-20v-8" stroke-opacity=".44"/>
+                <path d="m90 62 68 36 21-5m-74-24 56 29" stroke-opacity=".4"/>
+                <path d="m142 77 2 1m13 5 2 1m14 5 2 1" stroke-width="2.2" stroke-linecap="round"/>
+              </g>
+            </svg>
+          </div>
+          <div class="pg-cap-copy"><h3 id="pg-cap-records-title">Saved Evidence</h3><p>Keep scan receipts and history, then return to important domains and messages.</p></div>
+        </article>
       </div>
-      <div class="landing-proofline"><span aria-hidden="true">✳</span> No opaque scores. No silent “safe” verdicts. Reasons you can inspect.</div>
-    </div>
-
-    <figure class="landing-visual" aria-labelledby="landing-visual-caption">
-      <svg class="landing-illustration" viewBox="0 0 620 500" role="img" aria-labelledby="landing-visual-title landing-visual-desc">
-        <title id="landing-visual-title">PhishGuard evidence-check illustration</title>
-        <desc id="landing-visual-desc">A suspicious link passes through layered security checks and becomes an evidence-backed verdict.</desc>
-        <defs>
-          <pattern id="landing-dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#60745f" opacity=".27"/></pattern>
-          <linearGradient id="landing-card" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20342a"/><stop offset="1" stop-color="#17251e"/></linearGradient>
-          <linearGradient id="landing-orbit" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b5c7a0"/><stop offset="1" stop-color="#bf8c5c"/></linearGradient>
-          <filter id="landing-shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#142219" flood-opacity=".16"/></filter>
-        </defs>
-        <rect x="35" y="28" width="550" height="440" rx="34" fill="#e7e8d9"/>
-        <rect x="35" y="28" width="550" height="440" rx="34" fill="url(#landing-dots)"/>
-        <circle class="landing-orb landing-orb-one" cx="491" cy="91" r="82" fill="#d7ddc8" opacity=".68"/>
-        <circle class="landing-orb landing-orb-two" cx="113" cy="406" r="72" fill="#d7ddc8" opacity=".54"/>
-        <path class="landing-signal-path" d="M107 266 C181 266 175 167 247 167 S318 283 391 283 S440 192 510 192" fill="none" stroke="#869881" stroke-width="2" stroke-dasharray="5 8" opacity=".8"/>
-        <g filter="url(#landing-shadow)">
-          <rect x="113" y="86" width="397" height="321" rx="24" fill="url(#landing-card)"/>
-          <path d="M137 129h349" stroke="#31443a"/>
-          <circle cx="139" cy="108" r="4" fill="#bd8e60"/><circle cx="154" cy="108" r="4" fill="#95ae8e"/><circle cx="169" cy="108" r="4" fill="#566a59"/>
-          <text x="194" y="113" fill="#91a493" font-size="9" font-family="Arial,sans-serif" letter-spacing="1.8">PHISHGUARD · EVIDENCE MAP</text>
-          <rect x="145" y="154" width="333" height="58" rx="12" fill="#25392e" stroke="#3a5141"/>
-          <circle cx="170" cy="183" r="12" fill="#314c3d"/><path d="M166 183h8m-4-4 4 4-4 4" fill="none" stroke="#c0cda9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="193" y="179" fill="#e4e9dc" font-size="10" font-family="Arial,sans-serif">Suspicious message</text>
-          <text x="193" y="195" fill="#9bac9a" font-size="8.5" font-family="Arial,sans-serif">A closer look at the signals</text>
-          <g transform="translate(149 239)">
-            <rect width="98" height="73" rx="11" fill="#1c2b22" stroke="#35483a"/><circle cx="19" cy="20" r="9" fill="#31483a"/><path d="m15 20 3 3 5-6" fill="none" stroke="#b7cba4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><text x="12" y="45" fill="#dbe5d8" font-size="8.5" font-family="Arial,sans-serif">Domain</text><text x="12" y="58" fill="#93a594" font-size="7.5" font-family="Arial,sans-serif">Lookalike signal</text>
-            <rect x="112" width="98" height="73" rx="11" fill="#1c2b22" stroke="#35483a"/><circle cx="131" cy="20" r="9" fill="#4b392c"/><path d="M131 15v6m0 3v.2" fill="none" stroke="#d4aa78" stroke-width="1.5" stroke-linecap="round"/><text x="124" y="45" fill="#dbe5d8" font-size="8.5" font-family="Arial,sans-serif">Redirect</text><text x="124" y="58" fill="#93a594" font-size="7.5" font-family="Arial,sans-serif">Needs review</text>
-            <rect x="224" width="98" height="73" rx="11" fill="#1c2b22" stroke="#35483a"/><circle cx="243" cy="20" r="9" fill="#31483a"/><path d="M239 20h8m-4-4v8" fill="none" stroke="#b7cba4" stroke-width="1.5" stroke-linecap="round"/><text x="236" y="45" fill="#dbe5d8" font-size="8.5" font-family="Arial,sans-serif">Evidence</text><text x="236" y="58" fill="#93a594" font-size="7.5" font-family="Arial,sans-serif">Review the reasons</text>
-          </g>
-          <rect x="145" y="332" width="333" height="48" rx="12" fill="#d8e0ce"/>
-          <circle cx="169" cy="356" r="11" fill="#b7c7a8"/><path d="m164 356 3 3 6-7" fill="none" stroke="#284333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="190" y="353" fill="#263b2d" font-size="9.5" font-family="Arial,sans-serif" font-weight="700">A verdict with reasons</text>
-          <text x="190" y="367" fill="#5e715e" font-size="8" font-family="Arial,sans-serif">Signals stay visible. You stay in control.</text>
-        </g>
-        <circle class="landing-path-node landing-path-node-one" cx="106" cy="265" r="6" fill="#bb8b5d"/><circle class="landing-path-node landing-path-node-two" cx="247" cy="167" r="6" fill="#879d80"/><circle class="landing-path-node landing-path-node-three" cx="391" cy="283" r="6" fill="#879d80"/><circle class="landing-path-node landing-path-node-four" cx="510" cy="192" r="6" fill="#bb8b5d"/>
-        <g class="landing-approval-badge"><circle cx="497" cy="376" r="26" fill="#d1d9c2" stroke="#9bab8e"/><path d="m489 376 6 6 11-13" fill="none" stroke="#536a53" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
-      </svg>
-      <figcaption id="landing-visual-caption"><span>01 — Inspect</span><span>02 — Corroborate</span><span>03 — Understand</span></figcaption>
-    </figure>
-
-    <div class="landing-signal-strip" aria-label="PhishGuard capabilities">
-      <span><b>LINKS</b> Domain and redirect signals</span>
-      <i></i><span><b>EMAIL</b> Sender and header checks</span>
-      <i></i><span><b>RECEIPTS</b> Reasons behind each verdict</span>
     </div>
   </section>
-
-  <section class="landing-section landing-how" id="landing-how" data-motion-reveal>
-    <div class="landing-section-heading">
-      <span class="landing-kicker">A SIMPLE, TRANSPARENT FLOW</span>
-      <h2>From “is this real?”<br><em>to a clearer answer.</em></h2>
-      <p>PhishGuard brings useful signals together without hiding how it reached a conclusion.</p>
-    </div>
-    <div class="landing-steps">
-      <article><span class="landing-step-num">01</span><div class="landing-step-icon">↗</div><h3>Bring the message</h3><p>Paste a link or inspect an <code>.eml</code> message. The browser never opens suspicious URLs.</p></article>
-      <article><span class="landing-step-num">02</span><div class="landing-step-icon">⌁</div><h3>Check the signals</h3><p>Review domain, DNS, redirect, sender-authentication, and message-pattern evidence.</p></article>
-      <article><span class="landing-step-num">03</span><div class="landing-step-icon">◉</div><h3>Decide with context</h3><p>See a reasoned verdict, keep an audit receipt, and save important results for later.</p></article>
-    </div>
-  </section>
-
-  <section class="landing-section landing-capabilities" id="landing-capabilities" data-motion-reveal>
-    <div class="landing-section-heading landing-section-heading-row">
-      <div><span class="landing-kicker">BUILT FOR REAL-WORLD MESSAGES</span><h2>Signals, not guesswork.</h2></div>
-      <p>One workspace for the checks people actually need—organized around clear evidence.</p>
-    </div>
-    <div class="landing-capability-grid">
-      <article class="landing-capability-card landing-capability-featured"><div class="landing-card-icon">↗</div><span class="landing-card-index">01 / LINKS</span><h3>Spot the telltale details</h3><p>Look for IDN and homoglyph tricks, brand lookalikes, deceptive @ signs, ports, risky TLDs, shorteners, double extensions, and open redirects. Registration age, DNS, TLS, and a guarded redirect preview add context.</p><div class="landing-tags"><span>Domain signals</span><span>DNS &amp; TLS</span><span>Redirect preview</span></div></article>
-      <article class="landing-capability-card"><div class="landing-card-icon">✉</div><span class="landing-card-index">02 / EMAIL</span><h3>Look beyond the display name</h3><p>Review SPF, DKIM, and DMARC; Received-chain and Reply-To mismatches; display-name spoofing; BEC language; links; attachment hashes; and bank-detail changes.</p></article>
-      <article class="landing-capability-card"><div class="landing-card-icon">▤</div><span class="landing-card-index">03 / MEMORY</span><h3>Keep useful context</h3><p>Save scans, remember first-contact senders and domains, track time-of-click URL snapshots, compare vendor bank details, and group related reports by subject, sender, and link hosts.</p></article>
-      <article class="landing-capability-card"><div class="landing-card-icon">⌕</div><span class="landing-card-index">04 / REPUTATION</span><h3>Know when a signal is missing</h3><p>Optional Google Safe Browsing, VirusTotal, URLhaus, and PhishTank lookups add provider-attributed evidence only when enabled. Full URL sharing is opt-in per scan; a missing provider match is not a safety clearance.</p></article>
-    </div>
-  </section>
-
-  <section class="landing-section landing-approach" id="landing-approach" data-motion-reveal>
-    <div class="landing-approach-copy"><span class="landing-kicker">DESIGNED AROUND TRUST</span><h2>Explain the answer.<br><em>Never pretend.</em></h2><p>A clean green tick can be misleading when a check did not run. PhishGuard makes uncertainty visible and keeps each decision tied to evidence.</p>
-      <ul class="landing-principles"><li><span>✓</span><div><b>Reasons over mystery scores</b><small>Named signals and a receipt you can review.</small></div></li><li><span>✓</span><div><b>“Unknown” is a valid result</b><small>Missing information is not silently treated as safe.</small></div></li><li><span>✓</span><div><b>Safe-by-design previews</b><small>Page scripts are not executed and links are not made clickable.</small></div></li></ul>
-    </div>
-    <div class="landing-limit-card"><div class="landing-limit-head"><span class="landing-lamp"></span> HONEST LIMITS</div><h3>What it doesn’t do</h3><ul><li>No JavaScript execution or form submission during link previews.</li><li>No image or QR-code decoding yet.</li><li>Email file input is for <code>.eml</code>; Outlook <code>.msg</code> is not supported.</li><li>The built-in public-suffix list is compact and India-focused.</li></ul><p>Knowing a tool’s boundaries is part of using it safely.</p></div>
-  </section>
-
-  <section class="landing-cta-band" data-motion-reveal>
-    <div><span class="landing-kicker">YOUR NEXT MESSAGE CAN WAIT A MOMENT</span><h2>Make the next click a considered one.</h2><p>Create an account to save scan history and return to important evidence.</p></div>
-    <a class="landing-button landing-button-primary" href="/login?mode=register">Get started <span aria-hidden="true">→</span></a>
-  </section>
-  <footer class="landing-footer"><a class="landing-brand" href="/" aria-label="PhishGuard home"><span class="landing-brand-mark">PG</span><span><b>PhishGuard</b><small>Security, with evidence.</small></span></a><span>Clear signals for safer decisions.</span><a href="/login">Sign in</a></footer>
 </main>
 
 <!-- Authentication is shown after a visitor chooses to sign in or register. -->
@@ -370,9 +346,9 @@
         <div><b>Before you click</b><p>Check the link here first. It won’t open in your browser.</p></div>
         <button type="button" data-route="link">Check a link <span aria-hidden="true">→</span></button>
       </div>
-      <button class="nav-item" id="theme-toggle" aria-live="polite">
+      <button class="nav-item" id="theme-toggle" type="button" aria-live="polite" aria-label="Switch to soft contrast">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
-        <span id="theme-label">Light mode</span>
+        <span id="theme-label">Soft contrast</span>
       </button>
     </div>
   </aside>
@@ -464,7 +440,7 @@
             <div class="workspace-eyebrow"><span>02</span> YOUR SECURITY LIBRARY</div>
             <h2 class="hero-title">Keep the evidence<br>that matters.</h2>
             <p class="hero-sub">Saved checks stay organized here, ready when you want to compare or review a result.</p>
-            <div class="workspace-hero-note"><span>✳</span> Private to your account on this device</div>
+            <div class="workspace-hero-note"><span>✳</span> Saved in this browser for this username; not synced between devices</div>
           </div>
           <div class="workspace-hero-art saved-library-art" aria-hidden="true">
             <div class="library-orbit library-orbit-one"></div><div class="library-orbit library-orbit-two"></div>
@@ -664,7 +640,7 @@
         <button class="settings-home-option" type="button" data-settings-open="security"><span class="settings-home-icon">♢</span><span><b>Sign-in &amp; security</b><small>Password, recovery and login activity</small></span><span class="settings-home-arrow">→</span></button>
         <button class="settings-home-option" type="button" data-settings-open="notifications"><span class="settings-home-icon">◌</span><span><b>Notifications</b><small>Choose what should get your attention</small></span><span class="settings-home-arrow">→</span></button>
         <button class="settings-home-option" type="button" data-settings-open="privacy"><span class="settings-home-icon">▤</span><span><b>Privacy &amp; data</b><small>Export, clear, or delete account data</small></span><span class="settings-home-arrow">→</span></button>
-        <button class="settings-home-option" type="button" data-settings-open="appearance"><span class="settings-home-icon">◐</span><span><b>Appearance</b><small>Switch between light and dark themes</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="appearance"><span class="settings-home-icon">◐</span><span><b>Appearance</b><small>Choose deep or soft black-and-amber contrast</small></span><span class="settings-home-arrow">→</span></button>
         <button class="settings-home-option" type="button" data-settings-open="devices"><span class="settings-home-icon">▣</span><span><b>Accounts on this device</b><small>Review saved usernames or add an account</small></span><span class="settings-home-arrow">→</span></button>
       </div>
       <div class="settings-help-card"><span>?</span><div><b>Need a hand?</b><small>Open the PhishGuard Help Guide from the workspace for quick answers.</small></div></div>
@@ -697,8 +673,8 @@
     </div>
     <div class="settings-card" data-settings-category="appearance">
       <div class="settings-card-title">Workspace appearance</div>
-      <div class="settings-help">Choose the theme that feels comfortable for your workspace.</div>
-      <div class="settings-row"><span>Current theme</span><button class="btn btn-ghost btn-sm" id="settings-theme" type="button">Switch theme</button></div>
+      <div class="settings-help">PhishGuard stays near-black and amber. Choose deeper or softer contrast without switching to a light or green palette.</div>
+      <div class="settings-row"><span>Theme contrast</span><button class="btn btn-ghost btn-sm" id="settings-theme" type="button" aria-label="Switch to soft contrast">Use soft contrast</button></div>
     </div>
     <div class="settings-card" data-settings-category="devices">
       <div class="settings-card-title">Accounts on this device</div>
@@ -881,6 +857,6 @@
 </aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=20261104-amber"></script>
 </body>
 </html>

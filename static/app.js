@@ -302,8 +302,10 @@ function updateProfileUI(user) {
 
 function setupLandingReveals() {
   const landing = $('#landing-page');
+  if (!landing) return;
+  setupCapabilitiesTimeline(landing);
   const motionPreference = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-  if (!landing || !motionPreference || motionPreference.matches || !('IntersectionObserver' in window)) return;
+  if (!motionPreference || motionPreference.matches || !('IntersectionObserver' in window)) return;
 
   const targets = $$('[data-motion-reveal]', landing);
   if (!targets.length || landing.dataset.motionObserved === 'true') return;
@@ -319,6 +321,61 @@ function setupLandingReveals() {
   }, { threshold: 0.12, rootMargin: '0px 0px -7% 0px' });
 
   requestAnimationFrame(() => targets.forEach((target) => observer.observe(target)));
+}
+
+function setupCapabilitiesTimeline(landing) {
+  const section = $('#landing-capabilities', landing);
+  if (!section || section.dataset.capTimelineReady === 'true') return;
+  section.dataset.capTimelineReady = 'true';
+
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  if (reducedMotion?.matches || typeof Element.prototype.animate !== 'function') return;
+
+  const runMasterTimeline = () => {
+    if (section.dataset.capTimelineStarted === 'true') return;
+    section.dataset.capTimelineStarted = 'true';
+
+    // One master schedule: each effect uses the same document timeline and
+    // backwards fill, with offsets composed here in reading order.
+    const effects = [
+      ['.pg-cap-index', [{ opacity: 0, transform: 'translateY(9px)' }, { opacity: 1, transform: 'translateY(0)' }], 480, 0],
+      ['.pg-cap-strip-name', [{ opacity: 0, transform: 'translateY(9px)' }, { opacity: 1, transform: 'translateY(0)' }], 480, 65],
+      ['.pg-cap-strip-state', [{ opacity: 0, transform: 'translateY(9px)' }, { opacity: 1, transform: 'translateY(0)' }], 480, 120],
+      ['.pg-cap-rule', [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], 520, 45],
+      ['.pg-cap-title-mask h2', [{ opacity: 0, transform: 'translateY(105%)' }, { opacity: 1, transform: 'translateY(0)' }], 720, 160],
+      ['.pg-cap-clarity', [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], 680, 235],
+      ['.pg-cap-lede', [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'translateY(0)' }], 620, 300],
+      ['.pg-cap-card:nth-child(1)', [{ opacity: 0, transform: 'translateY(18px)' }, { opacity: 1, transform: 'translateY(0)' }], 640, 370],
+      ['.pg-cap-card:nth-child(2)', [{ opacity: 0, transform: 'translateY(18px)' }, { opacity: 1, transform: 'translateY(0)' }], 640, 470],
+      ['.pg-cap-card:nth-child(3)', [{ opacity: 0, transform: 'translateY(18px)' }, { opacity: 1, transform: 'translateY(0)' }], 640, 570],
+      ['.pg-cap-radar', [{ opacity: 0, transform: 'scale(.72)' }, { opacity: 1, transform: 'scale(1)' }], 620, 500],
+      ['.pg-cap-chart', [{ clipPath: 'inset(100% 0 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], 760, 625],
+      ['.pg-cap-reports', [{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], 760, 750],
+    ];
+
+    effects.forEach(([selector, keyframes, duration, delay]) => {
+      const element = $(selector, section);
+      if (!element) return;
+      element.animate(keyframes, {
+        duration,
+        delay,
+        easing: 'cubic-bezier(.23, 1, .32, 1)',
+        fill: 'backwards',
+        iterations: 1,
+      });
+    });
+  };
+
+  if (!('IntersectionObserver' in window)) {
+    requestAnimationFrame(runMasterTimeline);
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    if (!entries.some((entry) => entry.isIntersecting)) return;
+    observer.disconnect();
+    runMasterTimeline();
+  }, { threshold: 0.18 });
+  observer.observe(section);
 }
 
 function syncAssistantVisibility() {
@@ -453,7 +510,7 @@ const SETTINGS_CATEGORIES = {
   security: { title: 'Sign-in & security', copy: 'Choose a specific sign-in or recovery setting to manage.', section: 'privacy' },
   notifications: { title: 'Notifications', copy: 'Choose which browser and account notifications you want.', section: 'privacy' },
   privacy: { title: 'Privacy & data', copy: 'Review, export, or remove information linked to your account.', section: 'privacy' },
-  appearance: { title: 'Appearance', copy: 'Set the workspace theme that feels right for you.', section: 'profile' },
+  appearance: { title: 'Appearance', copy: 'Switch between two near-black amber contrast levels.', section: 'profile' },
   devices: { title: 'Accounts on this device', copy: 'Manage remembered usernames on this browser.', section: 'profile' },
 };
 
@@ -1072,14 +1129,21 @@ const sevClass = (sev) => ({ critical: 'b-critical', high: 'b-high', medium: 'b-
 
 /* ------------------------------------------------------------------- theme */
 function applyTheme(t) {
-  document.documentElement.dataset.theme = t;
-  localStorage.setItem('pg-theme', t);
-  $('#theme-label').textContent = t === 'dark' ? 'Light mode' : 'Dark mode';
-  $('#theme-icon').innerHTML = t === 'dark'
+  const theme = t === 'light' ? 'light' : 'dark';
+  const nextLabel = theme === 'dark' ? 'Soft contrast' : 'Deep contrast';
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem('pg-theme', theme); } catch { /* theme still applies for this session */ }
+  $('#theme-label').textContent = nextLabel;
+  $('#theme-toggle').setAttribute('aria-label', `Switch to ${nextLabel.toLowerCase()}`);
+  $('#settings-theme').textContent = theme === 'dark' ? 'Use soft contrast' : 'Use deep contrast';
+  $('#settings-theme').setAttribute('aria-label', `Switch to ${nextLabel.toLowerCase()}`);
+  $('#theme-icon').innerHTML = theme === 'dark'
     ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/>'
     : '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>';
 }
-applyTheme(localStorage.getItem('pg-theme') || 'dark');
+let initialTheme = 'dark';
+try { initialTheme = localStorage.getItem('pg-theme') === 'light' ? 'light' : 'dark'; } catch { /* use the default */ }
+applyTheme(initialTheme);
 $('#theme-toggle').onclick = () =>
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 

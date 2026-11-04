@@ -1,40 +1,40 @@
 /* ============================================================================
-   PhishGuard UI — design tokens + components
-   Dark first, with a full light theme. No external fonts/assets (the app runs
-   inside a sandboxed preview iframe, so everything here is local and inline).
+   PhishGuard UI — shared design tokens + components
+   Near-black and amber by default; contrast variants are defined at the end.
+   The app runs inside a sandboxed preview iframe, with local assets.
    ========================================================================== */
 
 /* ------------------------------------------------------------------ tokens */
 :root {
-  --bg: #0a0d12;
-  --bg-soft: #0d1219;
-  --surface: #111721;
-  --surface-2: #0d131c;
-  --surface-3: #151d29;
-  --border: rgba(255, 255, 255, .075);
-  --border-strong: rgba(255, 255, 255, .14);
-  --text: #e8eef6;
-  --text-dim: #93a4b8;
-  --text-faint: #6a7c92;
+  --bg: #050505;
+  --bg-soft: #0a0908;
+  --surface: #10100e;
+  --surface-2: #141311;
+  --surface-3: #1b1915;
+  --border: rgba(255, 255, 255, .085);
+  --border-strong: rgba(255, 255, 255, .16);
+  --text: #f2f0ea;
+  --text-dim: #bcb8af;
+  --text-faint: #858179;
 
-  --accent: #78936e;
-  --accent-2: #bd8c60;
-  --accent-soft: rgba(120, 147, 110, .14);
+  --accent: #ffc24a;
+  --accent-2: #e9931e;
+  --accent-soft: rgba(255, 194, 74, .13);
 
-  --danger: #ff4d5e;
-  --danger-soft: rgba(255, 77, 94, .12);
-  --warn: #ffb020;
-  --warn-soft: rgba(255, 176, 32, .12);
-  --ok: #22c55e;
-  --ok-soft: rgba(34, 197, 94, .12);
-  --info: #6aa9ff;
-  --unknown: #8b9bb0;
+  --danger: #b85e3e;
+  --danger-soft: rgba(184, 94, 62, .13);
+  --warn: #ffc24a;
+  --warn-soft: rgba(255, 194, 74, .13);
+  --ok: #c9c5bc;
+  --ok-soft: rgba(242, 240, 234, .08);
+  --info: #e9a631;
+  --unknown: #96928a;
 
   --radius: 14px;
   --radius-sm: 9px;
   --radius-lg: 20px;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px -12px rgba(0, 0, 0, .55);
-  --shadow-lg: 0 24px 64px -24px rgba(0, 0, 0, .75);
+  --shadow: 0 2px 8px rgba(0, 0, 0, .38), 0 16px 42px -28px rgba(0, 0, 0, .9);
+  --shadow-lg: 0 24px 70px -34px rgba(0, 0, 0, .92);
 
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
           Arial, "Noto Sans", sans-serif;
@@ -43,61 +43,60 @@
 }
 
 :root[data-theme="light"] {
-  --bg: #f4f7fb;
-  --bg-soft: #eef2f8;
-  --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --surface-3: #f1f5f9;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text: #0f172a;
-  --text-dim: #55657a;
-  --text-faint: #8494a8;
-  --accent: #45694d;
-  --accent-2: #b47d4c;
-  --accent-soft: rgba(69, 105, 77, .10);
-  --danger: #dc2626;
-  --danger-soft: rgba(220, 38, 38, .08);
-  --warn: #b45309;
-  --warn-soft: rgba(180, 83, 9, .09);
-  --ok: #15803d;
-  --ok-soft: rgba(21, 128, 61, .09);
-  --info: #5c7867;
-  --unknown: #64748b;
-  --shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 10px 28px -14px rgba(15, 23, 42, .22);
-  --shadow-lg: 0 24px 56px -20px rgba(15, 23, 42, .3);
+  --bg: #050505;
+  --bg-soft: #0a0908;
+  --surface: #10100e;
+  --surface-2: #141311;
+  --surface-3: #1b1915;
+  --border: rgba(255, 255, 255, .085);
+  --border-strong: rgba(255, 255, 255, .16);
+  --text: #f2f0ea;
+  --text-dim: #bcb8af;
+  --text-faint: #858179;
+  --accent: #ffc24a;
+  --accent-2: #e9931e;
+  --accent-soft: rgba(255, 194, 74, .13);
+  --danger: #b85e3e;
+  --danger-soft: rgba(184, 94, 62, .13);
+  --warn: #ffc24a;
+  --warn-soft: rgba(255, 194, 74, .13);
+  --ok: #c9c5bc;
+  --ok-soft: rgba(242, 240, 234, .08);
+  --info: #e9a631;
+  --unknown: #96928a;
+  --shadow: 0 2px 8px rgba(0, 0, 0, .38), 0 16px 42px -28px rgba(0, 0, 0, .9);
+  --shadow-lg: 0 24px 70px -34px rgba(0, 0, 0, .92);
 }
 
-/* ---------------------------------------------------------- calm dark mode */
-/* A softer palette keeps the dashboard readable without glowing cards or harsh
-   black/white contrast. Light mode tokens above remain unchanged. */
+/* ---------------------------------------------------------- shared contrast tokens */
+/* The final theme layer supplies the two black-and-amber contrast settings. */
 :root:not([data-theme="light"]) {
-  --bg: #101419;
-  --bg-soft: #131920;
-  --surface: #171d25;
-  --surface-2: #141a21;
-  --surface-3: #1b232d;
-  --border: rgba(207, 219, 235, .075);
-  --border-strong: rgba(207, 219, 235, .13);
-  --text: #d8e0ea;
-  --text-dim: #9aa8b8;
-  --text-faint: #738195;
+  --bg: #050505;
+  --bg-soft: #0a0908;
+  --surface: #10100e;
+  --surface-2: #141311;
+  --surface-3: #1b1915;
+  --border: rgba(255, 255, 255, .085);
+  --border-strong: rgba(255, 255, 255, .16);
+  --text: #f2f0ea;
+  --text-dim: #bcb8af;
+  --text-faint: #858179;
 
-  --accent: #8fa582;
-  --accent-2: #c49a6b;
-  --accent-soft: rgba(143, 165, 130, .13);
+  --accent: #ffc24a;
+  --accent-2: #e9931e;
+  --accent-soft: rgba(255, 194, 74, .13);
 
-  --danger: #d9828a;
-  --danger-soft: rgba(217, 130, 138, .12);
-  --warn: #d4ad6b;
-  --warn-soft: rgba(212, 173, 107, .12);
-  --ok: #76b995;
-  --ok-soft: rgba(118, 185, 149, .12);
-  --info: #9caf96;
-  --unknown: #8995a5;
+  --danger: #b85e3e;
+  --danger-soft: rgba(184, 94, 62, .13);
+  --warn: #ffc24a;
+  --warn-soft: rgba(255, 194, 74, .13);
+  --ok: #c9c5bc;
+  --ok-soft: rgba(242, 240, 234, .08);
+  --info: #e9a631;
+  --unknown: #96928a;
 
-  --shadow: 0 1px 2px rgba(0, 0, 0, .18), 0 8px 22px -16px rgba(0, 0, 0, .42);
-  --shadow-lg: 0 18px 42px -24px rgba(0, 0, 0, .58);
+  --shadow: 0 2px 8px rgba(0, 0, 0, .38), 0 16px 42px -28px rgba(0, 0, 0, .9);
+  --shadow-lg: 0 24px 70px -34px rgba(0, 0, 0, .92);
 }
 
 :root:not([data-theme="light"]) .btn-primary {
@@ -898,21 +897,21 @@ pre.code {
 /* ------------------------------------------------------ interface refinement */
 /* A clearer, higher-contrast workspace palette with less visual noise. */
 :root:not([data-theme="light"]) {
-  --bg: #0d131b;
-  --bg-soft: #101923;
-  --surface: #151f2b;
-  --surface-2: #111a24;
-  --surface-3: #1b2937;
-  --border: rgba(190, 211, 232, .10);
-  --border-strong: rgba(190, 211, 232, .18);
-  --text: #eef5fb;
-  --text-dim: #afbdca;
-  --text-faint: #8293a4;
-  --accent: #91aa83;
-  --accent-2: #bd8d62;
-  --accent-soft: rgba(145, 170, 131, .13);
-  --info: #9caf96;
-  --shadow: 0 2px 6px rgba(0, 0, 0, .18), 0 14px 36px -22px rgba(0, 0, 0, .62);
+  --bg: #050505;
+  --bg-soft: #0a0908;
+  --surface: #10100e;
+  --surface-2: #141311;
+  --surface-3: #1b1915;
+  --border: rgba(255, 255, 255, .085);
+  --border-strong: rgba(255, 255, 255, .16);
+  --text: #f2f0ea;
+  --text-dim: #bcb8af;
+  --text-faint: #858179;
+  --accent: #ffc24a;
+  --accent-2: #e9931e;
+  --accent-soft: rgba(255, 194, 74, .13);
+  --info: #e9a631;
+  --shadow: 0 2px 8px rgba(0, 0, 0, .38), 0 16px 42px -28px rgba(0, 0, 0, .9);
 }
 
 body {
@@ -977,7 +976,7 @@ body {
 .btn { min-height: 38px; border-radius: 10px; }
 .btn-primary {
   background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 72%, var(--accent-2)));
-  color: #071a1b;
+  color: #17120a;
   box-shadow: 0 7px 20px -12px var(--accent);
   font-weight: 720;
 }
@@ -1046,6 +1045,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 :root:not([data-theme="light"]) .btn-primary {
   background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 72%, var(--accent-2)));
-  color: #071a1b;
+  color: #17120a;
   box-shadow: 0 7px 20px -12px var(--accent);
 }
