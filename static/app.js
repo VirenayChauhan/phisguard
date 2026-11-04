@@ -393,10 +393,20 @@ function setupCapabilitiesTimeline(landing) {
   observer.observe(section);
 }
 
+const wideSidebarMedia = window.matchMedia ? window.matchMedia('(min-width: 921px)') : null;
 function syncAssistantVisibility() {
-  const available = !$('#auth-screen').hidden || !$('#dashboard').hidden;
-  $('#help-ai-fab').hidden = !available;
+  const dashboardVisible = !$('#dashboard').hidden;
+  const available = !$('#auth-screen').hidden || dashboardVisible;
+  const sidebarHasHelpLink = dashboardVisible
+    && !$('#dashboard').classList.contains('sidebar-hidden')
+    && Boolean(wideSidebarMedia?.matches);
+  // Keep one visible Help entry point: in the wide sidebar, otherwise the floating button.
+  $('#help-ai-fab').hidden = !available || sidebarHasHelpLink;
   if (!available) closeAssistant();
+}
+if (wideSidebarMedia) {
+  if (wideSidebarMedia.addEventListener) wideSidebarMedia.addEventListener('change', syncAssistantVisibility);
+  else wideSidebarMedia.addListener(syncAssistantVisibility);
 }
 
 function showLanding() {
@@ -1105,6 +1115,11 @@ async function askAssistant(question) {
 }
 
 $('#help-ai-fab').onclick = openAssistant;
+$('#sidebar-open-help').onclick = openAssistant;
+$('#sidebar-open-notifications').onclick = () => {
+  openSettings();
+  openSettingsCategory('notifications');
+};
 $('#assistant-close').onclick = closeAssistant;
 $('#assistant-form').onsubmit = (event) => {
   event.preventDefault();
@@ -1175,6 +1190,7 @@ function setSidebarHidden(hidden, persist = true) {
   sidebarToggle.setAttribute('aria-expanded', String(!hidden));
   sidebarToggle.setAttribute('aria-label', hidden ? 'Show navigation panel' : 'Hide navigation panel');
   $('#sidebar-toggle-label').textContent = hidden ? 'Show panel' : 'Hide panel';
+  syncAssistantVisibility();
   if (persist) {
     try { localStorage.setItem('pg-sidebar-hidden', hidden ? '1' : '0'); } catch { /* optional preference */ }
   }

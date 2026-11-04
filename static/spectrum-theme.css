@@ -166,6 +166,14 @@ input[type="checkbox"], input[type="radio"], progress { accent-color: #c451ad; }
   color: #fffaff;
   box-shadow: 0 8px 24px -13px rgba(191, 87, 180, .72);
 }
+.brand-mark, .auth-brand-mark, .auth-story-brand-mark {
+  display: block;
+  object-fit: contain;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+}
 .sidebar .brand-sub, .sidebar .nav-label, .sidebar .recent-empty { color: #918b9d; }
 .sidebar .nav-item, .sidebar .side-foot > .nav-item { color: #c8c2d1; }
 .sidebar .nav-item svg, .sidebar .nav-item[aria-current="page"] svg { color: #cb73bc; }

@@ -62,11 +62,13 @@
 
 .sidebar-toggle {
   display: inline-flex;
-  flex: none;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 38px;
+  width: auto;
+  height: auto;
+  min-height: 40px;
   padding: 7px 10px;
   border: 1px solid var(--border-strong);
   border-radius: 10px;
@@ -78,7 +80,7 @@
   transition: background .16s ease, color .16s ease, border-color .16s ease;
 }
 .sidebar-toggle:hover { color: var(--text); background: var(--surface-3); border-color: var(--accent); }
-.sidebar-toggle svg { width: 17px; height: 17px; }
+.sidebar-toggle svg { display: block; width: 18px; height: 18px; flex: none; }
 .app.sidebar-hidden { grid-template-columns: minmax(0, 1fr); }
 .app.sidebar-hidden #app-sidebar, #app-sidebar[hidden] { display: none !important; }
 .sidebar { transition: width .18s ease, padding .18s ease; }

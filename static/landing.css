@@ -29,7 +29,7 @@
 .pg-site-wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 9px;
   flex: none;
   color: #f4f1e9;
   font-size: 11px;
@@ -37,6 +37,7 @@
   letter-spacing: .105em;
   text-transform: uppercase;
 }
+.pg-site-logo { display: block; width: 32px; height: 32px; flex: none; object-fit: contain; }
 .pg-wordmark-mark { color: #b449a1; font-size: 16px; }
 .pg-site-actions { display: flex; align-items: center; gap: clamp(15px, 3vw, 40px); }
 .pg-site-actions > a:not(.pg-site-join) {

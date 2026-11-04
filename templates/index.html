@@ -8,18 +8,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <title>PhishGuard — link &amp; email checker with receipts</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='mobile-workspace.css') }}?v=20261104-googleauth1">
-<link rel="stylesheet" href="{{ url_for('static', filename='google-auth.css') }}?v=20261104-googleauth1">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23B84AA4'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='%23FFF8FF' text-anchor='middle'>PG</text></svg>">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='mobile-workspace.css') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='google-auth.css') }}?v=20261104-brand-logo1">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1">
 <script>
   if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
     document.documentElement.dataset.uiTrial = 'split';
@@ -33,7 +33,7 @@
 </div>
 <main class="landing-page" id="landing-page"{% if login_page|default(false) or ui_trial|default(false) %} hidden{% endif %}>
   <header class="pg-site-bar">
-    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home">PhishGuard<span class="pg-wordmark-mark" aria-hidden="true">/</span></a>
+    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home"><img class="pg-site-logo" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt="">PhishGuard</a>
     <nav class="pg-site-actions" aria-label="Main navigation">
       <a href="#landing-capabilities">Platform</a>
       <a href="/login">Sign in</a>
@@ -147,7 +147,7 @@
 <section class="auth-screen" id="auth-screen"{% if not (login_page|default(false) or ui_trial|default(false)) %} hidden{% endif %} aria-labelledby="auth-title">
   <aside class="auth-story" aria-label="About PhishGuard">
     <div class="auth-story-brand">
-      <div class="auth-story-brand-mark" aria-hidden="true">PG</div>
+      <img class="auth-story-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt="" aria-hidden="true">
       <div><b>PhishGuard</b><span>PERSONAL SECURITY</span></div>
     </div>
     <div class="auth-story-main">
@@ -172,7 +172,7 @@
   </aside>
   <div class="auth-card">
     <a class="auth-back" href="/">← Back to PhishGuard</a>
-    <div class="auth-brand-mark" aria-hidden="true">PG</div>
+    <img class="auth-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt="" aria-hidden="true">
     <div class="auth-eyebrow">SECURE WORKSPACE</div>
     <h1 id="auth-title">Sign in to PhishGuard</h1>
     <p class="auth-lede" id="auth-lede">Create a secure account or log in to access the phishing protection workspace.</p>
@@ -346,7 +346,7 @@
   <!-- ============================== SIDEBAR ============================== -->
   <aside class="sidebar" id="app-sidebar">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">PG</div>
+      <img class="brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt="" aria-hidden="true">
       <div>
         <div class="brand-name">PhishGuard</div>
         <div class="brand-sub">verdicts with receipts</div>
@@ -391,30 +391,33 @@
         Saved scans
       </button>
       <div class="nav-label">ANALYSIS TOOLS</div>
-      <button class="nav-item" data-route="link">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
-        Check a link <span class="kbd">1</span>
+      <button class="nav-item" type="button" data-route="link" aria-keyshortcuts="1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+        Check a link <span class="kbd" aria-hidden="true">1</span>
       </button>
-      <button class="nav-item" data-route="email">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
-        Check an email <span class="kbd">2</span>
+      <button class="nav-item" type="button" data-route="email" aria-keyshortcuts="2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+        Check an email <span class="kbd" aria-hidden="true">2</span>
       </button>
 
       <div class="nav-label">CAMPAIGN INTELLIGENCE</div>
-      <button class="nav-item" data-route="sweep">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/><circle cx="12" cy="12" r="3"/></svg>
-        Campaigns <span class="kbd">3</span>
+      <button class="nav-item" type="button" data-route="sweep" aria-keyshortcuts="3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/><circle cx="12" cy="12" r="3"/></svg>
+        Campaigns <span class="kbd" aria-hidden="true">3</span>
       </button>
       <div class="nav-label">RECENT CHECKS</div>
       <div class="recent" id="recent"></div>
     </nav>
 
       <div class="side-foot">
-      <div class="sidebar-guide">
+      <section class="sidebar-guide" aria-label="Quick access">
         <span class="sidebar-guide-mark" aria-hidden="true">✳</span>
-        <div><b>Before you click</b><p>Check the link here first. It won’t open in your browser.</p></div>
-        <button type="button" data-route="link">Check a link <span aria-hidden="true">→</span></button>
-      </div>
+        <div><b>Quick access</b><p>Help and notification preferences.</p></div>
+        <div class="sidebar-guide-actions">
+          <button type="button" id="sidebar-open-help">Help Guide</button>
+          <button type="button" id="sidebar-open-notifications">Notifications</button>
+        </div>
+      </section>
       <button class="nav-item" id="theme-toggle" type="button" aria-live="polite" aria-label="Switch to soft contrast">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
         <span id="theme-label">Soft contrast</span>
@@ -426,7 +429,7 @@
   <div class="main">
     <header class="topbar">
       <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Hide navigation panel" aria-expanded="true" aria-controls="app-sidebar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
         <span id="sidebar-toggle-label">Hide panel</span>
       </button>
       <div>
@@ -496,7 +499,7 @@
           <div class="workspace-hero-art saved-library-art" aria-hidden="true">
             <div class="library-orbit library-orbit-one"></div><div class="library-orbit library-orbit-two"></div>
             <div class="library-sheet library-sheet-back"></div>
-            <div class="library-sheet library-sheet-front"><span class="library-sheet-mark">PG</span><span class="library-sheet-line"></span><span class="library-sheet-line short"></span><span class="library-sheet-tag">SAVED EVIDENCE</span><span class="library-sheet-check">✓</span></div>
+            <div class="library-sheet library-sheet-front"><span class="library-sheet-mark"><img src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt=""></span><span class="library-sheet-line"></span><span class="library-sheet-line short"></span><span class="library-sheet-tag">SAVED EVIDENCE</span><span class="library-sheet-check">✓</span></div>
             <span class="library-art-spark">✦</span>
           </div>
         </div>
@@ -918,7 +921,7 @@
 </aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="{{ url_for('static', filename='app.js') }}?v=20261104-googleauth1"></script>
-<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-googleauth1"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=20261104-brand-logo1"></script>
+<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-brand-logo1"></script>
 </body>
 </html>
