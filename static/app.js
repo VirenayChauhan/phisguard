@@ -1146,6 +1146,14 @@ $('#theme-toggle').onclick = () =>
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 
 const sidebarToggle = $('#sidebar-toggle');
+const sidebarProfileMore = $('.sidebar-profile-more');
+if (sidebarProfileMore && window.matchMedia) {
+  const compactSidebar = window.matchMedia('(max-width: 560px)');
+  const syncSidebarProfileDisclosure = () => { sidebarProfileMore.open = !compactSidebar.matches; };
+  syncSidebarProfileDisclosure();
+  if (compactSidebar.addEventListener) compactSidebar.addEventListener('change', syncSidebarProfileDisclosure);
+  else compactSidebar.addListener(syncSidebarProfileDisclosure);
+}
 function setSidebarHidden(hidden, persist = true) {
   const sidebar = $('#app-sidebar');
   $('#dashboard').classList.toggle('sidebar-hidden', hidden);
