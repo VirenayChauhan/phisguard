@@ -308,8 +308,12 @@ server-side `CRON_SECRET`.
 
 ### 4. Deploy with Docker (the recommended way to keep a stable link)
 
-Docker gives you a **host port**, so the URL is always `http://localhost:8000` — the
-token-secured preview link from the hosted sandbox does not apply inside a container.
+Docker runs the Flask application as one service: it serves the UI and `/api/*`
+backend from the same origin, so no browser-side localhost API address or CORS setup
+is needed. A named Docker volume keeps the local SQLite database—including accounts
+and scan history—across container rebuilds and restarts. The port is bound to your
+laptop only by default; the token-secured hosted preview link does not apply inside
+a container.
 
 ```bash
 cd phishguard
@@ -319,7 +323,7 @@ docker build -t phishguard:0.9.0 .
 
 # run it
 docker run -d --name phishguard \
-  -p 8000:8000 \
+  -p 127.0.0.1:8000:8000 \
   -v phishguard-data:/app/data \
   --restart unless-stopped \
   phishguard:0.9.0
@@ -341,13 +345,13 @@ curl -s localhost:8000/api/health  # {"ok":true,...}
 ```bash
 docker compose up -d --build
 docker compose logs -f
-docker compose down          # add -v to also delete the persisted data
+docker compose down          # stops app; named volume retains accounts and history
 ```
 
 **Optional reputation keys:**
 
 ```bash
-docker run -d --name phishguard -p 8000:8000 -v phishguard-data:/app/data \
+docker run -d --name phishguard -p 127.0.0.1:8000:8000 -v phishguard-data:/app/data \
   -e GSB_API_KEY=your-key -e VT_API_KEY=your-key \
   -e URLHAUS_AUTH_KEY=your-key -e PHISHTANK_APP_KEY=your-key \
   phishguard:0.9.0
@@ -369,7 +373,7 @@ or put them in a `.env` next to `docker-compose.yml` and use `docker compose up 
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `port is already allocated` | something already on 8000 | `-p 8080:8000`, then open `localhost:8080` |
+| `port is already allocated` | something already on 8000 | use `PHISHGUARD_PORT=8080 docker compose up -d --build`, then open `localhost:8080` |
 | Page loads, banner says *falling back to /tmp* | root-owned bind mount | `mkdir -p ./data && sudo chown -R 10001:10001 ./data`, then mount `-v "$PWD/data:/app/data"` |
 | `unhealthy` but the page works | healthcheck hits `127.0.0.1` inside the container | confirm you didn't override `PORT` — if you did, pass the same value to the healthcheck |
 | Lookups (domain age, DNS) are empty | container has no outbound network | check the daemon's DNS/proxy policy; the app degrades to lexical-only and labels it |

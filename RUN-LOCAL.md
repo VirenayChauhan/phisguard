@@ -86,8 +86,10 @@ docker compose logs -f           # watch the log
 docker compose down              # stop
 ```
 
-Data persists in the `phishguard-data` volume. Full Docker notes (healthcheck, env keys,
-troubleshooting table) are in `README.md` → *Deploy with Docker*.
+The Flask container serves both the UI and backend API from the same origin. Accounts
+and scan history persist in the `phishguard-data` volume across restarts and rebuilds;
+`docker compose down` does not remove that volume. Full Docker notes (healthcheck, env
+keys, troubleshooting table) are in `README.md` → *Deploy with Docker*.
 
 ---
 
