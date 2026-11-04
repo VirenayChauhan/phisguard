@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" {% if ui_trial|default(false) %}data-ui-trial="split"{% endif %}>
+<html lang="en" data-theme="dark" data-palette="signature" {% if ui_trial|default(false) %}data-ui-trial="split"{% endif %}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,18 +8,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <title>PhishGuard — link &amp; email checker with receipts</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='mobile-workspace.css') }}?v=20261104-brand-logo1">
-<link rel="stylesheet" href="{{ url_for('static', filename='google-auth.css') }}?v=20261104-brand-logo1">
-<link rel="icon" type="image/png" href="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='mobile-workspace.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='google-auth.css') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='theme-picker.css') }}?v=20261104-theme-picker2">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2">
 <script>
   if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
     document.documentElement.dataset.uiTrial = 'split';
@@ -33,7 +34,7 @@
 </div>
 <main class="landing-page" id="landing-page"{% if login_page|default(false) or ui_trial|default(false) %} hidden{% endif %}>
   <header class="pg-site-bar">
-    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home"><img class="pg-site-logo" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt="">PhishGuard</a>
+    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home"><img class="pg-site-logo" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt="">PhishGuard</a>
     <nav class="pg-site-actions" aria-label="Main navigation">
       <a href="#landing-capabilities">Platform</a>
       <a href="/login">Sign in</a>
@@ -147,7 +148,7 @@
 <section class="auth-screen" id="auth-screen"{% if not (login_page|default(false) or ui_trial|default(false)) %} hidden{% endif %} aria-labelledby="auth-title">
   <aside class="auth-story" aria-label="About PhishGuard">
     <div class="auth-story-brand">
-      <img class="auth-story-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt="" aria-hidden="true">
+      <img class="auth-story-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt="" aria-hidden="true">
       <div><b>PhishGuard</b><span>PERSONAL SECURITY</span></div>
     </div>
     <div class="auth-story-main">
@@ -172,7 +173,7 @@
   </aside>
   <div class="auth-card">
     <a class="auth-back" href="/">← Back to PhishGuard</a>
-    <img class="auth-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt="" aria-hidden="true">
+    <img class="auth-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt="" aria-hidden="true">
     <div class="auth-eyebrow">SECURE WORKSPACE</div>
     <h1 id="auth-title">Sign in to PhishGuard</h1>
     <p class="auth-lede" id="auth-lede">Create a secure account or log in to access the phishing protection workspace.</p>
@@ -346,7 +347,7 @@
   <!-- ============================== SIDEBAR ============================== -->
   <aside class="sidebar" id="app-sidebar">
     <div class="brand">
-      <img class="brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt="" aria-hidden="true">
+      <img class="brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt="" aria-hidden="true">
       <div>
         <div class="brand-name">PhishGuard</div>
         <div class="brand-sub">verdicts with receipts</div>
@@ -418,10 +419,7 @@
           <button type="button" id="sidebar-open-notifications">Notifications</button>
         </div>
       </section>
-      <button class="nav-item" id="theme-toggle" type="button" aria-live="polite" aria-label="Switch to soft contrast">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
-        <span id="theme-label">Soft contrast</span>
-      </button>
+
     </div>
   </aside>
 
@@ -499,7 +497,7 @@
           <div class="workspace-hero-art saved-library-art" aria-hidden="true">
             <div class="library-orbit library-orbit-one"></div><div class="library-orbit library-orbit-two"></div>
             <div class="library-sheet library-sheet-back"></div>
-            <div class="library-sheet library-sheet-front"><span class="library-sheet-mark"><img src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-brand-logo1" alt=""></span><span class="library-sheet-line"></span><span class="library-sheet-line short"></span><span class="library-sheet-tag">SAVED EVIDENCE</span><span class="library-sheet-check">✓</span></div>
+            <div class="library-sheet library-sheet-front"><span class="library-sheet-mark"><img src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt=""></span><span class="library-sheet-line"></span><span class="library-sheet-line short"></span><span class="library-sheet-tag">SAVED EVIDENCE</span><span class="library-sheet-check">✓</span></div>
             <span class="library-art-spark">✦</span>
           </div>
         </div>
@@ -737,8 +735,30 @@
     </div>
     <div class="settings-card" data-settings-category="appearance">
       <div class="settings-card-title">Workspace appearance</div>
-      <div class="settings-help">PhishGuard stays near-black with magenta, violet, and blue accents. Choose deeper or softer contrast without switching to a light palette.</div>
-      <div class="settings-row"><span>Theme contrast</span><button class="btn btn-ghost btn-sm" id="settings-theme" type="button" aria-label="Switch to soft contrast">Use soft contrast</button></div>
+      <div class="settings-help" id="appearance-theme-help">Choose a theme. Every option keeps PhishGuard’s near-black look and accessible contrast.</div>
+      <fieldset class="theme-options" aria-describedby="appearance-theme-help">
+        <legend>Choose your theme</legend>
+        <label class="theme-choice">
+          <span class="theme-swatch theme-swatch-signature" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="theme-choice-copy"><b>Signature</b><small>Magenta · violet · blue</small></span>
+          <input type="radio" name="appearance-theme" value="signature">
+        </label>
+        <label class="theme-choice">
+          <span class="theme-swatch theme-swatch-violet" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="theme-choice-copy"><b>Violet Dusk</b><small>Violet · orchid · blue</small></span>
+          <input type="radio" name="appearance-theme" value="violet">
+        </label>
+        <label class="theme-choice">
+          <span class="theme-swatch theme-swatch-blue" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="theme-choice-copy"><b>Blue Hour</b><small>Blue · violet · magenta</small></span>
+          <input type="radio" name="appearance-theme" value="blue">
+        </label>
+        <label class="theme-choice">
+          <span class="theme-swatch theme-swatch-soft" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="theme-choice-copy"><b>Soft Contrast</b><small>Gentler surfaces · same palette</small></span>
+          <input type="radio" name="appearance-theme" value="soft">
+        </label>
+      </fieldset>
     </div>
     <div class="settings-card" data-settings-category="devices">
       <div class="settings-card-title">Accounts on this device</div>
@@ -921,7 +941,7 @@
 </aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="{{ url_for('static', filename='app.js') }}?v=20261104-brand-logo1"></script>
-<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-brand-logo1"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=20261104-theme-picker2"></script>
+<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-theme-picker2"></script>
 </body>
 </html>

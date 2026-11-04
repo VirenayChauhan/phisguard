@@ -624,8 +624,6 @@ $('#security-action-back').onclick = () => {
   setSettingsMessage('');
   $('#account-panel').scrollTop = 0;
 };
-$('#settings-theme').onclick = () =>
-  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 $('#settings-enable-notifications').onclick = enableBrowserNotifications;
 $('#notify-browser').onchange = (event) => {
   if (event.target.checked) enableBrowserNotifications();
@@ -1154,24 +1152,32 @@ const sevClass = (sev) => ({ critical: 'b-critical', high: 'b-high', medium: 'b-
   low: 'b-low', info: 'b-info' }[sev] || 'b-info');
 
 /* ------------------------------------------------------------------- theme */
-function applyTheme(t) {
-  const theme = t === 'light' ? 'light' : 'dark';
-  const nextLabel = theme === 'dark' ? 'Soft contrast' : 'Deep contrast';
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem('pg-theme', theme); } catch { /* theme still applies for this session */ }
-  $('#theme-label').textContent = nextLabel;
-  $('#theme-toggle').setAttribute('aria-label', `Switch to ${nextLabel.toLowerCase()}`);
-  $('#settings-theme').textContent = theme === 'dark' ? 'Use soft contrast' : 'Use deep contrast';
-  $('#settings-theme').setAttribute('aria-label', `Switch to ${nextLabel.toLowerCase()}`);
-  $('#theme-icon').innerHTML = theme === 'dark'
-    ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/>'
-    : '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>';
+const THEME_IDS = new Set(['signature', 'violet', 'blue', 'soft']);
+function normalizeThemeId(value) {
+  if (THEME_IDS.has(value)) return value;
+  // Keep users' previous contrast preference when upgrading from the old toggle.
+  if (value === 'light') return 'soft';
+  return 'signature';
 }
-let initialTheme = 'dark';
-try { initialTheme = localStorage.getItem('pg-theme') === 'light' ? 'light' : 'dark'; } catch { /* use the default */ }
+function applyTheme(themeId) {
+  const selected = normalizeThemeId(themeId);
+  const softContrast = selected === 'soft';
+  document.documentElement.dataset.theme = softContrast ? 'light' : 'dark';
+  document.documentElement.dataset.palette = selected;
+  try { localStorage.setItem('pg-theme', selected); } catch { /* theme still applies for this session */ }
+  $$('input[name="appearance-theme"]').forEach((input) => {
+    input.checked = input.value === selected;
+    input.closest('.theme-choice')?.classList.toggle('selected', input.checked);
+  });
+}
+let initialTheme = 'signature';
+try { initialTheme = normalizeThemeId(localStorage.getItem('pg-theme')); } catch { /* use the default */ }
+$$('input[name="appearance-theme"]').forEach((input) => {
+  input.addEventListener('change', () => {
+    if (input.checked) applyTheme(input.value);
+  });
+});
 applyTheme(initialTheme);
-$('#theme-toggle').onclick = () =>
-  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 
 const sidebarToggle = $('#sidebar-toggle');
 const sidebarProfileMore = $('.sidebar-profile-more');
