@@ -8,13 +8,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <title>PhishGuard — link &amp; email checker with receipts</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-amber">
-<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-amber">
-<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-amber">
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-amber">
-<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-amber">
-<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-amber">
-<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-amber">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-recreate7">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-recreate7">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-recreate7">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-recreate7">
+<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-recreate7">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-recreate7">
+<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-recreate7">
+<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-recreate7">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23FFC24A'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='%2317120A' text-anchor='middle'>PG</text></svg>">
 <script>
   if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
@@ -29,23 +30,48 @@
 </div>
 <main class="landing-page" id="landing-page"{% if login_page|default(false) or ui_trial|default(false) %} hidden{% endif %}>
   <header class="pg-site-bar">
-    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home">PhishGuard</a>
-    <nav class="pg-site-actions" aria-label="Account">
-      <a href="/login">Sign in</a>
+    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home">PhishGuard<span class="pg-wordmark-mark" aria-hidden="true">/</span></a>
+    <nav class="pg-site-actions" aria-label="Main navigation">
+      <a href="#landing-capabilities">Platform</a>
+      <a href="/login#link">Link checks</a>
+      <a href="/login#email">Email checks</a>
       <a class="pg-site-join" href="/login?mode=register">Create account <span aria-hidden="true">↗</span></a>
     </nav>
   </header>
+  <section class="pg-hero" id="landing-hero" aria-labelledby="pg-hero-title">
+    <div class="pg-hero-grid" aria-hidden="true"></div>
+    <canvas class="depth-scene pg-depth-scene" data-three-scene="landing" aria-hidden="true"></canvas>
+    <div class="pg-hero-inner">
+      <div class="pg-hero-copy">
+        <h1 id="pg-hero-title"><span>Tracing</span><br><span>the <em>unseen</em></span></h1>
+        <p>Inspect suspicious links and email. PhishGuard shows the evidence behind its verdict, so you can make a safer decision before you click.</p>
+        <div class="pg-hero-actions">
+          <a class="pg-hero-cta" href="/login?mode=register">CREATE ACCOUNT <span aria-hidden="true">↗</span></a>
+          <a class="pg-hero-signin" href="/login">Sign in</a>
+        </div>
+        <div class="pg-hero-footnote"><span aria-hidden="true">↳</span> LINK SIGNALS <i></i> EMAIL HEADERS <i></i> EXPLAINABLE VERDICTS</div>
+      </div>
+      <aside class="pg-signal-card" aria-label="PhishGuard check types">
+        <div class="pg-signal-card-head"><span>CHECK MODES</span><span class="pg-signal-card-status"><i></i> 2 CHECK TYPES</span></div>
+        <div class="pg-signal-card-number">02</div>
+        <div class="pg-signal-card-label">LINK + EMAIL CHECKS</div>
+        <div class="pg-signal-card-rule"></div>
+        <div class="pg-signal-card-foot"><span>VERDICTS WITH EVIDENCE</span><span aria-hidden="true">//</span></div>
+      </aside>
+    </div>
+    <a class="pg-scroll-cue" href="#landing-capabilities"><span>EXPLORE THE SIGNALS</span><i aria-hidden="true"></i></a>
+  </section>
   <section class="pg-capabilities" id="landing-capabilities" aria-labelledby="pg-cap-title">
     <div class="pg-cap-guides" aria-hidden="true"></div>
     <div class="pg-cap-inner">
       <header class="pg-cap-header">
-        <div class="pg-cap-strip" aria-label="Section 01, capabilities, full visibility">
+        <div class="pg-cap-strip" aria-label="Capabilities">
           <span class="pg-cap-strip-left"><span class="pg-cap-index">01</span><i class="pg-cap-rule" aria-hidden="true"></i></span>
           <span class="pg-cap-strip-name">// Capabilities</span>
-          <span class="pg-cap-strip-state">Full Visibility</span>
+          <span class="pg-cap-strip-state">Evidence, Not Guesswork</span>
         </div>
-        <div class="pg-cap-title-mask"><h2 id="pg-cap-title"><span class="pg-cap-clarity">Clarity</span> across every layer</h2></div>
-        <p class="pg-cap-lede">A clearer view of suspicious links and messages. Detect patterns, understand the evidence, and make safer decisions before problems reach you.</p>
+        <div class="pg-cap-title-mask"><h2 id="pg-cap-title"><span class="pg-cap-clarity">See the signal.</span> Understand the risk.</h2></div>
+        <p class="pg-cap-lede">Check links and email, review the evidence behind a result, and keep scans you want to revisit.</p>
       </header>
 
       <div class="pg-cap-cards">
@@ -391,6 +417,7 @@
       <!-- --------------------------------------------------- OVERVIEW VIEW -->
       <section class="view" id="view-overview">
         <div class="dashboard-welcome card">
+          <canvas class="depth-scene workspace-depth-scene" data-three-scene="workspace" aria-hidden="true"></canvas>
           <div>
             <div class="auth-eyebrow">YOUR PHISHGUARD WORKSPACE</div>
             <h2 class="hero-title">Welcome back, <span id="dashboard-user-name">–</span></h2>
@@ -857,6 +884,7 @@
 </aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="{{ url_for('static', filename='app.js') }}?v=20261104-amber"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=20261104-recreate7"></script>
+<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-recreate7"></script>
 </body>
 </html>

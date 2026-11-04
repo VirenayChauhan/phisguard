@@ -93,18 +93,18 @@
 }
 
 @keyframes pg-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  0%, 100% { transform: translate3d(0, 0, 22px) rotateX(4deg) rotateY(-7deg); }
+  50% { transform: translate3d(0, -3px, 25px) rotateX(4deg) rotateY(-7deg); }
 }
 
 @keyframes pg-envelope-float {
-  0%, 100% { transform: rotate(-4deg) translateY(0); }
-  50% { transform: rotate(-4deg) translateY(-3px); }
+  0%, 100% { transform: translate3d(0, 0, 20px) rotateX(3deg) rotateY(-7deg) rotate(-4deg); }
+  50% { transform: translate3d(0, -3px, 23px) rotateX(3deg) rotateY(-7deg) rotate(-4deg); }
 }
 
 @keyframes pg-sheet-float {
-  0%, 100% { transform: translate(-2px, 7px) rotate(-5deg); }
-  50% { transform: translate(-2px, 4px) rotate(-5deg); }
+  0%, 100% { transform: translate3d(-2px, 7px, 18px) rotateY(-6deg) rotate(-5deg); }
+  50% { transform: translate3d(-2px, 4px, 21px) rotateY(-6deg) rotate(-5deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {

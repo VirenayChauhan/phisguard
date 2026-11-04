@@ -1,0 +1,242 @@
+/* Subtle, CSS-only 3D depth. This layer only changes presentation; no controls
+   gain transforms outside pointer-capable hover states. */
+:root {
+  --depth-side: rgba(0, 0, 0, .58);
+  --depth-highlight: rgba(255, 255, 255, .12);
+  --depth-amber: rgba(255, 194, 74, .2);
+}
+
+#landing-page, #dashboard, #auth-screen { isolation: isolate; }
+#dashboard .content { perspective: 1500px; perspective-origin: 50% 8%; }
+.depth-scene { position: absolute; display: block; pointer-events: none; border: 0; }
+.pg-depth-scene {
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: .92;
+  mix-blend-mode: screen;
+}
+.pg-cap-inner { z-index: 1; }
+.workspace-depth-scene {
+  z-index: 0;
+  top: -24%;
+  right: -1%;
+  width: min(42%, 440px);
+  height: 148%;
+  opacity: .5;
+  mix-blend-mode: screen;
+}
+.workspace-depth-scene[data-three-unavailable="true"] { display: none; }
+#view-overview, #view-saved, #view-link, #view-email, #view-sweep { transform-style: preserve-3d; }
+
+/* The public capability cards read as small glass objects over a deep plane. */
+.pg-capabilities {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .018), transparent 42%);
+}
+.pg-cap-cards { perspective: 1250px; perspective-origin: 50% 42%; }
+.pg-cap-card {
+  transform-style: preserve-3d;
+  border-top-color: rgba(255, 255, 255, .24);
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, .055), transparent 52%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .07) inset,
+    0 18px 36px -26px rgba(0, 0, 0, .95), 0 2px 4px rgba(0, 0, 0, .45);
+}
+.pg-cap-card::after {
+  position: absolute;
+  content: "";
+  z-index: 0;
+  inset: auto 9% 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(180, 73, 161, .32), transparent);
+  transform: translateZ(2px);
+}
+.pg-cap-stage { transform: translateZ(24px); }
+.pg-cap-art { filter: hue-rotate(-58deg) saturate(.84) drop-shadow(0 13px 18px rgba(180, 73, 161, .16)); }
+.pg-cap-copy { transform: translateZ(17px); }
+.pg-site-join {
+  border: 1px solid rgba(180, 73, 161, .76);
+  background: linear-gradient(145deg, #bd58aa, #80397f);
+  color: #fff8ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .44), 0 3px 0 #51234d,
+    0 9px 20px -12px rgba(180, 73, 161, .82);
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+.pg-site-join:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 5px 0 #51234d, 0 14px 24px -13px rgba(180,73,161,.75); }
+.pg-site-join:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 0 #51234d; }
+
+/* Raised overview dashboard and result panels. */
+.dashboard-welcome {
+  transform-style: preserve-3d;
+  border-top-color: rgba(255, 194, 74, .35);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset,
+    0 3px 0 rgba(106, 65, 14, .72), 0 20px 42px -28px rgba(0, 0, 0, .96);
+}
+.dashboard-welcome::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, .055), transparent 38% 72%, rgba(255, 194, 74, .035));
+  transform: translateZ(1px);
+}
+.dashboard-welcome > div:first-child { transform: translateZ(17px); }
+.dashboard-welcome .dashboard-quick-actions { transform: translateZ(24px); }
+.kpis { perspective: 1000px; }
+.kpi {
+  transform-style: preserve-3d;
+  border-top-color: rgba(255, 255, 255, .17);
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, .045), transparent 58%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset,
+    0 3px 0 rgba(0, 0, 0, .52), 0 12px 24px -18px rgba(0, 0, 0, .92);
+}
+#view-overview > .overview-status-card,
+#view-overview > .overview-panels > .card,
+#view-overview > .overview-saved-card,
+#view-saved > .card,
+#view-sweep .card {
+  transform-style: preserve-3d;
+  border-top-color: rgba(255, 255, 255, .14);
+  background-image: linear-gradient(150deg, rgba(255, 255, 255, .035), transparent 46%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .055) inset,
+    0 2px 0 rgba(0, 0, 0, .48), 0 14px 30px -24px rgba(0, 0, 0, .92);
+}
+.overview-guide-list > button, .settings-home-option, .settings-action-menu > button {
+  transform-style: preserve-3d;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .055) inset, 0 2px 0 rgba(0, 0, 0, .45);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+.saved-folder {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 2px 0 rgba(0, 0, 0, .45);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
+}
+.saved-scan-row { transition: background .16s ease, transform .16s ease; }
+.saved-scan-row:hover { background: linear-gradient(100deg, rgba(255, 194, 74, .07), transparent 76%); }
+
+/* Buttons have a tangible edge and a short physical press. */
+.btn, .profile-trigger, .sidebar-toggle {
+  transform-style: preserve-3d;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 2px 0 rgba(0, 0, 0, .46);
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease,
+    background .14s ease, color .14s ease;
+}
+.btn-primary, :root:not([data-theme="light"]) .btn-primary,
+:root[data-theme="light"] .btn-primary {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .48), 0 3px 0 #8a4d10,
+    0 10px 20px -13px rgba(255, 194, 74, .85);
+}
+.btn-primary:hover, :root:not([data-theme="light"]) .btn-primary:hover,
+:root[data-theme="light"] .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .56), 0 5px 0 #8a4d10,
+    0 15px 24px -13px rgba(255, 194, 74, .76);
+}
+.btn-primary:active, .btn:not(:disabled):active {
+  transform: translateY(2px) scale(.985);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .22), 0 1px 0 rgba(0, 0, 0, .55);
+}
+.btn-ghost, .btn-secondary, .btn-outline {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 2px 0 rgba(0, 0, 0, .52);
+}
+.btn-ghost:hover, .btn-secondary:hover, .btn-outline:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 3px 0 rgba(0, 0, 0, .5),
+    0 8px 16px -12px rgba(255, 194, 74, .4);
+}
+input:not([type="checkbox"]):not([type="radio"]), select, textarea, .field {
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .4), 0 1px 0 rgba(255, 255, 255, .035);
+}
+
+/* Existing workspace illustrations now have explicit front/middle/back planes. */
+.workspace-hero-art, .workspace-tool-art {
+  perspective: 720px;
+  transform-style: preserve-3d;
+}
+.library-sheet, .library-sheet-back, .library-sheet-front { transform-style: preserve-3d; }
+.library-sheet-back { transform: translate3d(13px, -5px, -8px) rotateY(10deg) rotate(9deg); }
+.library-sheet-front { transform: translate3d(-2px, 7px, 18px) rotateY(-6deg) rotate(-5deg); }
+.library-sheet-mark, .library-sheet-line, .library-sheet-tag { position: relative; transform: translateZ(8px); }
+.library-sheet-check { transform: translateZ(14px); }
+.tool-art-shield { transform: translateZ(22px) rotateX(4deg) rotateY(-7deg); }
+.email-art-envelope { transform: translateZ(20px) rotateX(3deg) rotateY(-7deg) rotate(-4deg); }
+.tool-art-node { transform: translateZ(15px); }
+
+/* Floating overlays use layered edges without changing their positioning. */
+.profile-menu, .account-panel, .assistant-panel, .drawer, .modal {
+  border-top-color: rgba(255, 255, 255, .2);
+  box-shadow: -12px 20px 54px -28px rgba(0, 0, 0, .95),
+    0 1px 0 rgba(255, 255, 255, .07) inset;
+}
+.auth-card {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  border-top-color: rgba(255, 194, 74, .32);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .09) inset,
+    0 5px 0 rgba(0, 0, 0, .45), 0 30px 70px -38px rgba(0, 0, 0, .96);
+}
+.auth-card .auth-brand-mark { transform: translateZ(12px); }
+.auth-tabs { box-shadow: inset 0 2px 6px rgba(0, 0, 0, .3); }
+.auth-tab.active { box-shadow: 0 2px 0 rgba(0, 0, 0, .34), 0 4px 12px -8px rgba(255, 194, 74, .48); }
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .pg-cap-card:hover {
+    transform: translateY(-5px) rotateX(2deg) rotateY(-1.2deg);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .12) inset,
+      0 27px 42px -24px rgba(0, 0, 0, .98), 0 4px 10px rgba(0, 0, 0, .44);
+  }
+  .dashboard-welcome:hover {
+    transform: rotateX(.8deg) translateY(-2px);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .1) inset,
+      0 5px 0 rgba(106, 65, 14, .7), 0 26px 48px -28px rgba(0, 0, 0, .98);
+  }
+  .kpi:hover {
+    transform: translateY(-4px) rotateX(2deg) rotateY(-1deg);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .1) inset,
+      0 4px 0 rgba(0, 0, 0, .48), 0 20px 30px -21px rgba(0, 0, 0, .96);
+  }
+  #view-overview > .overview-status-card:hover,
+  #view-overview > .overview-panels > .card:hover,
+  #view-overview > .overview-saved-card:hover,
+  #view-saved > .card:hover,
+  #view-sweep .card:hover {
+    transform: translateY(-3px) rotateX(.7deg);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset,
+      0 4px 0 rgba(0, 0, 0, .45), 0 20px 36px -24px rgba(0, 0, 0, .96);
+  }
+  .overview-guide-list > button:hover, .settings-home-option:hover,
+  .settings-action-menu > button:hover, .saved-folder:hover {
+    transform: translateY(-2px) translateZ(4px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 4px 0 rgba(0, 0, 0, .45),
+      0 10px 18px -14px rgba(255, 194, 74, .48);
+  }
+  .saved-folder:active, .settings-home-option:active, .overview-guide-list > button:active,
+  .settings-action-menu > button:active { transform: translateY(1px) scale(.99); }
+}
+
+@media (max-width: 640px) {
+  #dashboard .content { perspective: none; }
+  .pg-depth-scene { opacity: .28; }
+  .pg-hero .pg-depth-scene { opacity: .72; }
+  .workspace-depth-scene { top: -12%; right: -12%; width: 62%; height: 126%; opacity: .24; }
+  .pg-cap-stage { transform: translateZ(12px); }
+  .pg-cap-copy { transform: translateZ(8px); }
+  .dashboard-welcome > div:first-child { transform: translateZ(8px); }
+  .dashboard-welcome .dashboard-quick-actions { transform: none; }
+}
+@media (max-width: 390px) {
+  .workspace-depth-scene { opacity: .16; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pg-cap-card, .dashboard-welcome, .kpi, .card, .btn, .settings-home-option,
+  .settings-action-menu > button, .overview-guide-list > button, .saved-folder {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .pg-cap-card:hover, .dashboard-welcome:hover, .kpi:hover, .card:hover,
+  .btn-primary:hover, .btn-ghost:hover, .settings-home-option:hover,
+  .settings-action-menu > button:hover, .overview-guide-list > button:hover,
+  .saved-folder:hover { transform: none !important; }
+}
