@@ -34,6 +34,7 @@ store.init()
 
 PUBLIC_API_PATHS = {
     "/api/health",
+    "/api/public-check-count",
     "/api/auth/session",
     "/api/auth/register",
     "/api/auth/login",
@@ -97,6 +98,12 @@ def ui_trial():
 def health():
     from engine import intel
     return jsonify({"ok": True, "intel": intel.configured(), "stats": store.stats()})
+
+
+@app.get("/api/public-check-count")
+def public_check_count():
+    """Expose only the aggregate completed-scan total used on the public landing page."""
+    return jsonify({"checks_completed": store.completed_check_count()})
 
 
 @app.get("/api/auth/session")

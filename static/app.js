@@ -304,6 +304,17 @@ function updateProfileUI(user) {
   syncNotificationUI();
 }
 
+async function loadPublicCheckCount() {
+  const count = $('#public-check-count');
+  if (!count) return;
+  try {
+    const data = await api('/api/public-check-count');
+    count.textContent = num(data.checks_completed);
+  } catch {
+    count.textContent = '—';
+  }
+}
+
 function setupLandingReveals() {
   const landing = $('#landing-page');
   if (!landing) return;
@@ -2212,4 +2223,5 @@ async function loadSweep() {
 $('#btn-refresh-clusters').onclick = loadSweep;
 
 /* ------------------------------------------------------------------- start */
+loadPublicCheckCount();
 checkSession();

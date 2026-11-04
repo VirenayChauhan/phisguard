@@ -8,15 +8,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <title>PhishGuard — link &amp; email checker with receipts</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-meter2">
-<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-meter2">
-<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-meter2">
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-meter2">
-<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-meter2">
-<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-meter2">
-<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-meter2">
-<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-meter2">
-<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-meter2">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-community2">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-community2">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-community2">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-community2">
+<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-community2">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-community2">
+<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-community2">
+<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-community2">
+<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-community2">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23B84AA4'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='%23FFF8FF' text-anchor='middle'>PG</text></svg>">
 <script>
   if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
@@ -34,8 +34,7 @@
     <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home">PhishGuard<span class="pg-wordmark-mark" aria-hidden="true">/</span></a>
     <nav class="pg-site-actions" aria-label="Main navigation">
       <a href="#landing-capabilities">Platform</a>
-      <a href="/login#link">Link checks</a>
-      <a href="/login#email">Email checks</a>
+      <a href="/login">Sign in</a>
       <a class="pg-site-join" href="/login?mode=register">Create account <span aria-hidden="true">↗</span></a>
     </nav>
   </header>
@@ -50,14 +49,14 @@
           <a class="pg-hero-cta" href="/login?mode=register">CREATE ACCOUNT <span aria-hidden="true">↗</span></a>
           <a class="pg-hero-signin" href="/login">Sign in</a>
         </div>
-        <div class="pg-hero-footnote"><span aria-hidden="true">↳</span> LINK SIGNALS <i></i> EMAIL HEADERS <i></i> EXPLAINABLE VERDICTS</div>
+        <div class="pg-hero-footnote"><span aria-hidden="true">↳</span> THREAT SIGNALS <i></i> SAVED EVIDENCE <i></i> EXPLAINABLE VERDICTS</div>
       </div>
-      <aside class="pg-signal-card" aria-label="PhishGuard check types">
-        <div class="pg-signal-card-head"><span>CHECK MODES</span><span class="pg-signal-card-status"><i></i> 2 CHECK TYPES</span></div>
-        <div class="pg-signal-card-number">02</div>
-        <div class="pg-signal-card-label">LINK + EMAIL CHECKS</div>
+      <aside class="pg-signal-card" aria-label="Total PhishGuard checks completed across all users">
+        <div class="pg-signal-card-head"><span>COMMUNITY ACTIVITY</span><span class="pg-signal-card-status"><i></i> ALL USERS</span></div>
+        <div class="pg-signal-card-number" id="public-check-count" aria-live="polite">—</div>
+        <div class="pg-signal-card-label">CHECKS COMPLETED</div>
         <div class="pg-signal-card-rule"></div>
-        <div class="pg-signal-card-foot"><span>VERDICTS WITH EVIDENCE</span><span aria-hidden="true">//</span></div>
+        <div class="pg-signal-card-foot"><span>ACROSS THE PLATFORM</span><span aria-hidden="true">//</span></div>
       </aside>
     </div>
     <a class="pg-scroll-cue" href="#landing-capabilities"><span>EXPLORE THE SIGNALS</span><i aria-hidden="true"></i></a>
@@ -900,7 +899,7 @@
 </aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="{{ url_for('static', filename='app.js') }}?v=20261104-meter2"></script>
-<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-meter2"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=20261104-community2"></script>
+<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-community2"></script>
 </body>
 </html>

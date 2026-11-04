@@ -882,6 +882,12 @@ def get_receipt(rid: str) -> dict | None:
     return json.loads(row["payload"]) if row else None
 
 
+def completed_check_count() -> int:
+    """Return only the aggregate count of scan receipts; never expose receipt data."""
+    with _LOCK, _conn() as c:
+        return int(c.execute("SELECT COUNT(*) AS n FROM receipts").fetchone()["n"])
+
+
 def stats() -> dict:
     with _LOCK, _conn() as c:
         q = lambda sql: c.execute(sql).fetchone()["n"]
