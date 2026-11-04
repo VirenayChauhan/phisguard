@@ -268,10 +268,14 @@ function updateProfileUI(user) {
   activeUser = user;
   const displayName = user?.display_name || user?.username || 'Account';
   const initial = user?.avatar_initials || displayName.slice(0, 1).toUpperCase();
-  $('#user-identity').textContent = displayName;
-  $('#profile-avatar').textContent = initial;
-  $('#profile-menu-name').textContent = displayName;
-  $('#profile-menu-mobile').textContent = user?.username || '';
+  $('#sidebar-profile-avatar').textContent = initial;
+  $('#sidebar-profile-name').textContent = displayName;
+  $('#sidebar-profile-email').textContent = user?.email || 'Email not added';
+  $('#sidebar-profile-username').textContent = user?.username || '–';
+  $('#sidebar-profile-email-status').textContent = user?.email_verified ? 'Verified' : (user?.email ? 'Not verified' : 'No email');
+  $('#sidebar-profile-mobile').textContent = user?.mobile || 'Not added';
+  $('#sidebar-profile-created').textContent = formatAccountDate(user?.created_at);
+  $('#sidebar-profile-password-changed').textContent = formatAccountDate(user?.password_changed_at);
   $('#settings-avatar').textContent = initial;
   $('#settings-name').textContent = displayName;
   $('#settings-email').textContent = user?.email || 'Gmail not added';
@@ -500,17 +504,12 @@ function enterDashboard(user) {
   go(ROUTES[requestedRoute] ? requestedRoute : 'overview');
 }
 
-function closeProfileMenu() {
-  $('#profile-menu').hidden = true;
-  $('#btn-profile').setAttribute('aria-expanded', 'false');
-}
-
 const SETTINGS_CATEGORIES = {
   profile: { title: 'Profile details', copy: 'Update how your account appears in PhishGuard.', section: 'profile' },
   security: { title: 'Sign-in & security', copy: 'Choose a specific sign-in or recovery setting to manage.', section: 'privacy' },
   notifications: { title: 'Notifications', copy: 'Choose which browser and account notifications you want.', section: 'privacy' },
   privacy: { title: 'Privacy & data', copy: 'Review, export, or remove information linked to your account.', section: 'privacy' },
-  appearance: { title: 'Appearance', copy: 'Switch between two near-black amber contrast levels.', section: 'profile' },
+  appearance: { title: 'Appearance', copy: 'Switch between two near-black spectrum contrast levels.', section: 'profile' },
   devices: { title: 'Accounts on this device', copy: 'Manage remembered usernames on this browser.', section: 'profile' },
 };
 
@@ -551,7 +550,6 @@ function showSettingsHome() {
 }
 
 function openSettings() {
-  closeProfileMenu();
   showSettingsHome();
   $('#account-panel').hidden = false;
   $('#account-scrim').hidden = false;
@@ -566,28 +564,17 @@ function closeSettings() {
 async function leaveDashboard(nextTab = 'login', username = '') {
   try { await postJSON('/api/auth/logout', {}); } catch { /* local state still resets */ }
   activeUser = null;
-  closeProfileMenu();
   closeSettings();
   showLogin(nextTab, username);
 }
 
 function switchAccount(username) {
   if (!username) return;
-  closeProfileMenu();
   closeSettings();
   leaveDashboard('login', username);
   setAuthMessage(`Enter the password for ${username}.`);
 }
 
-$('#btn-profile').onclick = (event) => {
-  event.stopPropagation();
-  const menu = $('#profile-menu');
-  menu.hidden = !menu.hidden;
-  $('#btn-profile').setAttribute('aria-expanded', String(!menu.hidden));
-};
-document.addEventListener('click', (event) => {
-  if (!event.target.closest('.user-menu')) closeProfileMenu();
-});
 $('#btn-settings').onclick = openSettings;
 $('#account-panel-close').onclick = closeSettings;
 $('#account-scrim').onclick = closeSettings;

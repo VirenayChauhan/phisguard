@@ -54,20 +54,21 @@ function createScene(canvas, THREE) {
   renderer.toneMappingExposure = 1.12;
 
   const isLanding = canvas.dataset.threeScene === 'landing';
+  const isRibbon = isLanding || canvas.dataset.threeScene === 'ribbon';
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 40);
-  camera.position.set(0, 0, isLanding ? 9.1 : 7.4);
+  camera.position.set(0, 0, isLanding ? 9.1 : (isRibbon ? 8.4 : 7.4));
 
   const scene = new THREE.Scene();
   const sculpture = new THREE.Group();
   scene.add(sculpture);
-  sculpture.position.set(isLanding ? 0 : 0.25, isLanding ? -1.28 : 0, 0);
-  sculpture.scale.setScalar(isLanding ? 1 : 0.88);
+  sculpture.position.set(isLanding ? 0 : 0.12, isLanding ? -1.28 : -0.08, 0);
+  sculpture.scale.setScalar(isLanding ? 1 : (isRibbon ? 0.82 : 0.88));
 
-  scene.add(new THREE.AmbientLight(isLanding ? 0xeadcf5 : 0xffe3b0, isLanding ? 1.35 : 1.15));
-  const keyLight = new THREE.DirectionalLight(isLanding ? 0xffd9f3 : 0xffd98a, isLanding ? 3.8 : 3.1);
+  scene.add(new THREE.AmbientLight(isLanding ? 0xeadcf5 : 0xe1d7f2, isLanding ? 1.35 : 1.15));
+  const keyLight = new THREE.DirectionalLight(isLanding ? 0xffd9f3 : 0xe9d7ff, isLanding ? 3.8 : 3.1);
   keyLight.position.set(-2.5, 3.2, 5);
   scene.add(keyLight);
-  const rimLight = new THREE.PointLight(isLanding ? 0xff59c8 : 0xff8a18, 20, 12, 2);
+  const rimLight = new THREE.PointLight(isLanding ? 0xff59c8 : 0x6689d1, 20, 12, 2);
   rimLight.position.set(2.1, -1.2, 2.2);
   scene.add(rimLight);
 
@@ -78,9 +79,9 @@ function createScene(canvas, THREE) {
   let pixels = null;
   let updateRibbon = () => {};
 
-  if (isLanding) {
+  if (isRibbon) {
     // Repeating beveled plates form a flexible ribbon, echoing the reference art.
-    const count = 68;
+    const count = isLanding ? 68 : 54;
     const plateGeometry = new THREE.BoxGeometry(0.27, 1, 0.24);
     const plateMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
@@ -94,32 +95,33 @@ function createScene(canvas, THREE) {
     ribbon = new THREE.InstancedMesh(plateGeometry, plateMaterial, count);
     ribbon.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     const matrix = new THREE.Object3D();
-    const step = 0.285;
+    const step = isLanding ? 0.285 : 0.19;
+    const baseHeight = isLanding ? 2.92 : 1.62;
     const segments = Array.from({ length: count }, (_, index) => ({
       x: (index - (count - 1) / 2) * step,
-      height: 2.92 + 0.18 * Math.sin(((index - (count - 1) / 2) * step) * 0.47 + 0.8),
+      height: baseHeight + (isLanding ? 0.18 : 0.09) * Math.sin(((index - (count - 1) / 2) * step) * 0.47 + 0.8),
     }));
     updateRibbon = (seconds = 0) => {
       const peakCenter = 0.35 + 0.72 * Math.sin(seconds * 0.34);
       for (let index = 0; index < segments.length; index += 1) {
         const { x, height } = segments[index];
-        const peak = 1.28 * Math.exp(-((x - peakCenter) ** 2) / 6.5);
-        const waveA = 0.34 * Math.sin(x * 0.62 - seconds * 0.68);
-        const waveB = 0.29 * Math.sin(x * 1.12 - seconds * 1.28);
-        const waveC = 0.19 * Math.sin(x * 1.78 - seconds * 1.92);
-        const y = -1.95 + peak + waveA + waveB + waveC;
-        const slope = 0.34 * 0.62 * Math.cos(x * 0.62 - seconds * 0.68)
-          + 0.29 * 1.12 * Math.cos(x * 1.12 - seconds * 1.28)
-          + 0.19 * 1.78 * Math.cos(x * 1.78 - seconds * 1.92)
-          - (2 * (x - peakCenter) / 6.5) * peak;
-        const depth = 0.34 * Math.sin(x * 0.72 - seconds * 0.58) + 0.15 * Math.cos(x * 1.31 - seconds * 0.38);
+        const peak = (isLanding ? 1.28 : 0.66) * Math.exp(-((x - peakCenter) ** 2) / (isLanding ? 6.5 : 3.6));
+        const waveA = (isLanding ? 0.34 : 0.22) * Math.sin(x * 0.62 - seconds * 0.68);
+        const waveB = (isLanding ? 0.29 : 0.17) * Math.sin(x * 1.12 - seconds * 1.28);
+        const waveC = (isLanding ? 0.19 : 0.1) * Math.sin(x * 1.78 - seconds * 1.92);
+        const y = (isLanding ? -1.95 : -0.18) + peak + waveA + waveB + waveC;
+        const slope = (isLanding ? 0.34 : 0.22) * 0.62 * Math.cos(x * 0.62 - seconds * 0.68)
+          + (isLanding ? 0.29 : 0.17) * 1.12 * Math.cos(x * 1.12 - seconds * 1.28)
+          + (isLanding ? 0.19 : 0.1) * 1.78 * Math.cos(x * 1.78 - seconds * 1.92)
+          - (2 * (x - peakCenter) / (isLanding ? 6.5 : 3.6)) * peak;
+        const depth = (isLanding ? 0.34 : 0.22) * Math.sin(x * 0.72 - seconds * 0.58) + 0.15 * Math.cos(x * 1.31 - seconds * 0.38);
         matrix.position.set(x, y, depth);
         matrix.rotation.set(
           0.1 * Math.sin(x * 0.9 - seconds * 0.82),
           0.24 * Math.sin(x * 0.57 - seconds * 0.64),
           -slope * 0.22,
         );
-        matrix.scale.set(1, height + 0.13 * Math.sin(x * 0.82 - seconds * 1.16), 1);
+        matrix.scale.set(1, height + (isLanding ? 0.13 : 0.07) * Math.sin(x * 0.82 - seconds * 1.16), 1);
         matrix.updateMatrix();
         ribbon.setMatrixAt(index, matrix.matrix);
       }
@@ -140,29 +142,31 @@ function createScene(canvas, THREE) {
     if (ribbon.instanceColor) ribbon.instanceColor.needsUpdate = true;
     sculpture.add(ribbon);
 
-    const pixelGroup = new THREE.Group();
-    const pixelGeometry = new THREE.BoxGeometry(0.055, 0.055, 0.055);
-    const pixelMaterial = new THREE.MeshBasicMaterial({ color: 0xd4c8b7, transparent: true, opacity: 0.24 });
-    for (let index = 0; index < 30; index += 1) {
-      const pixel = new THREE.Mesh(pixelGeometry, pixelMaterial);
-      const seed = index + 1;
-      pixel.position.set(
-        Math.sin(seed * 12.9898) * 8.6,
-        -2.7 + ((seed * 1.618) % 4.8),
-        -1.4 - ((seed * 0.73) % 1.7),
-      );
-      pixel.scale.setScalar(0.65 + ((seed * 0.37) % 1.2));
-      pixelGroup.add(pixel);
+    if (isLanding) {
+      const pixelGroup = new THREE.Group();
+      const pixelGeometry = new THREE.BoxGeometry(0.055, 0.055, 0.055);
+      const pixelMaterial = new THREE.MeshBasicMaterial({ color: 0xd4c8b7, transparent: true, opacity: 0.24 });
+      for (let index = 0; index < 30; index += 1) {
+        const pixel = new THREE.Mesh(pixelGeometry, pixelMaterial);
+        const seed = index + 1;
+        pixel.position.set(
+          Math.sin(seed * 12.9898) * 8.6,
+          -2.7 + ((seed * 1.618) % 4.8),
+          -1.4 - ((seed * 0.73) % 1.7),
+        );
+        pixel.scale.setScalar(0.65 + ((seed * 0.37) % 1.2));
+        pixelGroup.add(pixel);
+      }
+      pixels = pixelGroup;
+      scene.add(pixels);
     }
-    pixels = pixelGroup;
-    scene.add(pixels);
   } else {
     const coreGeometry = new THREE.IcosahedronGeometry(0.43, 2);
     const coreMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffc24a,
-      metalness: 0.62,
-      roughness: 0.2,
-      emissive: 0x8c3d00,
+      color: 0xb85bb0,
+      metalness: 0.52,
+      roughness: 0.23,
+      emissive: 0x55266d,
       emissiveIntensity: 0.62,
       flatShading: true,
     });
@@ -171,15 +175,15 @@ function createScene(canvas, THREE) {
 
     const wire = new THREE.LineSegments(
       new THREE.EdgesGeometry(coreGeometry, 10),
-      new THREE.LineBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0.52 }),
+      new THREE.LineBasicMaterial({ color: 0xe9d9ff, transparent: true, opacity: 0.58 }),
     );
     wire.scale.setScalar(1.018);
     core.add(wire);
 
     const ringMaterials = [
-      new THREE.MeshStandardMaterial({ color: 0xffc24a, metalness: 0.78, roughness: 0.24, transparent: true, opacity: 0.64 }),
-      new THREE.MeshStandardMaterial({ color: 0xe9931e, metalness: 0.72, roughness: 0.28, transparent: true, opacity: 0.48 }),
-      new THREE.MeshStandardMaterial({ color: 0xffdf9a, metalness: 0.66, roughness: 0.3, transparent: true, opacity: 0.34 }),
+      new THREE.MeshStandardMaterial({ color: 0xc761b3, metalness: 0.68, roughness: 0.24, transparent: true, opacity: 0.68 }),
+      new THREE.MeshStandardMaterial({ color: 0x8061bd, metalness: 0.62, roughness: 0.28, transparent: true, opacity: 0.52 }),
+      new THREE.MeshStandardMaterial({ color: 0x7698cb, metalness: 0.58, roughness: 0.3, transparent: true, opacity: 0.42 }),
     ];
     rings = ringMaterials.map((material, index) => {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.98 + index * 0.12, 0.012, 8, 88), material);
@@ -191,9 +195,9 @@ function createScene(canvas, THREE) {
     });
 
     const nodeMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffd16a,
-      emissive: 0xc15a06,
-      emissiveIntensity: 0.8,
+      color: 0xe7a0d7,
+      emissive: 0x713d91,
+      emissiveIntensity: 0.72,
       metalness: 0.35,
       roughness: 0.22,
     });
@@ -210,7 +214,7 @@ function createScene(canvas, THREE) {
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
   camera.aspect = width / height;
-  camera.position.z = isLanding ? 9.1 : 6.5;
+  camera.position.z = isLanding ? 9.1 : (isRibbon ? 8.4 : 6.5);
   camera.updateProjectionMatrix();
   renderer.setSize(width, height, false);
 
@@ -225,7 +229,7 @@ function createScene(canvas, THREE) {
     const motionTime = elapsed * (motionPreference.matches ? 0.68 : 1);
     sculpture.rotation.y = Math.sin(motionTime * 0.22) * 0.14;
     sculpture.rotation.x = Math.sin(motionTime * 0.18) * 0.08;
-    if (isLanding) {
+    if (isRibbon) {
       sculpture.rotation.y = Math.sin(motionTime * 0.12) * 0.075;
       sculpture.rotation.x = Math.sin(motionTime * 0.15) * 0.04;
       updateRibbon(motionTime);

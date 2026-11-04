@@ -8,15 +8,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <title>PhishGuard — link &amp; email checker with receipts</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-recreate7">
-<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-recreate7">
-<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-recreate7">
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-recreate7">
-<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-recreate7">
-<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-recreate7">
-<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-recreate7">
-<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-recreate7">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23FFC24A'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='%2317120A' text-anchor='middle'>PG</text></svg>">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-spectrum2">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-spectrum2">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-spectrum2">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-spectrum2">
+<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-spectrum2">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-spectrum2">
+<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-spectrum2">
+<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-spectrum2">
+<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-spectrum2">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23B84AA4'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='%23FFF8FF' text-anchor='middle'>PG</text></svg>">
 <script>
   if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
     document.documentElement.dataset.uiTrial = 'split';
@@ -337,6 +338,30 @@
       </div>
     </div>
 
+    <section class="sidebar-profile" aria-label="Account profile">
+      <div class="sidebar-profile-heading">
+        <span class="sidebar-profile-avatar" id="sidebar-profile-avatar" aria-hidden="true">?</span>
+        <div class="sidebar-profile-identity">
+          <strong id="sidebar-profile-name">Account</strong>
+          <span id="sidebar-profile-email">Email not added</span>
+        </div>
+      </div>
+      <dl class="sidebar-profile-details">
+        <div><dt>Username</dt><dd id="sidebar-profile-username">–</dd></div>
+        <div><dt>Email status</dt><dd id="sidebar-profile-email-status">No email</dd></div>
+        <div><dt>Mobile</dt><dd id="sidebar-profile-mobile">–</dd></div>
+        <div><dt>Account since</dt><dd id="sidebar-profile-created">–</dd></div>
+        <div><dt>Password updated</dt><dd id="sidebar-profile-password-changed">–</dd></div>
+      </dl>
+      <div class="sidebar-profile-actions" aria-label="Account actions">
+        <button class="profile-action" id="btn-settings" type="button">⚙ Settings</button>
+        <button class="profile-action" id="btn-add-account" type="button">＋ Add account</button>
+        <button class="profile-action danger-action" id="btn-logout" type="button">↪ Log out</button>
+      </div>
+      <div class="profile-section-label">Saved accounts</div>
+      <div class="profile-saved-list" id="profile-saved-list"></div>
+    </section>
+
     <nav class="nav" aria-label="Main">
       <div class="nav-label">HOME BASE</div>
       <button class="nav-item" data-route="overview" aria-current="page">
@@ -390,26 +415,6 @@
         <h1 id="page-title">Overview</h1>
         <div class="crumb" id="page-crumb">Instant lexical verdict, then infrastructure, reputation and a click preview</div>
       </div>
-      <div class="topbar-actions">
-        <div class="user-menu">
-          <button class="profile-trigger" id="btn-profile" type="button" aria-haspopup="menu" aria-expanded="false">
-            <span class="profile-avatar" id="profile-avatar">?</span>
-            <span class="user-email" id="user-identity">–</span>
-            <span class="profile-chevron" aria-hidden="true">⌄</span>
-          </button>
-          <div class="profile-menu" id="profile-menu" role="menu" hidden>
-            <div class="profile-menu-head">
-              <div class="profile-menu-name" id="profile-menu-name">–</div>
-              <div class="profile-menu-mobile" id="profile-menu-mobile">–</div>
-            </div>
-            <button class="profile-action" id="btn-settings" type="button" role="menuitem">⚙ Settings</button>
-            <button class="profile-action" id="btn-add-account" type="button" role="menuitem">＋ Add account</button>
-            <div class="profile-section-label">Saved accounts</div>
-            <div class="profile-saved-list" id="profile-saved-list"></div>
-            <button class="profile-action danger-action" id="btn-logout" type="button" role="menuitem">↪ Log out</button>
-          </div>
-        </div>
-      </div>
     </header>
 
     <main class="content">
@@ -417,7 +422,7 @@
       <!-- --------------------------------------------------- OVERVIEW VIEW -->
       <section class="view" id="view-overview">
         <div class="dashboard-welcome card">
-          <canvas class="depth-scene workspace-depth-scene" data-three-scene="workspace" aria-hidden="true"></canvas>
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
           <div>
             <div class="auth-eyebrow">YOUR PHISHGUARD WORKSPACE</div>
             <h2 class="hero-title">Welcome back, <span id="dashboard-user-name">–</span></h2>
@@ -463,6 +468,7 @@
       <!-- ---------------------------------------------------- SAVED VIEW -->
       <section class="view" id="view-saved" hidden>
         <div class="hero workspace-view-hero saved-scans-hero">
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
           <div class="workspace-hero-copy">
             <div class="workspace-eyebrow"><span>02</span> YOUR SECURITY LIBRARY</div>
             <h2 class="hero-title">Keep the evidence<br>that matters.</h2>
@@ -486,6 +492,7 @@
       <!-- ------------------------------------------------------- LINK VIEW -->
       <section class="view" id="view-link">
         <div class="hero workspace-tool-hero link-tool-hero">
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
           <div class="workspace-tool-head">
             <div class="workspace-tool-copy">
               <div class="workspace-eyebrow"><span>01</span> URL INTELLIGENCE</div>
@@ -535,6 +542,7 @@
       <!-- ------------------------------------------------------ EMAIL VIEW -->
       <section class="view" id="view-email" hidden>
         <div class="hero workspace-tool-hero email-tool-hero">
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
           <div class="workspace-tool-head">
             <div class="workspace-tool-copy">
               <div class="workspace-eyebrow"><span>02</span> MESSAGE FORENSICS</div>
@@ -580,6 +588,14 @@
 
       <!-- ------------------------------------------------------ SWEEP VIEW -->
       <section class="view" id="view-sweep" hidden>
+        <div class="hero workspace-view-hero campaign-hero">
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
+          <div class="workspace-hero-copy">
+            <div class="workspace-eyebrow"><span>03</span> CAMPAIGN INTELLIGENCE</div>
+            <h2 class="hero-title">See the pattern. Stop the spread.</h2>
+            <p class="hero-sub">Related reports are grouped by shared message and link signals, so emerging phishing campaigns are easier to spot.</p>
+          </div>
+        </div>
         <div class="stack">
           <div class="kpis" id="sweep-kpis"></div>
           <div class="card">
@@ -667,7 +683,7 @@
         <button class="settings-home-option" type="button" data-settings-open="security"><span class="settings-home-icon">♢</span><span><b>Sign-in &amp; security</b><small>Password, recovery and login activity</small></span><span class="settings-home-arrow">→</span></button>
         <button class="settings-home-option" type="button" data-settings-open="notifications"><span class="settings-home-icon">◌</span><span><b>Notifications</b><small>Choose what should get your attention</small></span><span class="settings-home-arrow">→</span></button>
         <button class="settings-home-option" type="button" data-settings-open="privacy"><span class="settings-home-icon">▤</span><span><b>Privacy &amp; data</b><small>Export, clear, or delete account data</small></span><span class="settings-home-arrow">→</span></button>
-        <button class="settings-home-option" type="button" data-settings-open="appearance"><span class="settings-home-icon">◐</span><span><b>Appearance</b><small>Choose deep or soft black-and-amber contrast</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="appearance"><span class="settings-home-icon">◐</span><span><b>Appearance</b><small>Choose deep or soft black with magenta and violet accents</small></span><span class="settings-home-arrow">→</span></button>
         <button class="settings-home-option" type="button" data-settings-open="devices"><span class="settings-home-icon">▣</span><span><b>Accounts on this device</b><small>Review saved usernames or add an account</small></span><span class="settings-home-arrow">→</span></button>
       </div>
       <div class="settings-help-card"><span>?</span><div><b>Need a hand?</b><small>Open the PhishGuard Help Guide from the workspace for quick answers.</small></div></div>
@@ -700,7 +716,7 @@
     </div>
     <div class="settings-card" data-settings-category="appearance">
       <div class="settings-card-title">Workspace appearance</div>
-      <div class="settings-help">PhishGuard stays near-black and amber. Choose deeper or softer contrast without switching to a light or green palette.</div>
+      <div class="settings-help">PhishGuard stays near-black with magenta, violet, and blue accents. Choose deeper or softer contrast without switching to a light palette.</div>
       <div class="settings-row"><span>Theme contrast</span><button class="btn btn-ghost btn-sm" id="settings-theme" type="button" aria-label="Switch to soft contrast">Use soft contrast</button></div>
     </div>
     <div class="settings-card" data-settings-category="devices">
@@ -884,7 +900,7 @@
 </aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="{{ url_for('static', filename='app.js') }}?v=20261104-recreate7"></script>
-<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-recreate7"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=20261104-spectrum2"></script>
+<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-spectrum2"></script>
 </body>
 </html>
