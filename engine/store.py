@@ -9,10 +9,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import sqlite3
 import threading
+import time
 import uuid
 from datetime import datetime, timezone
 
@@ -31,7 +33,9 @@ if (
     )
 DB_PATH = os.environ.get("PHISHGUARD_DB",
                          os.path.join(os.path.dirname(__file__), "..", "data", "phishguard.db"))
-_LOCK = threading.Lock()
+_LOCK = threading.RLock()
+_INIT_LOCK = threading.Lock()
+_INITIALIZED_CONFIG: tuple[str, str] | None = None
 
 
 class _PostgresConnection:
@@ -149,7 +153,8 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def _conn():
+def _raw_conn():
+    """Open a connection without triggering schema setup (used by init itself)."""
     if DATABASE_URL:
         import psycopg
         from psycopg.rows import dict_row
@@ -161,8 +166,30 @@ def _conn():
     return c
 
 
+def _conn():
+    _ensure_initialized()
+    return _raw_conn()
+
+
+def _ensure_initialized():
+    """Initialize lazily so static pages don't wait on Postgres during cold starts."""
+    config = (DATABASE_URL, DB_PATH)
+    if _INITIALIZED_CONFIG == config:
+        return
+    with _INIT_LOCK:
+        if _INITIALIZED_CONFIG == config:
+            return
+        started = time.perf_counter()
+        init()
+        logging.getLogger("phisguard.store").info(
+            "schema initialization completed duration_ms=%.1f",
+            (time.perf_counter() - started) * 1000,
+        )
+
+
 def init():
-    with _LOCK, _conn() as c:
+    global _INITIALIZED_CONFIG
+    with _LOCK, _raw_conn() as c:
         schema = SCHEMA.replace(" COLLATE NOCASE", "") if DATABASE_URL else SCHEMA
         c.executescript(schema)
         if DATABASE_URL:
@@ -211,6 +238,7 @@ def init():
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_auth_accounts_email_nocase "
             "ON auth_accounts(LOWER(email)) WHERE email IS NOT NULL AND email <> ''"
         )
+    _INITIALIZED_CONFIG = (DATABASE_URL, DB_PATH)
 
 
 # --------------------------------------------------------------- auth -------

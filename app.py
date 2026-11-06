@@ -8,11 +8,12 @@ import hmac
 import json
 import os
 import secrets
+import time
 import traceback
 from datetime import datetime, timedelta, timezone
 
 from authlib.integrations.flask_client import OAuth
-from flask import Flask, jsonify, make_response, redirect, render_template, request, send_from_directory, session, url_for
+from flask import Flask, g, jsonify, make_response, redirect, render_template, request, send_from_directory, session, url_for
 
 try:
     from dotenv import load_dotenv
@@ -48,9 +49,6 @@ _google = _oauth.register(
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
 )
-store.init()
-
-
 def google_auth_configured() -> bool:
     return bool(
         app.config["GOOGLE_CLIENT_ID"]
@@ -74,6 +72,11 @@ PUBLIC_API_PATHS = {
     "/api/cron/cluster-digest",
     "/api/cron/monthly-scan-summary",
 }
+
+
+@app.before_request
+def start_request_timer():
+    g.phishguard_request_started = time.perf_counter()
 
 
 @app.before_request
@@ -833,6 +836,16 @@ def money_deterred():
 
 @app.after_request
 def headers(resp):
+    started = getattr(g, "phishguard_request_started", None)
+    if started is not None:
+        elapsed_ms = max(0.0, (time.perf_counter() - started) * 1000)
+        resp.headers["Server-Timing"] = f"app;dur={elapsed_ms:.1f}"
+        if request.path in {"/", "/login", "/ui-trial"} or request.path.startswith("/api/"):
+            # Record endpoint-level timing without logging URLs, query values, or user data.
+            app.logger.info(
+                "request endpoint=%s method=%s status=%d app_ms=%.1f",
+                request.endpoint or "unmatched", request.method, resp.status_code, elapsed_ms,
+            )
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["Referrer-Policy"] = "no-referrer"
     resp.headers["X-Frame-Options"] = "DENY"
