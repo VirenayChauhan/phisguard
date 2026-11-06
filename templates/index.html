@@ -8,19 +8,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <title>PhishGuard — link &amp; email checker with receipts</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='mobile-workspace.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='google-auth.css') }}?v=20261104-theme-picker2">
-<link rel="stylesheet" href="{{ url_for('static', filename='theme-picker.css') }}?v=20261104-theme-picker2">
-<link rel="icon" type="image/png" href="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='mobile-workspace.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='google-auth.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='theme-picker.css') }}?v=20261106-digital-virus2">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2">
 <script>
   if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
     document.documentElement.dataset.uiTrial = 'split';
@@ -34,7 +34,7 @@
 </div>
 <main class="landing-page" id="landing-page"{% if login_page|default(false) or ui_trial|default(false) %} hidden{% endif %}>
   <header class="pg-site-bar">
-    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home"><img class="pg-site-logo" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt="">PhishGuard</a>
+    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home"><img class="pg-site-logo" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt="">PhishGuard</a>
     <nav class="pg-site-actions" aria-label="Main navigation">
       <a href="#landing-capabilities">Platform</a>
       <a href="/login">Sign in</a>
@@ -42,8 +42,26 @@
     </nav>
   </header>
   <section class="pg-hero" id="landing-hero" aria-labelledby="pg-hero-title">
-    <div class="pg-hero-grid" aria-hidden="true"></div>
     <canvas class="depth-scene pg-depth-scene" data-three-scene="landing" aria-hidden="true"></canvas>
+    <div class="pg-virus-field" aria-hidden="true">
+      <svg class="pg-virus-defs" aria-hidden="true" focusable="false"><symbol id="pg-digital-virus-art" viewBox="0 0 80 80">
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="1.8" opacity=".8" d="M40 3v13M40 64v13M3 40h13M64 40h13M14 14l9 9M57 57l9 9M66 14l-9 9M23 57l-9 9M27 7l5 10M48 63l5 10M7 27l10 5M63 48l10 5"/>
+    <path stroke-width="1.25" opacity=".5" d="M40 3l2.5 5-5 2.5M40 77l-2.5-5 5-2.5M3 40l5-2.5 2.5 5M77 40l-5 2.5-2.5-5"/>
+    <path fill="currentColor" fill-opacity=".11" stroke-width="1.5" d="M40 16 52 20 60 29 64 40 60 52 52 60 40 64 28 60 20 52 16 40 20 28 28 20Z"/>
+    <path stroke-width=".9" opacity=".44" d="M40 16v48M16 40h48M28 20l24 40M52 20 28 60M20 28l40 24M60 28 20 52M28 20l24 0M20 28l40 0M16 40l48 0M20 52l40 0M28 60l24 0"/>
+    <path stroke-width="1.5" opacity=".78" d="M27 34h8v-7h8v8h8M25 46h10v7h9v-7h10M40 35v10"/>
+  </g>
+  <g fill="currentColor"><circle cx="40" cy="16" r="2.1"/><circle cx="64" cy="40" r="2.1"/><circle cx="40" cy="64" r="2.1"/><circle cx="16" cy="40" r="2.1"/><circle cx="28" cy="20" r="1.6"/><circle cx="52" cy="20" r="1.6"/><circle cx="60" cy="52" r="1.6"/><circle cx="28" cy="60" r="1.6"/></g>
+  <g fill="currentColor" opacity=".82"><rect x="65" y="18" width="3" height="3"/><rect x="70" y="13" width="2" height="2"/><rect x="12" y="62" width="3" height="3"/><rect x="8" y="68" width="2" height="2"/><rect x="64" y="62" width="2" height="2"/></g>
+  <circle cx="34" cy="34" r="3.1" fill="#fff" fill-opacity=".76"/><circle cx="47" cy="45" r="2" fill="#fff" fill-opacity=".65"/>
+</symbol></svg>
+      <svg class="pg-virus pg-virus-lilac pg-virus-a" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-blue pg-virus-b" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-magenta pg-virus-c" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-blue pg-virus-d" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-lilac pg-virus-e" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+    </div>
     <div class="pg-hero-inner">
       <div class="pg-hero-copy">
         <h1 id="pg-hero-title"><span>Tracing</span><br><span>the <em>unseen</em></span></h1>
@@ -65,7 +83,13 @@
     <a class="pg-scroll-cue" href="#landing-capabilities"><span>EXPLORE THE SIGNALS</span><i aria-hidden="true"></i></a>
   </section>
   <section class="pg-capabilities" id="landing-capabilities" aria-labelledby="pg-cap-title">
-    <div class="pg-cap-guides" aria-hidden="true"></div>
+    <div class="pg-virus-field pg-virus-field-cap" aria-hidden="true">
+      <svg class="pg-virus pg-virus-blue pg-virus-f" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-magenta pg-virus-g" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-lilac pg-virus-h" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-blue pg-virus-i" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-magenta pg-virus-j" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+    </div>
     <div class="pg-cap-inner">
       <header class="pg-cap-header">
         <div class="pg-cap-strip" aria-label="Capabilities">
@@ -148,7 +172,7 @@
 <section class="auth-screen" id="auth-screen"{% if not (login_page|default(false) or ui_trial|default(false)) %} hidden{% endif %} aria-labelledby="auth-title">
   <aside class="auth-story" aria-label="About PhishGuard">
     <div class="auth-story-brand">
-      <img class="auth-story-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt="" aria-hidden="true">
+      <img class="auth-story-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt="" aria-hidden="true">
       <div><b>PhishGuard</b><span>PERSONAL SECURITY</span></div>
     </div>
     <div class="auth-story-main">
@@ -173,7 +197,7 @@
   </aside>
   <div class="auth-card">
     <a class="auth-back" href="/">← Back to PhishGuard</a>
-    <img class="auth-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt="" aria-hidden="true">
+    <img class="auth-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt="" aria-hidden="true">
     <div class="auth-eyebrow">SECURE WORKSPACE</div>
     <h1 id="auth-title">Sign in to PhishGuard</h1>
     <p class="auth-lede" id="auth-lede">Create a secure account or log in to access the phishing protection workspace.</p>
@@ -347,7 +371,7 @@
   <!-- ============================== SIDEBAR ============================== -->
   <aside class="sidebar" id="app-sidebar">
     <div class="brand">
-      <img class="brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt="" aria-hidden="true">
+      <img class="brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt="" aria-hidden="true">
       <div>
         <div class="brand-name">PhishGuard</div>
         <div class="brand-sub">verdicts with receipts</div>
@@ -497,7 +521,7 @@
           <div class="workspace-hero-art saved-library-art" aria-hidden="true">
             <div class="library-orbit library-orbit-one"></div><div class="library-orbit library-orbit-two"></div>
             <div class="library-sheet library-sheet-back"></div>
-            <div class="library-sheet library-sheet-front"><span class="library-sheet-mark"><img src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261104-theme-picker2" alt=""></span><span class="library-sheet-line"></span><span class="library-sheet-line short"></span><span class="library-sheet-tag">SAVED EVIDENCE</span><span class="library-sheet-check">✓</span></div>
+            <div class="library-sheet library-sheet-front"><span class="library-sheet-mark"><img src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt=""></span><span class="library-sheet-line"></span><span class="library-sheet-line short"></span><span class="library-sheet-tag">SAVED EVIDENCE</span><span class="library-sheet-check">✓</span></div>
             <span class="library-art-spark">✦</span>
           </div>
         </div>
@@ -941,7 +965,7 @@
 </aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="{{ url_for('static', filename='app.js') }}?v=20261104-theme-picker2"></script>
-<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261104-theme-picker2"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=20261106-digital-virus2"></script>
+<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261106-digital-virus2"></script>
 </body>
 </html>

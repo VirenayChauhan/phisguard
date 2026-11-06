@@ -14,15 +14,33 @@ function installCursorSpotlight() {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   const surfaces = document.querySelectorAll('.pg-hero, .pg-capabilities, .pg-cap-card');
   surfaces.forEach((surface) => {
+    const viruses = [...surface.querySelectorAll('.pg-virus')];
     surface.addEventListener('pointermove', (event) => {
       if (event.pointerType === 'touch') return;
       const bounds = surface.getBoundingClientRect();
-      surface.style.setProperty('--spot-x', `${event.clientX - bounds.left}px`);
-      surface.style.setProperty('--spot-y', `${event.clientY - bounds.top}px`);
+      const pointerX = event.clientX - bounds.left;
+      const pointerY = event.clientY - bounds.top;
+      surface.style.setProperty('--spot-x', `${pointerX}px`);
+      surface.style.setProperty('--spot-y', `${pointerY}px`);
       surface.dataset.spotlightActive = 'true';
+
+      viruses.forEach((virus) => {
+        const virusBounds = virus.getBoundingClientRect();
+        const distance = Math.hypot(
+          event.clientX - (virusBounds.left + virusBounds.width / 2),
+          event.clientY - (virusBounds.top + virusBounds.height / 2),
+        );
+        const reveal = Math.max(0, 1 - distance / 165);
+        virus.style.opacity = `${0.035 + reveal * 0.68}`;
+        virus.style.filter = `drop-shadow(0 0 ${4 + reveal * 13}px currentColor)`;
+      });
     }, { passive: true });
     surface.addEventListener('pointerleave', () => {
       delete surface.dataset.spotlightActive;
+      viruses.forEach((virus) => {
+        virus.style.opacity = '';
+        virus.style.filter = '';
+      });
     });
   });
 }
