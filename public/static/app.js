@@ -2265,61 +2265,6 @@ async function loadSweep() {
 }
 $('#btn-refresh-clusters').onclick = loadSweep;
 
-/* ------------------------------------------------------- public link screen */
-const publicUrlForm = $('#public-url-check-form');
-if (publicUrlForm) {
-  publicUrlForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const input = $('#public-url-input');
-    const button = $('#public-url-check-button');
-    const result = $('#public-url-check-result');
-    const url = input.value.trim();
-    if (!url) { input.focus(); return; }
-
-    button.disabled = true;
-    button.textContent = 'CHECKING…';
-    result.hidden = false;
-    result.removeAttribute('data-state');
-    result.setAttribute('aria-busy', 'true');
-    result.innerHTML = '<p class="pg-public-check-result-explain">Checking URL structure…</p>';
-    try {
-      const verdict = await postJSON('/api/public/url-check', { url });
-      const facts = verdict.facts || {};
-      const signalItems = (verdict.signals || []).slice(0, 4);
-      const label = String(verdict.label || 'unknown');
-      const resultLabel = ({
-        malicious: 'Strong warning signs',
-        suspicious: 'Suspicious link patterns',
-        unknown: 'Needs further verification',
-        likely_safe: 'No obvious warning signs',
-        safe: 'No obvious warning signs',
-      })[label] || 'Needs further verification';
-      const signalList = signalItems.length
-        ? `<ul class="pg-public-check-signals">${signalItems.map((signal) =>
-          `<li><b>${esc(signal.title)}</b><span>${esc(signal.evidence)}</span></li>`).join('')}</ul>`
-        : '<p class="pg-public-check-result-explain">No structural warning signs fired in this quick screen.</p>';
-      const domain = facts.registrable_domain || facts.host || 'Could not identify a domain';
-      result.dataset.label = label;
-      result.innerHTML = `<div class="pg-public-check-result-head">
-          <div><h3>${esc(verdict.headline || resultLabel)}</h3>
-            <p class="pg-public-check-result-domain">${esc(facts.defanged || domain)}</p></div>
-          <span class="pg-public-check-badge" data-label="${esc(label)}">${esc(resultLabel)}</span>
-        </div>
-        <p class="pg-public-check-result-explain">${esc(verdict.explain || '')}</p>
-        ${signalList}
-        <p class="pg-public-check-caveat">Quick structural screen only — no site was opened and no live blocklists, DNS, or reputation feeds were queried. Absence of a warning is not proof that a link is safe.</p>`;
-    } catch (error) {
-      result.dataset.state = 'error';
-      result.innerHTML = `<div class="pg-public-check-result-head"><h3>Could not complete the check</h3></div>
-        <p class="pg-public-check-result-explain">${esc(error.message || 'Please try again.')}</p>`;
-    } finally {
-      result.removeAttribute('aria-busy');
-      button.disabled = false;
-      button.innerHTML = 'CHECK LINK <span aria-hidden="true">↗</span>';
-    }
-  });
-}
-
 /* ------------------------------------------------------------------- start */
 loadPublicCheckCount();
 checkSession();

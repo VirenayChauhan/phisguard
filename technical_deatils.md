@@ -46,8 +46,6 @@ Browser
   ├─ GET /static/*
   │    ├─ Vercel static edge CDN in deployment
   │    └─ Flask app.static_folder locally / fallback
-  ├─ POST /api/public/url-check
-  │    └─ no-account, no-network lexical screen; no user-history writes
   └─ same-origin fetch('/api/...')
        └─ app.py route/auth gate
             ├─ engine/auth.py       account and session operations
@@ -97,7 +95,6 @@ public/static/
   app.js                        Frontend state, client routing, forms, API calls, renderers
   style.css                     Base tokens and shared workspace/auth components
   landing.css                   Public landing-page layout and effects
-  public-check.css              Public URL quick-check form and results
   spectrum-theme.css            Palette and theme overrides
   depth-scene.js                Lazy Three.js scenes and cursor spotlight/virus reveal
   depth.css                     Depth/3D CSS enhancements
@@ -177,7 +174,7 @@ The timing measures time inside the Flask request, not browser download/render t
 
 The browser receives `templates/index.html`, which contains these top-level modes:
 
-1. **Landing page (`#landing-page`)** — masthead, hero, no-account quick URL screen, and capabilities information/cards.
+1. **Landing page (`#landing-page`)** — masthead, hero with account CTAs, and capabilities information/cards.
 2. **Auth (`#auth-screen`)** — login, create-account, recovery, email verification, and Google sign-in states.
 3. **Workspace (`#dashboard`)** — sidebar, top bar, and five hash-routed views:
    - `#view-overview`
@@ -410,7 +407,6 @@ All JSON routes are same-origin. Unless noted, errors are JSON `{ "error": "..."
 | `GET /auth/google/callback` | Public | Verify callback and create/login account. |
 | `GET /api/health` | Public | `ok`, configured provider booleans and aggregate store stats. |
 | `GET /api/public-check-count` | Public | Aggregate receipt count for landing page; no receipt payload. |
-| `POST /api/public/url-check` | Public | No-account lexical URL screen; no network, third-party lookup, receipt, or history write; URL body capped at 24 KB. |
 | `GET /api/auth/session` | Public | `{authenticated, user}` session probe. |
 
 ### Account and authentication

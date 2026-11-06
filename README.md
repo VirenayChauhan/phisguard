@@ -27,10 +27,8 @@ hidden when it isn't needed.
 ![PhishGuard link verdict](docs/screenshot-link.png)
 
 **Structure**
-- **Public landing page** — includes a no-account quick link screen for suspicious URLs,
-  alongside explanations of email forensics, reputation keys, safe-preview behavior,
-  evidence receipts, and current limitations. The public check is structural-only: it
-  does not open the link, send it to third-party providers, or persist the input.
+- **Public landing page** — explains link checks, email forensics, reputation keys,
+  safe-preview behavior, evidence receipts, and current limitations before sign-in.
 - **Workspace sidebar** — routes (Overview / Saved scans / Check a link / Check an email /
   Campaigns), recent checks persisted in `localStorage`, and a hide/show control.
 - **Verdict hero** — score gauge, plain-language headline, categorical evidence strength

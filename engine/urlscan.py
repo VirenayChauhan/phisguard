@@ -15,21 +15,6 @@ from . import intel, lexical, net, store, verdict
 from .lexical import sig
 
 
-def analyze_public_quick(raw_url: str) -> dict:
-    """Public, no-network URL screen that does not read or write user history."""
-    lex = lexical.analyze_url(raw_url)
-    facts = lex["facts"]
-    notes = ["public quick screen: URL structure only; no DNS, page fetch, or reputation lookup"]
-    if lex.get("error"):
-        notes.append(lex["error"])
-    result = verdict.judge(list(lex["signals"]), intel_ok=False,
-                           intel_notes=notes, channel="url",
-                           force_unknown=bool(lex.get("error") or not facts.get("host")))
-    result["facts"] = _public_facts(facts)
-    result["speed"] = "public_quick"
-    return result
-
-
 def analyze_quick(raw_url: str) -> dict:
     lex = lexical.analyze_url(raw_url)
     facts = lex["facts"]
