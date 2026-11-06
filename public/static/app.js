@@ -1028,12 +1028,21 @@ async function checkSession() {
     account: 'Google could not securely link this account. Check that your Google email is verified, then try again.',
     failed: 'Google sign-in could not be completed. Please try again.',
   };
+  const microsoftError = query.get('microsoft_error');
+  const microsoftErrorMessages = {
+    setup: 'Microsoft sign-in is not configured for this deployment yet.',
+    cancelled: 'Microsoft sign-in was cancelled.',
+    state: 'The sign-in session expired. Please try again.',
+    account: 'Microsoft sign-in could not be securely matched. Try your existing sign-in method or contact support.',
+    failed: 'Microsoft sign-in could not be completed. Please try again.',
+  };
   try {
     const result = await api('/api/auth/session');
     if (result.authenticated) enterDashboard(result.user);
     else if (isLoginRoute) {
       showLogin(requestedMode);
       if (googleErrorMessages[googleError]) setAuthMessage(googleErrorMessages[googleError], googleError === 'cancelled' ? '' : 'error');
+      else if (microsoftErrorMessages[microsoftError]) setAuthMessage(microsoftErrorMessages[microsoftError], microsoftError === 'cancelled' ? '' : 'error');
     } else showLanding();
   } catch (error) {
     if (isLoginRoute) {

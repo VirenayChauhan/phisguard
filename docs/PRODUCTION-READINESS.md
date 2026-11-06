@@ -22,7 +22,8 @@ Live site: <https://phisguard-five.vercel.app>
    deployment says **Ready** and is serving the production alias.
 2. Open the live site in a private/incognito window. Confirm the public page loads,
    the completed-check count appears, and **Sign in → Continue with Google** returns
-   you to the signed-in workspace.
+   you to the signed-in workspace. If Microsoft sign-in has been configured, verify
+   **Continue with Microsoft** using an account you own.
 3. While signed in, run a harmless check such as `https://example.com`. Confirm the
    result shows the evidence and any unavailable/degraded checks honestly; a provider
    “no match” is not proof that a site is safe.

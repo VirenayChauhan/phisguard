@@ -412,19 +412,25 @@ def link_oauth_identity(provider: str, subject: str, user_id: str,
 
 def create_oauth_auth_account(user_id: str, username: str, password_hash: str,
                               email: str, display_name: str, avatar_initials: str,
-                              created_at: str, provider: str, subject: str) -> None:
-    """Create a verified-email account and its provider identity atomically."""
+                              created_at: str, provider: str, subject: str,
+                              email_verified: bool = True) -> None:
+    """Create an OAuth account and identity atomically.
+
+    Providers that assert verified email may set ``email_verified``. Other
+    providers can create an account with an unverified or absent email.
+    """
     with _LOCK, _conn() as c:
         c.execute(
             "INSERT INTO auth_accounts "
             "(user_id,username,password_hash,mobile,email,email_verified_at,display_name,"
             "avatar_initials,password_changed_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
-            (user_id, username, password_hash, "", email, created_at, display_name or None,
+            (user_id, username, password_hash, "", email or None,
+             created_at if email_verified else None, display_name or None,
              avatar_initials or None, created_at, created_at),
         )
         c.execute(
             "INSERT INTO auth_oauth_identities(provider,subject,user_id,email,created_at) "
-            "VALUES(?,?,?,?,?)", (provider, subject, user_id, email, created_at),
+            "VALUES(?,?,?,?,?)", (provider, subject, user_id, email or "", created_at),
         )
 
 

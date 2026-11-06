@@ -1,5 +1,5 @@
-/* Google OpenID sign-in button; keep provider branding, PhishGuard surfaces. */
-.google-auth-option { display: grid; gap: 2px; margin: 16px 0 18px; }
+/* OpenID sign-in buttons; preserve provider marks within PhishGuard surfaces. */
+.google-auth-option { display: grid; gap: 8px; margin: 16px 0 18px; }
 .google-auth-button {
   display: flex;
   min-height: 48px;

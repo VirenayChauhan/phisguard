@@ -344,6 +344,76 @@ def google_login_account(subject: str, email: str, email_verified: bool,
     return _create_session(account, request_ip, user_agent)
 
 
+def microsoft_login_account(subject: str, email: str, display_name: str,
+                            request_ip: str = "", user_agent: str = "",
+                            email_verified: bool = False) -> tuple[dict, str]:
+    """Sign in with Microsoft's stable OIDC subject and conservative email handling.
+
+    Microsoft's email/preferred-username claims are not necessarily verified.
+    Only an explicit ``email_verified`` claim is retained, and an email address
+    is never used to merge a Microsoft identity into an existing account.
+    """
+    subject = subject.strip() if isinstance(subject, str) else ""
+    email = email.strip().lower() if isinstance(email, str) else ""
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        email = ""
+    email_verified = email_verified is True
+    if not email_verified:
+        email = ""
+    display_name = normalize_display_name(display_name)
+    if not subject or len(subject) > 255:
+        raise AuthError("Microsoft did not provide a valid account identifier.", 400)
+
+    provider = "microsoft"
+    identity = store.get_oauth_identity(provider, subject)
+    account = store.get_auth_account_by_user_id(identity["user_id"]) if identity else None
+    if identity and not account:
+        raise AuthError("This Microsoft sign-in is no longer linked to an account.", 409)
+
+    if not account:
+        # Email is present here only when Microsoft explicitly marked it verified.
+        # Still never merge accounts by address; a collision leaves email unset.
+        account_email = email
+        if account_email and store.get_auth_account_by_email(account_email):
+            account_email = ""
+        if not display_name:
+            display_name = account_email.split("@", 1)[0][:60] if account_email else "Microsoft user"
+
+        local_part = (email.split("@", 1)[0] if email else "microsoft").lower()
+        stem = re.sub(r"[^a-z0-9_]+", "_", local_part).strip("_")[:16] or "microsoft"
+        account = None
+        for _ in range(5):
+            username = f"m_{stem}_{secrets.token_hex(3)}"
+            user_id = secrets.token_urlsafe(18)
+            created_at = _iso(_now())
+            try:
+                store.create_oauth_auth_account(
+                    user_id, username, generate_password_hash(secrets.token_urlsafe(48)),
+                    account_email, display_name, _default_initials(display_name, username),
+                    created_at, provider, subject,
+                    email_verified=bool(email_verified and account_email),
+                )
+                account = store.get_auth_account(username)
+                break
+            except Exception as exc:
+                identity = store.get_oauth_identity(provider, subject)
+                if identity:
+                    account = store.get_auth_account_by_user_id(identity["user_id"])
+                    break
+                if account_email and store.get_auth_account_by_email(account_email):
+                    # A concurrent account creation claimed the unverified email;
+                    # don't retry with that address or link to it.
+                    account_email = ""
+                    continue
+                if isinstance(exc, sqlite3.IntegrityError) or getattr(exc, "sqlstate", None) == "23505":
+                    continue
+                raise
+        if not account:
+            raise AuthError("Could not create a PhishGuard account for this Microsoft login. Please retry.", 503)
+
+    return _create_session(account, request_ip, user_agent)
+
+
 def login_account(username: str, password: str, request_ip: str,
                   user_agent: str = "") -> tuple[dict, str]:
     username = normalize_username(username)
