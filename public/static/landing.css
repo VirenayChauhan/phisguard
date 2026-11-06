@@ -84,6 +84,16 @@
   transition: opacity .18s ease;
 }
 .pg-hero[data-spotlight-active="true"]::after { opacity: 1; }
+/* Fade the hero scene into the next section instead of ending on a hard edge. */
+.pg-hero::before {
+  position: absolute;
+  z-index: 2;
+  content: "";
+  inset: auto 0 0;
+  height: clamp(110px, 17vh, 180px);
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgba(6, 6, 6, .72) 70%, #060606 100%);
+}
 .pg-virus-field { position: absolute; z-index: 1; inset: 0; overflow: hidden; pointer-events: none; }
 .pg-virus-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .pg-virus {
@@ -113,7 +123,7 @@
 @keyframes pg-virus-rotate { to { rotate: 360deg; } }
 .pg-hero-inner {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   width: min(100%, 1510px);
   min-height: max(690px, calc(100svh - 62px));
   margin: 0 auto;
@@ -225,7 +235,7 @@
 .pg-signal-card-foot span:last-child { color: #b449a1; }
 .pg-scroll-cue {
   position: absolute;
-  z-index: 3;
+  z-index: 4;
   left: clamp(25px, 4.8vw, 72px);
   bottom: 19px;
   display: flex;

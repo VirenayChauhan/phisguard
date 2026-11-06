@@ -64,6 +64,7 @@ def google_auth_configured() -> bool:
 PUBLIC_API_PATHS = {
     "/api/health",
     "/api/public-check-count",
+    "/api/public/url-check",
     "/api/auth/session",
     "/api/auth/register",
     "/api/auth/login",
@@ -183,6 +184,26 @@ def health():
 def public_check_count():
     """Expose only the aggregate completed-scan total used on the public landing page."""
     return jsonify({"checks_completed": store.completed_check_count()})
+
+
+@app.post("/api/public/url-check")
+def public_url_check():
+    """Run the public no-network link screen without an account or stored history."""
+    request.max_content_length = 24 * 1024
+    data = request.get_json(silent=True) or {}
+    candidate = data.get("url")
+    if not isinstance(candidate, str):
+        return jsonify({"error": "Provide the URL as text."}), 400
+    url = candidate.strip()
+    if not url:
+        return jsonify({"error": "Paste a URL to check."}), 400
+    if len(url) > 4000:
+        return jsonify({"error": "URL is too long (4,000 characters max)."}), 400
+    try:
+        return jsonify(urlscan.analyze_public_quick(url))
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "The link could not be checked right now."}), 500
 
 
 @app.get("/api/auth/session")

@@ -10,6 +10,7 @@ class TestStaticAssetServing(unittest.TestCase):
     def test_static_files_keep_the_existing_url_prefix(self):
         for path, content_type in (
             ("/static/style.css", "text/css"),
+            ("/static/public-check.css", "text/css"),
             ("/static/app.js", "javascript"),
             ("/static/phisguard-logo.png", "image/png"),
         ):
