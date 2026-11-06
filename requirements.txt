@@ -1,0 +1,13 @@
+# ---- runtime ----
+flask>=3.0,<4
+gunicorn>=21.2          # production WSGI server (used by the Dockerfile CMD)
+requests>=2.31
+dnspython>=2.6          # DNS: A/MX/NS/TXT, SPF & DMARC presence
+dkimpy>=1.1             # real DKIM signature verification
+python-dotenv>=1.0,<2   # local .env loading for auth settings
+Authlib>=1.3,<2         # OpenID Connect / Google sign-in
+psycopg[binary]>=3.2,<4 # persistent Postgres backend for serverless hosting
+
+# ---- optional ----
+pywebpush>=2.0.3,<3.0  # standards-based push; disabled unless VAPID keys are configured
+# Safe Browsing / VirusTotal/URLhaus/PhishTank use HTTPS APIs and optional keys.

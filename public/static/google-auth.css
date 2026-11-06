@@ -1,0 +1,35 @@
+/* OpenID sign-in buttons; preserve provider marks within PhishGuard surfaces. */
+.google-auth-option { display: grid; gap: 8px; margin: 16px 0 18px; }
+.google-auth-button {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  background: linear-gradient(110deg, rgba(195, 78, 170, .07), rgba(118, 82, 179, .07)), var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 680;
+  text-decoration: none;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.google-auth-button:hover {
+  border-color: rgba(205, 98, 182, .48);
+  background: linear-gradient(110deg, rgba(195, 78, 170, .13), rgba(118, 82, 179, .12)), var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+}
+.google-auth-button:active { transform: translateY(1px); }
+.google-auth-button svg { width: 19px; height: 19px; flex: none; }
+.google-auth-arrow { margin-left: auto; color: #d179c2; font-size: 14px; }
+.auth-divider { display: flex; align-items: center; gap: 10px; color: var(--text-faint); }
+.auth-divider::before, .auth-divider::after { height: 1px; flex: 1; background: var(--border); content: ""; }
+.auth-divider span { padding-top: 10px; font: 700 8px/1 var(--mono); letter-spacing: .12em; }
+.google-auth-button:focus-visible { outline: 2px solid #e185d0; outline-offset: 3px; }
+@media (max-width: 560px) {
+  .google-auth-option { margin: 14px 0 16px; }
+  .google-auth-button { min-height: 46px; font-size: 12px; }
+}

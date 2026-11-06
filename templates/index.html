@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-palette="signature" {% if ui_trial|default(false) %}data-ui-trial="split"{% endif %}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>PhishGuard — link &amp; email checker with receipts</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='brand-refresh.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=20261106-seamless-section1">
+<link rel="stylesheet" href="{{ url_for('static', filename='workspace-polish.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='motion.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui-trial.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='amber-theme.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='depth.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='spectrum-theme.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='mobile-workspace.css') }}?v=20261106-digital-virus2">
+<link rel="stylesheet" href="{{ url_for('static', filename='google-auth.css') }}?v=20261106-microsoft-oauth1">
+<link rel="stylesheet" href="{{ url_for('static', filename='theme-picker.css') }}?v=20261106-digital-virus2">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2">
+<script>
+  if (new URLSearchParams(window.location.search).get('ui') === 'trial') {
+    document.documentElement.dataset.uiTrial = 'split';
+  }
+</script>
+</head>
+<body>
+<div class="ui-trial-banner" role="note">
+  <span><b>UI trial 01</b><span class="ui-trial-banner-detail">Editorial split-screen</span></span>
+  <a href="/" aria-label="Return to the current PhishGuard design">Back to current UI <span aria-hidden="true">↗</span></a>
+</div>
+<main class="landing-page" id="landing-page"{% if login_page|default(false) or ui_trial|default(false) %} hidden{% endif %}>
+  <header class="pg-site-bar">
+    <a class="pg-site-wordmark" href="/" aria-label="PhishGuard home"><img class="pg-site-logo" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt="">PhishGuard</a>
+    <nav class="pg-site-actions" aria-label="Main navigation">
+      <a href="#landing-capabilities">Platform</a>
+      <a href="/login">Sign in</a>
+      <a class="pg-site-join" href="/login?mode=register">Create account <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+  <section class="pg-hero" id="landing-hero" aria-labelledby="pg-hero-title">
+    <canvas class="depth-scene pg-depth-scene" data-three-scene="landing" aria-hidden="true"></canvas>
+    <div class="pg-virus-field" aria-hidden="true">
+      <svg class="pg-virus-defs" aria-hidden="true" focusable="false"><symbol id="pg-digital-virus-art" viewBox="0 0 80 80">
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="1.8" opacity=".8" d="M40 3v13M40 64v13M3 40h13M64 40h13M14 14l9 9M57 57l9 9M66 14l-9 9M23 57l-9 9M27 7l5 10M48 63l5 10M7 27l10 5M63 48l10 5"/>
+    <path stroke-width="1.25" opacity=".5" d="M40 3l2.5 5-5 2.5M40 77l-2.5-5 5-2.5M3 40l5-2.5 2.5 5M77 40l-5 2.5-2.5-5"/>
+    <path fill="currentColor" fill-opacity=".11" stroke-width="1.5" d="M40 16 52 20 60 29 64 40 60 52 52 60 40 64 28 60 20 52 16 40 20 28 28 20Z"/>
+    <path stroke-width=".9" opacity=".44" d="M40 16v48M16 40h48M28 20l24 40M52 20 28 60M20 28l40 24M60 28 20 52M28 20l24 0M20 28l40 0M16 40l48 0M20 52l40 0M28 60l24 0"/>
+    <path stroke-width="1.5" opacity=".78" d="M27 34h8v-7h8v8h8M25 46h10v7h9v-7h10M40 35v10"/>
+  </g>
+  <g fill="currentColor"><circle cx="40" cy="16" r="2.1"/><circle cx="64" cy="40" r="2.1"/><circle cx="40" cy="64" r="2.1"/><circle cx="16" cy="40" r="2.1"/><circle cx="28" cy="20" r="1.6"/><circle cx="52" cy="20" r="1.6"/><circle cx="60" cy="52" r="1.6"/><circle cx="28" cy="60" r="1.6"/></g>
+  <g fill="currentColor" opacity=".82"><rect x="65" y="18" width="3" height="3"/><rect x="70" y="13" width="2" height="2"/><rect x="12" y="62" width="3" height="3"/><rect x="8" y="68" width="2" height="2"/><rect x="64" y="62" width="2" height="2"/></g>
+  <circle cx="34" cy="34" r="3.1" fill="#fff" fill-opacity=".76"/><circle cx="47" cy="45" r="2" fill="#fff" fill-opacity=".65"/>
+</symbol></svg>
+      <svg class="pg-virus pg-virus-lilac pg-virus-a" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-blue pg-virus-b" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-magenta pg-virus-c" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-blue pg-virus-d" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-lilac pg-virus-e" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+    </div>
+    <div class="pg-hero-inner">
+      <div class="pg-hero-copy">
+        <h1 id="pg-hero-title"><span>Tracing</span><br><span>the <em>unseen</em></span></h1>
+        <p>Inspect suspicious links and email. PhishGuard shows the evidence behind its verdict, so you can make a safer decision before you click.</p>
+        <div class="pg-hero-actions">
+          <a class="pg-hero-cta" href="/login?mode=register">CREATE ACCOUNT <span aria-hidden="true">↗</span></a>
+          <a class="pg-hero-signin" href="/login">Sign in</a>
+        </div>
+        <div class="pg-hero-footnote"><span aria-hidden="true">↳</span> THREAT SIGNALS <i></i> SAVED EVIDENCE <i></i> EXPLAINABLE VERDICTS</div>
+      </div>
+      <aside class="pg-signal-card" aria-label="Total PhishGuard checks completed across all users">
+        <div class="pg-signal-card-head"><span>COMMUNITY ACTIVITY</span><span class="pg-signal-card-status"><i></i> ALL USERS</span></div>
+        <div class="pg-signal-card-number" id="public-check-count" aria-live="polite">—</div>
+        <div class="pg-signal-card-label">CHECKS COMPLETED</div>
+        <div class="pg-signal-card-rule"></div>
+        <div class="pg-signal-card-foot"><span>ACROSS THE PLATFORM</span><span aria-hidden="true">//</span></div>
+      </aside>
+    </div>
+    <a class="pg-scroll-cue" href="#landing-capabilities"><span>EXPLORE THE SIGNALS</span><i aria-hidden="true"></i></a>
+  </section>
+  <section class="pg-capabilities" id="landing-capabilities" aria-labelledby="pg-cap-title">
+    <div class="pg-virus-field pg-virus-field-cap" aria-hidden="true">
+      <svg class="pg-virus pg-virus-blue pg-virus-f" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-magenta pg-virus-g" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-lilac pg-virus-h" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-blue pg-virus-i" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+      <svg class="pg-virus pg-virus-magenta pg-virus-j" viewBox="0 0 80 80" focusable="false"><use href="#pg-digital-virus-art"/></svg>
+    </div>
+    <div class="pg-cap-inner">
+      <header class="pg-cap-header">
+        <div class="pg-cap-strip" aria-label="Capabilities">
+          <span class="pg-cap-strip-left"><span class="pg-cap-index">01</span><i class="pg-cap-rule" aria-hidden="true"></i></span>
+          <span class="pg-cap-strip-name">// Capabilities</span>
+          <span class="pg-cap-strip-state">Evidence, Not Guesswork</span>
+        </div>
+        <div class="pg-cap-title-mask"><h2 id="pg-cap-title"><span class="pg-cap-clarity">See the signal.</span> Understand the risk.</h2></div>
+        <p class="pg-cap-lede">Check links and email, review the evidence behind a result, and keep scans you want to revisit.</p>
+      </header>
+
+      <div class="pg-cap-cards">
+        <article class="pg-cap-card" aria-labelledby="pg-cap-signals-title">
+          <div class="pg-cap-stage" aria-hidden="true">
+            <svg class="pg-cap-art pg-cap-radar" viewBox="0 0 360 170" fill="none" focusable="false">
+              <defs>
+                <radialGradient id="pg-radar-orb"><stop stop-color="#FFF1C6"/><stop offset=".28" stop-color="#FFC24A"/><stop offset="1" stop-color="#B85E3E" stop-opacity=".12"/></radialGradient>
+                <filter id="pg-radar-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              </defs>
+              <g class="pg-art-glow" filter="url(#pg-radar-glow)" stroke="#FFC24A" stroke-opacity=".76">
+                <circle cx="180" cy="86" r="23" stroke-width=".9"/><circle cx="180" cy="86" r="48" stroke-width=".8" stroke-opacity=".54"/><circle cx="180" cy="86" r="71" stroke-width=".8" stroke-opacity=".34"/>
+                <path d="M109 86h142M180 15v142M130 36l100 100M230 36 130 136" stroke-width=".55" stroke-opacity=".23"/>
+                <path d="M180 86 231 36" stroke-width="1.2" stroke-opacity=".8"/><circle cx="230.2" cy="35.8" r="3.2" fill="#FFC24A" stroke="none"/>
+              </g>
+              <circle cx="180" cy="86" r="13" fill="url(#pg-radar-orb)" filter="url(#pg-radar-glow)"/>
+              <circle cx="180" cy="86" r="3.3" fill="#FFF4D2"/>
+            </svg>
+          </div>
+          <div class="pg-cap-copy"><h3 id="pg-cap-signals-title">Real-Time Signals</h3><p>Read domain age, DNS, TLS, and redirect clues alongside the links you check.</p></div>
+        </article>
+
+        <article class="pg-cap-card" aria-labelledby="pg-cap-insights-title">
+          <div class="pg-cap-stage" aria-hidden="true">
+            <svg class="pg-cap-art pg-cap-chart" viewBox="0 0 360 170" fill="none" focusable="false">
+              <defs>
+                <filter id="pg-chart-glow" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <radialGradient id="pg-sphere-fill"><stop stop-color="#FFC24A" stop-opacity=".18"/><stop offset="1" stop-color="#FFC24A" stop-opacity="0"/></radialGradient>
+              </defs>
+              <g class="pg-art-glow" filter="url(#pg-chart-glow)" stroke="#FFC24A" stroke-opacity=".78" stroke-width=".85">
+                <path d="M85 119h100" stroke-opacity=".4"/>
+                <g class="pg-chart-bars">
+                  <path d="M101 116V79c0-5 16-5 16 0v37M101 79c0 5 16 5 16 0M101 116c0 5 16 5 16 0"/>
+                  <path d="M128 116V56c0-5 16-5 16 0v60M128 56c0 5 16 5 16 0M128 116c0 5 16 5 16 0"/>
+                  <path d="M155 116V91c0-5 16-5 16 0v25M155 91c0 5 16 5 16 0M155 116c0 5 16 5 16 0"/>
+                </g>
+                <g class="pg-chart-spheres">
+                  <circle cx="226" cy="88" r="34" fill="url(#pg-sphere-fill)"/>
+                  <ellipse cx="226" cy="88" rx="34" ry="13"/><ellipse cx="226" cy="88" rx="13" ry="34"/>
+                  <circle cx="267" cy="79" r="25" fill="url(#pg-sphere-fill)"/><ellipse cx="267" cy="79" rx="25" ry="9"/><ellipse cx="267" cy="79" rx="9" ry="25"/>
+                </g>
+                <path class="pg-chart-dashes" d="M202 34h12m8 0h6m9 0h13" stroke-linecap="round" stroke-width="1.5"/>
+              </g>
+            </svg>
+          </div>
+          <div class="pg-cap-copy"><h3 id="pg-cap-insights-title">Actionable Insights</h3><p>Turn link and email evidence into clear, reasoned verdicts—not opaque scores.</p></div>
+        </article>
+
+        <article class="pg-cap-card" aria-labelledby="pg-cap-records-title">
+          <div class="pg-cap-stage" aria-hidden="true">
+            <svg class="pg-cap-art pg-cap-reports" viewBox="0 0 360 170" fill="none" focusable="false">
+              <defs><filter id="pg-report-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+              <g class="pg-report-sheets pg-art-glow" filter="url(#pg-report-glow)" stroke="#FFC24A" stroke-opacity=".78" stroke-width=".9">
+                <path d="m121 48 94-20 43 23v91l-94 20-43-23z" fill="#FFC24A" fill-opacity=".025"/>
+                <path d="m121 48 43 23 94-20M164 71v91" stroke-opacity=".42"/>
+                <path d="m139 55 59-13m-48 22 75-16m-60 28 74-16m-75 29 75-16m-68 30 56-12" stroke-linecap="round"/>
+                <path d="m108 57-18 5v89l68 36 92-20v-8" stroke-opacity=".44"/>
+                <path d="m90 62 68 36 21-5m-74-24 56 29" stroke-opacity=".4"/>
+                <path d="m142 77 2 1m13 5 2 1m14 5 2 1" stroke-width="2.2" stroke-linecap="round"/>
+              </g>
+            </svg>
+          </div>
+          <div class="pg-cap-copy"><h3 id="pg-cap-records-title">Saved Evidence</h3><p>Keep scan receipts and history, then return to important domains and messages.</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Authentication is shown after a visitor chooses to sign in or register. -->
+<section class="auth-screen" id="auth-screen"{% if not (login_page|default(false) or ui_trial|default(false)) %} hidden{% endif %} aria-labelledby="auth-title">
+  <aside class="auth-story" aria-label="About PhishGuard">
+    <div class="auth-story-brand">
+      <img class="auth-story-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt="" aria-hidden="true">
+      <div><b>PhishGuard</b><span>PERSONAL SECURITY</span></div>
+    </div>
+    <div class="auth-story-main">
+      <div class="auth-story-eyebrow"><span></span> SECURITY, WITH EVIDENCE</div>
+      <h2>Confidence<br>before the <em>click.</em></h2>
+      <p class="auth-story-lede">Check suspicious links and emails, then see the signals behind every verdict.</p>
+      <div class="auth-story-flow" aria-label="How PhishGuard checks a message">
+        <div class="auth-story-flow-label">A clearer way to check</div>
+        <div class="auth-story-flow-steps">
+          <span><b>01</b> Inspect</span><i aria-hidden="true">→</i>
+          <span><b>02</b> Verify</span><i aria-hidden="true">→</i>
+          <span><b>03</b> Decide</span>
+        </div>
+      </div>
+      <div class="auth-story-features">
+        <div><span class="auth-story-feature-icon" aria-hidden="true">↗</span><p><b>Link checks</b><small>Spot suspicious domains and redirects.</small></p></div>
+        <div><span class="auth-story-feature-icon" aria-hidden="true">✉</span><p><b>Email checks</b><small>Review headers, links, and sender signals.</small></p></div>
+        <div><span class="auth-story-feature-icon" aria-hidden="true">▤</span><p><b>Saved history</b><small>Keep scan results in one workspace.</small></p></div>
+      </div>
+    </div>
+    <div class="auth-story-footer"><span>PHISHGUARD</span><span>Clear signals. Safer decisions.</span></div>
+  </aside>
+  <div class="auth-card">
+    <a class="auth-back" href="/">← Back to PhishGuard</a>
+    <img class="auth-brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt="" aria-hidden="true">
+    <div class="auth-eyebrow">SECURE WORKSPACE</div>
+    <h1 id="auth-title">Sign in to PhishGuard</h1>
+    <p class="auth-lede" id="auth-lede">Create a secure account or log in to access the phishing protection workspace.</p>
+
+    <div class="google-auth-option" id="google-auth-option">
+      <a class="google-auth-button oauth-auth-button" href="/auth/google/start">
+        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+          <path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.1v5.1h6.6c3.9-3.6 6.1-8.8 6.1-14.9Z"/>
+          <path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/>
+          <path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4V15H5.8a20 20 0 0 0 0 18l6.8-5.3Z"/>
+          <path fill="#EA4335" d="M24 11.9c3 0 5.7 1 7.8 3.1l5.9-5.9C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.8 15l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z"/>
+        </svg>
+        <span>Continue with Google</span>
+        <span class="google-auth-arrow" aria-hidden="true">↗</span>
+      </a>
+      <div class="auth-divider" aria-hidden="true"><span>OR USE PHISHGUARD</span></div>
+    </div>
+
+    <div class="auth-tabs" id="auth-tabs" role="tablist" aria-label="Account access">
+      <button class="auth-tab active" id="tab-login" type="button" role="tab" aria-selected="true">Log in</button>
+      <button class="auth-tab" id="tab-register" type="button" role="tab" aria-selected="false">Create account</button>
+    </div>
+
+    <form id="login-form" class="auth-form">
+      <label for="login-username">Username</label>
+      <input id="login-username" type="text" autocomplete="username" minlength="3" maxlength="32"
+             placeholder="your_username" required>
+      <label for="login-password">Password</label>
+      <input id="login-password" type="password" autocomplete="current-password"
+             placeholder="Your password" required>
+      <button class="btn btn-primary auth-submit" id="btn-login" type="submit">
+        Log in <span aria-hidden="true">→</span>
+      </button>
+      <div class="auth-actions">
+        <button class="auth-link" id="btn-forgot-password" type="button">Forgot password?</button>
+      </div>
+    </form>
+
+    <form id="register-form" class="auth-form" hidden>
+      <div class="register-progress" aria-label="Account creation progress">
+        <span class="register-progress-step active" data-progress-step="1"><b>1</b> Account</span>
+        <span class="register-progress-line"></span>
+        <span class="register-progress-step" data-progress-step="2"><b>2</b> Password</span>
+        <span class="register-progress-line"></span>
+        <span class="register-progress-step" data-progress-step="3"><b>3</b> Recovery</span>
+      </div>
+
+      <section class="register-step active" data-register-step="1">
+        <div class="register-step-heading"><b>Set up your account</b><span>Basic details first.</span></div>
+        <label for="register-username">Username</label>
+        <input id="register-username" type="text" autocomplete="username" minlength="3" maxlength="32"
+               pattern="[A-Za-z][A-Za-z0-9_]{2,31}" placeholder="your_username" required>
+        <div class="auth-help">3–32 characters, starting with a letter.</div>
+        <label for="register-mobile">Mobile number</label>
+        <input id="register-mobile" type="tel" inputmode="tel" autocomplete="tel"
+               pattern="(?:\+91[\s-]?)?[6-9][0-9]{9}" placeholder="9876543210" required>
+        <label for="register-email">Gmail address <span class="optional-label">(optional)</span></label>
+        <input id="register-email" type="email" autocomplete="email"
+               pattern="[^@\s]+@(gmail\.com|googlemail\.com)" placeholder="name@gmail.com">
+        <div class="auth-help">You can add it later from Privacy &amp; authentication.</div>
+        <label class="settings-check" for="register-monthly-summary">
+          <input id="register-monthly-summary" type="checkbox">
+          Email me a monthly summary of flagged sites
+        </label>
+        <div class="auth-help">Optional and off by default. Includes flagged domains from your scans only—not full URLs or email contents. Verify your Gmail address to receive it; change this anytime in Settings.</div>
+        <button class="btn btn-primary auth-submit register-next" type="button">Next <span aria-hidden="true">→</span></button>
+      </section>
+
+      <section class="register-step" data-register-step="2" hidden>
+        <div class="register-step-heading"><b>Protect your account</b><span>Choose a password you can remember.</span></div>
+        <label for="register-password">Password</label>
+        <input id="register-password" type="password" autocomplete="new-password"
+               minlength="8" maxlength="128" placeholder="At least 8 characters" required>
+        <div class="auth-help">Use at least 8 characters with a letter and a number.</div>
+        <label for="register-password-confirm">Confirm password</label>
+        <input id="register-password-confirm" type="password" autocomplete="new-password"
+               minlength="8" maxlength="128" placeholder="Re-enter password" required>
+        <div class="register-actions">
+          <button class="btn btn-ghost register-back" type="button">← Back</button>
+          <button class="btn btn-primary register-next" type="button">Next <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+
+      <section class="register-step" data-register-step="3" hidden>
+        <div class="register-step-heading"><b>Add a recovery option</b><span>Use this if you ever forget your password.</span></div>
+        <label for="register-recovery-question">Password recovery question</label>
+        <select id="register-recovery-question" required>
+          <option value="">Choose a question</option>
+          <option>What is your favorite game?</option>
+          <option>What is your favorite flower?</option>
+          <option>What is your favorite hobby?</option>
+          <option>What city were you born in?</option>
+          <option>What was your first pet's name?</option>
+        </select>
+        <label for="register-recovery-answer">Your answer</label>
+        <input id="register-recovery-answer" type="text" autocomplete="off" minlength="2" maxlength="128"
+               placeholder="Enter an answer" required>
+        <div class="auth-help">Choose an answer others cannot easily guess.</div>
+        <div class="register-actions">
+          <button class="btn btn-ghost register-back" type="button">← Back</button>
+          <button class="btn btn-primary" id="btn-register" type="submit">Create account <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+    </form>
+
+    <form id="forgot-lookup-form" class="auth-form" hidden>
+      <label for="forgot-username">Username</label>
+      <input id="forgot-username" type="text" autocomplete="username" minlength="3" maxlength="32"
+             placeholder="your_username" required>
+      <div class="auth-help">You can use your recovery question or request a code sent to a verified Gmail address.</div>
+      <button class="btn btn-primary auth-submit" id="btn-forgot-lookup" type="submit">
+        Continue with recovery question <span aria-hidden="true">→</span>
+      </button>
+      <button class="auth-link auth-submit" id="btn-request-reset-code" type="button">Send a reset code to verified Gmail</button>
+      <div class="auth-actions">
+        <button class="auth-link" id="btn-back-login" type="button">← Back to login</button>
+      </div>
+    </form>
+
+    <form id="forgot-reset-form" class="auth-form" hidden>
+      <div class="auth-sent-note">Recovery question<br><b id="forgot-question">–</b></div>
+      <label for="forgot-answer">Your answer</label>
+      <input id="forgot-answer" type="text" autocomplete="off" minlength="2" maxlength="128"
+             placeholder="Enter your answer" required>
+      <label for="forgot-new-password">New password</label>
+      <input id="forgot-new-password" type="password" autocomplete="new-password" minlength="8" maxlength="128"
+             placeholder="At least 8 characters" required>
+      <label for="forgot-confirm-password">Confirm new password</label>
+      <input id="forgot-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128"
+             placeholder="Re-enter password" required>
+      <div class="auth-help">At least 8 characters with one letter and one number.</div>
+      <button class="btn btn-primary auth-submit" id="btn-forgot-reset" type="submit">
+        Reset password <span aria-hidden="true">→</span>
+      </button>
+      <div class="auth-actions">
+        <button class="auth-link" id="btn-forgot-start-over" type="button">Use a different account</button>
+      </div>
+    </form>
+
+    <form id="forgot-email-reset-form" class="auth-form" hidden>
+      <div class="auth-sent-note">Enter the six-digit code sent to the account’s verified Gmail address.</div>
+      <label for="forgot-email-code">Email code</label>
+      <input id="forgot-email-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" required>
+      <label for="forgot-email-new-password">New password</label>
+      <input id="forgot-email-new-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required>
+      <label for="forgot-email-confirm-password">Confirm new password</label>
+      <input id="forgot-email-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Re-enter password" required>
+      <div class="auth-help">Code expires after 10 minutes. Passwords need one letter and one number.</div>
+      <button class="btn btn-primary auth-submit" id="btn-forgot-email-reset" type="submit">Reset password <span aria-hidden="true">→</span></button>
+      <div class="auth-actions">
+        <button class="auth-link" id="btn-forgot-email-start-over" type="button">Use a different account</button>
+      </div>
+    </form>
+
+    <section class="saved-accounts" id="saved-accounts" hidden aria-label="Saved accounts">
+      <div class="saved-accounts-title">Saved accounts</div>
+      <div class="saved-account-list" id="saved-account-list"></div>
+      <div class="auth-help">Only usernames are remembered here. A password is always required.</div>
+    </section>
+
+    <div class="auth-message" id="auth-message" role="status" aria-live="polite"></div>
+    <div class="auth-security-note">
+      <span class="security-icon" aria-hidden="true">✓</span>
+      Passwords are securely hashed. Your session is protected with an HttpOnly cookie.
+    </div>
+  </div>
+</section>
+
+<div class="app" id="dashboard" hidden>
+
+  <!-- ============================== SIDEBAR ============================== -->
+  <aside class="sidebar" id="app-sidebar">
+    <div class="brand">
+      <img class="brand-mark" src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt="" aria-hidden="true">
+      <div>
+        <div class="brand-name">PhishGuard</div>
+        <div class="brand-sub">verdicts with receipts</div>
+      </div>
+    </div>
+
+    <section class="sidebar-profile" aria-label="Account profile">
+      <div class="sidebar-profile-heading">
+        <span class="sidebar-profile-avatar" id="sidebar-profile-avatar" aria-hidden="true">?</span>
+        <div class="sidebar-profile-identity">
+          <strong id="sidebar-profile-name">Account</strong>
+          <span id="sidebar-profile-email">Email not added</span>
+        </div>
+      </div>
+      <details class="sidebar-profile-more" open>
+        <summary>Account details &amp; actions <span aria-hidden="true">⌄</span></summary>
+        <dl class="sidebar-profile-details">
+          <div><dt>Username</dt><dd id="sidebar-profile-username">–</dd></div>
+          <div><dt>Email status</dt><dd id="sidebar-profile-email-status">No email</dd></div>
+          <div><dt>Mobile</dt><dd id="sidebar-profile-mobile">–</dd></div>
+          <div><dt>Account since</dt><dd id="sidebar-profile-created">–</dd></div>
+          <div><dt>Password updated</dt><dd id="sidebar-profile-password-changed">–</dd></div>
+        </dl>
+        <div class="sidebar-profile-actions" aria-label="Account actions">
+          <button class="profile-action" id="btn-settings" type="button">⚙ Settings</button>
+          <button class="profile-action" id="btn-add-account" type="button">＋ Add account</button>
+          <button class="profile-action danger-action" id="btn-logout" type="button">↪ Log out</button>
+        </div>
+        <div class="profile-section-label">Saved accounts</div>
+        <div class="profile-saved-list" id="profile-saved-list"></div>
+      </details>
+    </section>
+
+    <nav class="nav" aria-label="Main">
+      <div class="nav-label">HOME BASE</div>
+      <button class="nav-item" data-route="overview" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </button>
+      <button class="nav-item" data-route="saved">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-3-6 3Z"/><path d="M9 7h6"/></svg>
+        Saved scans
+      </button>
+      <div class="nav-label">ANALYSIS TOOLS</div>
+      <button class="nav-item" type="button" data-route="link" aria-keyshortcuts="1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+        Check a link <span class="kbd" aria-hidden="true">1</span>
+      </button>
+      <button class="nav-item" type="button" data-route="email" aria-keyshortcuts="2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+        Check an email <span class="kbd" aria-hidden="true">2</span>
+      </button>
+
+      <div class="nav-label">CAMPAIGN INTELLIGENCE</div>
+      <button class="nav-item" type="button" data-route="sweep" aria-keyshortcuts="3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/><circle cx="12" cy="12" r="3"/></svg>
+        Campaigns <span class="kbd" aria-hidden="true">3</span>
+      </button>
+      <div class="nav-label">RECENT CHECKS</div>
+      <div class="recent" id="recent"></div>
+    </nav>
+
+      <div class="side-foot">
+      <section class="sidebar-guide" aria-label="Quick access">
+        <span class="sidebar-guide-mark" aria-hidden="true">✳</span>
+        <div><b>Quick access</b><p>Help and notification preferences.</p></div>
+        <div class="sidebar-guide-actions">
+          <button type="button" id="sidebar-open-help">Help Guide</button>
+          <button type="button" id="sidebar-open-notifications">Notifications</button>
+        </div>
+      </section>
+
+    </div>
+  </aside>
+
+  <!-- =============================== MAIN =============================== -->
+  <div class="main">
+    <header class="topbar">
+      <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Hide navigation panel" aria-expanded="true" aria-controls="app-sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+        <span id="sidebar-toggle-label">Hide panel</span>
+      </button>
+      <div>
+        <h1 id="page-title">Overview</h1>
+        <div class="crumb" id="page-crumb">Instant lexical verdict, then infrastructure, reputation and a click preview</div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- --------------------------------------------------- OVERVIEW VIEW -->
+      <section class="view" id="view-overview">
+        <div class="dashboard-welcome card">
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
+          <div>
+            <div class="auth-eyebrow">YOUR PHISHGUARD WORKSPACE</div>
+            <h2 class="hero-title">Welcome back, <span id="dashboard-user-name">–</span></h2>
+            <p class="hero-sub">Review your recent checks, keep evidence you need, and choose what to inspect next.</p>
+          </div>
+          <div class="dashboard-quick-actions">
+            <button class="btn btn-primary" data-dashboard-route="link">＋ Check a link</button>
+            <button class="btn btn-ghost" data-dashboard-route="email">Check an email</button>
+            <button class="btn btn-ghost" data-dashboard-route="saved">Saved scans</button>
+          </div>
+        </div>
+        <div class="kpis" id="personal-kpis" style="margin-top:16px"></div>
+        <div class="card overview-status-card" style="margin-top:16px">
+          <div class="card-head"><h3 class="card-title">Analysis status</h3><div class="spacer"></div><span class="faint tiny">signals available to this workspace</span></div>
+          <div class="card-body overview-status-grid">
+            <div class="overview-status-item"><span>Analysis engine</span><b id="engine-ver">–</b></div>
+            <div class="overview-status-item"><span>Reputation providers</span><b id="engine-intel">–</b></div>
+            <div class="overview-status-item"><span>Domains observed</span><b id="engine-domains">–</b></div>
+            <div class="overview-status-item"><span>Campaign reports</span><b id="engine-reports">–</b></div>
+            <div class="overview-status-chips"><span class="chip" id="chip-intel"><span class="dot"></span> reputation <b>–</b></span><span class="chip" id="chip-clusters"><span class="dot"></span> clusters <b>–</b></span></div>
+          </div>
+        </div>
+        <div class="grid grid-2 overview-panels" style="margin-top:16px">
+          <div class="card overview-activity-card">
+            <div class="card-head"><h3 class="card-title">Recent activity</h3><div class="spacer"></div><span class="faint tiny">on this device</span></div>
+            <div class="card-body" id="dashboard-recent-list"></div>
+          </div>
+          <div class="card overview-guide-card">
+            <div class="card-head"><h3 class="card-title">A good place to start</h3></div>
+            <div class="card-body overview-guide-list">
+              <button type="button" data-dashboard-route="link"><span class="overview-guide-icon">↗</span><span><b>Check a link</b><small>Review domain and redirect signals.</small></span><span class="overview-guide-arrow">→</span></button>
+              <button type="button" data-dashboard-route="email"><span class="overview-guide-icon">✉</span><span><b>Check an email</b><small>Inspect sender, headers, and links.</small></span><span class="overview-guide-arrow">→</span></button>
+              <button type="button" data-dashboard-route="saved"><span class="overview-guide-icon">▤</span><span><b>Open saved scans</b><small>Return to evidence you kept.</small></span><span class="overview-guide-arrow">→</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="card overview-saved-card" style="margin-top:16px">
+          <div class="card-head"><h3 class="card-title">Saved scans</h3><div class="spacer"></div><button class="btn btn-ghost btn-sm" data-dashboard-route="saved">View library</button></div>
+          <div id="dashboard-saved-list"></div>
+        </div>
+      </section>
+
+      <!-- ---------------------------------------------------- SAVED VIEW -->
+      <section class="view" id="view-saved" hidden>
+        <div class="hero workspace-view-hero saved-scans-hero">
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
+          <div class="workspace-hero-copy">
+            <div class="workspace-eyebrow"><span>02</span> YOUR SECURITY LIBRARY</div>
+            <h2 class="hero-title">Keep the evidence<br>that matters.</h2>
+            <p class="hero-sub">Saved checks stay organized here, ready when you want to compare or review a result.</p>
+            <div class="workspace-hero-note"><span>✳</span> Saved in this browser for this username; not synced between devices</div>
+          </div>
+          <div class="workspace-hero-art saved-library-art" aria-hidden="true">
+            <div class="library-orbit library-orbit-one"></div><div class="library-orbit library-orbit-two"></div>
+            <div class="library-sheet library-sheet-back"></div>
+            <div class="library-sheet library-sheet-front"><span class="library-sheet-mark"><img src="{{ url_for('static', filename='phisguard-logo.png') }}?v=20261106-digital-virus2" alt=""></span><span class="library-sheet-line"></span><span class="library-sheet-line short"></span><span class="library-sheet-tag">SAVED EVIDENCE</span><span class="library-sheet-check">✓</span></div>
+            <span class="library-art-spark">✦</span>
+          </div>
+        </div>
+        <div class="saved-folder-bar" id="saved-folder-list" aria-label="Saved scan folders"></div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><h3 class="card-title" id="saved-scans-title">All saved scans</h3><div class="spacer"></div><span class="faint tiny" id="saved-scans-count">0 scans</span></div>
+          <div class="saved-scans-list" id="saved-scans-list"></div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------- LINK VIEW -->
+      <section class="view" id="view-link">
+        <div class="hero workspace-tool-hero link-tool-hero">
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
+          <div class="workspace-tool-head">
+            <div class="workspace-tool-copy">
+              <div class="workspace-eyebrow"><span>01</span> URL INTELLIGENCE</div>
+              <h2 class="hero-title">Check before you click.</h2>
+              <p class="hero-sub">Paste a link to inspect its domain, infrastructure, reputation, and redirect signals. It never opens in your browser.</p>
+            </div>
+            <div class="workspace-tool-art link-tool-art" aria-hidden="true"><div class="tool-art-orbit"></div><div class="tool-art-shield"><svg viewBox="0 0 48 54" fill="none"><path d="M24 3 42 10v13c0 12-8 22-18 28C14 45 6 35 6 23V10L24 3Z" stroke="currentColor" stroke-width="2"/><path d="m16 26 5 5 11-12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="tool-art-node node-a"></span><span class="tool-art-node node-b"></span><span class="tool-art-node node-c"></span><span class="tool-art-label">SIGNALS<br>NOT SHORTCUTS</span></div>
+          </div>
+          <div class="input-row">
+            <label class="field" for="url-input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+              <input id="url-input" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+                     placeholder="hxxps://paypal.com.secure-login-verify[.]top/account/verify" aria-describedby="url-hint">
+              <button class="clear" id="url-clear" title="Clear" aria-label="Clear input" hidden>×</button>
+            </label>
+            <button class="btn btn-primary" id="btn-url">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              Analyse
+            </button>
+          </div>
+          <div id="url-hint" class="samples">
+            <span class="label">Try one:</span>
+            <button class="sample" data-demo="http://paypal.com.secure-login-verify.top/account/verify?id=8821">brand in subdomain</button>
+            <button class="sample" data-demo="https://hdfcbank.com.secure-verify.top/kyc">bank lookalike</button>
+            <button class="sample" data-demo="https://microsoft.com@evil-login.ru/">@ decoy</button>
+            <button class="sample" data-demo="https://bit.ly/3xKyc">shortener</button>
+            <button class="sample" data-demo="https://www.google.com">clean control</button>
+          </div>
+          <div class="reputation-consent" role="group" aria-labelledby="url-reputation-consent-label">
+            <label class="settings-check" id="url-reputation-consent-label">
+              <input id="url-reputation-consent" type="checkbox">
+              Share this URL with configured third-party reputation providers
+            </label>
+            <div class="settings-help">Off by default. If enabled, the exact URL may be sent to Google Safe Browsing, VirusTotal, URLhaus, and/or PhishTank according to available server keys and provider limits. The self-made PhishGuard analysis still runs when unchecked. A provider no-match does not mean safe.</div>
+          </div>
+          <div class="pipeline" id="url-pipeline" hidden style="margin-top:16px">
+            <span class="stage" data-stage="lexical"><span class="pip"></span>lexical</span>
+            <span class="stage" data-stage="infra"><span class="pip"></span>registration &amp; DNS</span>
+            <span class="stage" data-stage="rep"><span class="pip"></span>reputation</span>
+            <span class="stage" data-stage="preview"><span class="pip"></span>click preview</span>
+            <span class="stage" data-stage="baseline"><span class="pip"></span>baseline</span>
+          </div>
+        </div>
+        <div id="url-out" class="stack" style="margin-top:16px" aria-live="polite"></div>
+      </section>
+
+      <!-- ------------------------------------------------------ EMAIL VIEW -->
+      <section class="view" id="view-email" hidden>
+        <div class="hero workspace-tool-hero email-tool-hero">
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
+          <div class="workspace-tool-head">
+            <div class="workspace-tool-copy">
+              <div class="workspace-eyebrow"><span>02</span> MESSAGE FORENSICS</div>
+              <h2 class="hero-title">Read the clues in the email.</h2>
+              <p class="hero-sub">Inspect sender authentication, message headers, links, and attachment indicators—without sending the message to a third-party file scanner.</p>
+            </div>
+            <div class="workspace-tool-art email-tool-art" aria-hidden="true"><div class="tool-art-orbit"></div><div class="email-art-envelope"><svg viewBox="0 0 64 48" fill="none"><rect x="4" y="6" width="56" height="38" rx="7" stroke="currentColor" stroke-width="2"/><path d="m7 11 25 18 25-18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m8 40 18-14m30 14L38 26" stroke="currentColor" stroke-width="1.5" opacity=".65"/></svg><span class="email-art-seal">✓</span></div><span class="tool-art-node node-a"></span><span class="tool-art-node node-c"></span><span class="tool-art-label">HEADER<br>ANALYSIS</span></div>
+          </div>
+
+          <div class="grid grid-2 email-input-grid" style="gap:16px">
+            <div class="drop" id="eml-drop" tabindex="0" role="button" aria-label="Choose an .eml file">
+              <input type="file" id="eml-file" accept=".eml,.txt,message/rfc822" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5-5 5 5"/><path d="M12 5v12"/></svg>
+              <div class="drop-title" id="drop-title">Drop an .eml here</div>
+              <div class="drop-sub" id="drop-sub">or click to browse · 12 MB max · nothing is uploaded anywhere else</div>
+            </div>
+            <div class="stack-sm">
+              <div class="seg" role="group" aria-label="Input mode">
+                <button data-emode="file" aria-pressed="true">File</button>
+                <button data-emode="paste" aria-pressed="false">Paste source</button>
+              </div>
+              <textarea class="raw" id="eml-raw" placeholder="Paste full raw source — From:, Received:, DKIM-Signature:, Authentication-Results:, then the body…" hidden></textarea>
+              <div class="samples" style="margin-top:0">
+                <span class="label">Samples:</span>
+                <button class="sample" data-sample="bec_invoice">BEC bank-change</button>
+                <button class="sample" data-sample="india_upi">UPI / KYC</button>
+                <button class="sample" data-sample="digital_arrest">digital arrest</button>
+                <button class="sample" data-sample="clean">clean mail</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-row" style="margin-top:16px">
+            <button class="btn btn-primary" id="btn-eml">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+              Analyse email
+            </button>
+            <span class="faint small" style="align-self:center">Files never leave this host. Only hashes and counters are stored.</span>
+          </div>
+        </div>
+        <div id="email-out" class="stack" style="margin-top:16px" aria-live="polite"></div>
+      </section>
+
+      <!-- ------------------------------------------------------ SWEEP VIEW -->
+      <section class="view" id="view-sweep" hidden>
+        <div class="hero workspace-view-hero campaign-hero">
+          <canvas class="depth-scene workspace-ribbon-scene" data-three-scene="ribbon" aria-hidden="true"></canvas>
+          <div class="workspace-hero-copy">
+            <div class="workspace-eyebrow"><span>03</span> CAMPAIGN INTELLIGENCE</div>
+            <h2 class="hero-title">See the pattern. Stop the spread.</h2>
+            <p class="hero-sub">Related reports are grouped by shared message and link signals, so emerging phishing campaigns are easier to spot.</p>
+          </div>
+        </div>
+        <div class="stack">
+          <div class="kpis" id="sweep-kpis"></div>
+          <div class="card">
+            <div class="card-head">
+              <h3 class="card-title">Campaign clusters</h3>
+              <div class="spacer"></div>
+              <span class="faint tiny">clustered by subject + sender + link hosts</span>
+              <button class="btn btn-ghost btn-sm" id="btn-refresh-clusters">Refresh</button>
+            </div>
+            <div id="sweep-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3 class="card-title">How report-to-sweep works</h3></div>
+            <div class="card-body prose">
+              <p style="margin-top:0">When one person reports a message, we fingerprint the campaign from the
+              normalised subject, the sender and the set of link hosts. Every later recipient is matched to the
+              same cluster, so the warning shows <b>“3 reports · 1 clicked”</b> before they act. A standalone
+              link report is grouped by its normalized host/path; query strings and fragments are not retained.
+              The person who submitted either kind of report can undo that specific report for five minutes.</p>
+              <ul>
+                <li><b>Cluster, don't duplicate.</b> A re-sent variant with a new subject prefix or a fresh
+                  lookalike domain still lands in the same cluster when the link hosts match.</li>
+                <li><b>Social proof is the strongest signal.</b> People trust “17 others received this” more
+                  than any risk score.</li>
+                <li><b>Report latency beats detection accuracy.</b> The metric that matters is minutes from
+                  delivery to first report.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
+    </main>
+  </div>
+
+</div>
+
+<!-- Shared by the sign-in screens and the authenticated workspace. This guide is
+     FAQ-based, app-scoped, and does not send questions to an external AI service. -->
+<button class="help-ai-fab" id="help-ai-fab" type="button" aria-label="Open PhishGuard Help Guide" hidden>✦ Help Guide</button>
+<aside class="assistant-panel" id="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title" hidden>
+  <div class="assistant-head">
+    <div>
+      <div class="auth-eyebrow">BUILT-IN GUIDE · PHISHGUARD ONLY</div>
+      <h2 id="assistant-title">PhishGuard Help</h2>
+    </div>
+    <button class="btn btn-icon btn-ghost" id="assistant-close" type="button" aria-label="Close Help Guide">×</button>
+  </div>
+  <div class="assistant-messages" id="assistant-messages" aria-live="polite">
+    <div class="assistant-bubble assistant-bubble-ai"><b>Hi! I’m the PhishGuard Help Guide.</b><br>I can help with PhishGuard login, account recovery, scans, and settings. I use a built-in app guide—not a cloud AI—and I can’t answer general questions.</div>
+  </div>
+  <div class="assistant-suggestions" id="assistant-suggestions">
+    <button type="button" data-assistant-question="How do I create a PhishGuard account?">Create an account</button>
+    <button type="button" data-assistant-question="Why can’t I log in to PhishGuard?">Login problem</button>
+    <button type="button" data-assistant-question="How do I reset my PhishGuard password?">Reset password</button>
+    <button type="button" data-assistant-question="How do I check a suspicious link?">Check a link</button>
+    <button type="button" data-assistant-question="How do I check an email in PhishGuard?">Check an email</button>
+    <button type="button" data-assistant-question="How do I manage PhishGuard settings?">Manage settings</button>
+  </div>
+  <form class="assistant-form" id="assistant-form">
+    <textarea id="assistant-input" maxlength="1200" rows="2" aria-label="Ask a question about PhishGuard" placeholder="Ask about PhishGuard…" required></textarea>
+    <button class="btn btn-primary" id="assistant-send" type="submit">Ask Guide <span aria-hidden="true">→</span></button>
+  </form>
+</aside>
+
+<!-- account settings + receipt drawer + toasts -->
+<div class="account-scrim" id="account-scrim" hidden></div>
+<aside class="account-panel" id="account-panel" role="dialog" aria-modal="true" aria-labelledby="account-panel-title" hidden>
+  <div class="account-panel-head">
+    <div>
+      <div class="auth-eyebrow">ACCOUNT</div>
+      <h2 id="account-panel-title">Profile &amp; settings</h2>
+    </div>
+    <button class="btn btn-icon btn-ghost" id="account-panel-close" type="button" aria-label="Close settings">×</button>
+  </div>
+  <div class="account-panel-body">
+    <div class="profile-large">
+      <div class="profile-avatar large" id="settings-avatar">?</div>
+      <div><div class="profile-menu-name" id="settings-name">–</div><div class="profile-menu-mobile" id="settings-email">Gmail not added</div></div>
+    </div>
+    <section class="settings-home" id="settings-home" aria-label="Settings options">
+      <div class="settings-home-intro"><span class="landing-kicker">YOUR ACCOUNT, YOUR CHOICE</span><h3>What would you like to manage?</h3><p>Choose a topic first. The related options will open on the next screen.</p></div>
+      <div class="settings-home-grid">
+        <button class="settings-home-option" type="button" data-settings-open="profile"><span class="settings-home-icon">◎</span><span><b>Profile details</b><small>Name, avatar and account info</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="security"><span class="settings-home-icon">♢</span><span><b>Sign-in &amp; security</b><small>Password, recovery and login activity</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="notifications"><span class="settings-home-icon">◌</span><span><b>Notifications</b><small>Choose what should get your attention</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="privacy"><span class="settings-home-icon">▤</span><span><b>Privacy &amp; data</b><small>Export, clear, or delete account data</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="appearance"><span class="settings-home-icon">◐</span><span><b>Appearance</b><small>Choose deep or soft black with magenta and violet accents</small></span><span class="settings-home-arrow">→</span></button>
+        <button class="settings-home-option" type="button" data-settings-open="devices"><span class="settings-home-icon">▣</span><span><b>Accounts on this device</b><small>Review saved usernames or add an account</small></span><span class="settings-home-arrow">→</span></button>
+      </div>
+      <div class="settings-help-card"><span>?</span><div><b>Need a hand?</b><small>Open the PhishGuard Help Guide from the workspace for quick answers.</small></div></div>
+    </section>
+    <div class="settings-detail" id="settings-detail" hidden>
+      <div class="settings-detail-head">
+        <button class="settings-back" id="settings-back" type="button">← All settings</button>
+        <div><h3 id="settings-detail-title">Profile details</h3><p id="settings-detail-copy">Manage your PhishGuard account details.</p></div>
+      </div>
+    <section class="settings-section" id="settings-profile-section" hidden>
+    <div class="settings-card" data-settings-category="profile">
+      <div class="settings-card-title">Profile appearance</div>
+      <div class="settings-help">Customize the name and initials shown in the app. Your password is required to save profile changes.</div>
+      <form class="settings-form" id="settings-profile-form">
+        <label for="settings-display-name">Display name</label>
+        <input id="settings-display-name" type="text" maxlength="60" autocomplete="name" placeholder="Your name">
+        <label for="settings-avatar-input">Avatar initials</label>
+        <input id="settings-avatar-input" type="text" maxlength="2" pattern="[A-Za-z0-9]{1,2}" placeholder="AR">
+        <label for="settings-profile-password">Current password</label>
+        <input id="settings-profile-password" type="password" autocomplete="current-password" required>
+        <button class="btn btn-primary" id="settings-profile-submit" type="submit">Save profile</button>
+      </form>
+    </div>
+    <div class="settings-card" data-settings-category="profile">
+      <div class="settings-card-title">Account at a glance</div>
+      <div class="settings-row"><span>Username</span><b id="settings-username">–</b></div>
+      <div class="settings-row"><span>Gmail address</span><b id="settings-email-value">Not added</b></div>
+      <div class="settings-row"><span>Mobile number</span><b id="settings-mobile-value">–</b></div>
+      <div class="settings-row"><span>Session</span><b>Active on this device</b></div>
+    </div>
+    <div class="settings-card" data-settings-category="appearance">
+      <div class="settings-card-title">Workspace appearance</div>
+      <div class="settings-help" id="appearance-theme-help">Choose a theme. Every option keeps PhishGuard’s near-black look and accessible contrast.</div>
+      <fieldset class="theme-options" aria-describedby="appearance-theme-help">
+        <legend>Choose your theme</legend>
+        <label class="theme-choice">
+          <span class="theme-swatch theme-swatch-signature" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="theme-choice-copy"><b>Signature</b><small>Magenta · violet · blue</small></span>
+          <input type="radio" name="appearance-theme" value="signature">
+        </label>
+        <label class="theme-choice">
+          <span class="theme-swatch theme-swatch-violet" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="theme-choice-copy"><b>Violet Dusk</b><small>Violet · orchid · blue</small></span>
+          <input type="radio" name="appearance-theme" value="violet">
+        </label>
+        <label class="theme-choice">
+          <span class="theme-swatch theme-swatch-blue" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="theme-choice-copy"><b>Blue Hour</b><small>Blue · violet · magenta</small></span>
+          <input type="radio" name="appearance-theme" value="blue">
+        </label>
+        <label class="theme-choice">
+          <span class="theme-swatch theme-swatch-soft" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="theme-choice-copy"><b>Soft Contrast</b><small>Gentler surfaces · same palette</small></span>
+          <input type="radio" name="appearance-theme" value="soft">
+        </label>
+      </fieldset>
+    </div>
+    <div class="settings-card" data-settings-category="devices">
+      <div class="settings-card-title">Accounts on this device</div>
+      <div class="settings-help">Only saved usernames are shown here; a password is always required to sign in.</div>
+      <div class="profile-saved-list" id="settings-saved-list"></div>
+      <button class="btn btn-primary" id="settings-add-account" type="button">＋ Add another account</button>
+    </div>
+    </section>
+    <section class="settings-section" id="settings-privacy-section" hidden>
+    <div class="privacy-hero" data-settings-category="security">
+      <div class="privacy-hero-icon" aria-hidden="true">✓</div>
+      <div><div class="auth-eyebrow">PROTECTED ACCOUNT</div><h3>Privacy &amp; authentication</h3><p>Control your sign-in details, notifications, and personal data from one secure place.</p></div>
+    </div>
+    <details class="privacy-group" id="privacy-security-group" data-settings-category="security">
+      <summary><span class="privacy-group-icon">♢</span><span><b>Account security</b><small>Gmail, mobile number, password and login activity</small></span><span class="privacy-chevron">⌄</span></summary>
+      <div class="privacy-group-body">
+      <div class="settings-help">Choose one setting to edit. Sensitive account changes ask for your current password.</div>
+      <div class="settings-action-menu" id="security-action-menu">
+        <button type="button" data-security-action="email" data-security-title="Gmail address"><span>✉</span><span><b>Gmail address</b><small>Add or update your contact email</small></span><i>→</i></button>
+        <button type="button" data-security-action="mobile" data-security-title="Mobile number"><span>⌕</span><span><b>Mobile number</b><small>Update your recovery contact</small></span><i>→</i></button>
+        <button type="button" data-security-action="recovery" data-security-title="Recovery question"><span>?</span><span><b>Recovery question</b><small>Choose a backup account-recovery answer</small></span><i>→</i></button>
+        <button type="button" data-security-action="password" data-security-title="Change password"><span>⌑</span><span><b>Password</b><small>Change the password for this account</small></span><i>→</i></button>
+        <button type="button" data-security-action="activity" data-security-title="Account activity"><span>◷</span><span><b>Login activity</b><small>Review recent sign-ins to your account</small></span><i>→</i></button>
+      </div>
+      <div class="security-action-detail" id="security-action-detail" hidden>
+        <button class="settings-back" id="security-action-back" type="button">← Security options</button>
+        <h4 id="security-action-title">Account setting</h4>
+      </div>
+    <div class="settings-card" data-security-action-card="email" hidden>
+      <div class="settings-card-title" id="settings-email-title">Add Gmail address</div>
+      <div class="settings-help">Verify your Gmail address to receive password-reset codes and, if you opt in, a monthly summary of flagged domains from your own scans. Mail is sent through the configured Mailjet account; scan summaries never contain full URLs or submitted email contents.</div>
+      <div class="settings-row"><span>Email status</span><b id="settings-email-verified">Not verified</b></div>
+      <form class="settings-form" id="settings-email-form">
+        <label for="settings-email-input">Gmail address</label>
+        <input id="settings-email-input" type="email" autocomplete="email" placeholder="name@gmail.com" required>
+        <label for="settings-email-password">Current password</label>
+        <input id="settings-email-password" type="password" autocomplete="current-password" required>
+        <button class="btn btn-primary" id="settings-email-submit" type="submit">Add Gmail address</button>
+      </form>
+      <button class="btn btn-ghost" id="settings-email-send-code" type="button">Send verification code</button>
+      <form class="settings-form" id="settings-email-verify-form">
+        <label for="settings-email-code">Verification code</label>
+        <input id="settings-email-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" required>
+        <button class="btn btn-primary" id="settings-email-verify-submit" type="submit">Verify email</button>
+      </form>
+    </div>
+    <div class="settings-card" data-security-action-card="recovery" hidden>
+      <div class="settings-card-title">Password recovery question</div>
+      <div class="settings-help">Use this only if you cannot log in. Your answer is stored as a secure hash and is never shown back to you.</div>
+      <form class="settings-form" id="settings-recovery-form">
+        <label for="settings-recovery-question">Recovery question</label>
+        <select id="settings-recovery-question" required>
+          <option value="">Choose a question</option>
+          <option>What is your favorite game?</option>
+          <option>What is your favorite flower?</option>
+          <option>What is your favorite hobby?</option>
+          <option>What city were you born in?</option>
+          <option>What was your first pet's name?</option>
+        </select>
+        <label for="settings-recovery-answer">Your answer</label>
+        <input id="settings-recovery-answer" type="text" autocomplete="off" minlength="2" maxlength="128" required>
+        <label for="settings-recovery-password">Current password</label>
+        <input id="settings-recovery-password" type="password" autocomplete="current-password" required>
+        <button class="btn btn-primary" id="settings-recovery-submit" type="submit">Save recovery question</button>
+      </form>
+    </div>
+    <div class="settings-card" data-security-action-card="mobile" hidden>
+      <div class="settings-card-title">Change mobile number</div>
+      <form class="settings-form" id="settings-mobile-form">
+        <label for="settings-mobile-input">New mobile number</label>
+        <input id="settings-mobile-input" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876543210" required>
+        <label for="settings-mobile-password">Current password</label>
+        <input id="settings-mobile-password" type="password" autocomplete="current-password" required>
+        <button class="btn btn-primary" id="settings-mobile-submit" type="submit">Save mobile number</button>
+      </form>
+    </div>
+    <div class="settings-card" data-security-action-card="password" hidden>
+      <div class="settings-card-title">Change password</div>
+      <div class="settings-help">Confirm your old password before choosing a new one.</div>
+      <form class="settings-form" id="settings-password-form">
+        <label for="settings-current-password">Current password</label>
+        <input id="settings-current-password" type="password" autocomplete="current-password" required>
+        <label for="settings-new-password">New password</label>
+        <input id="settings-new-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+        <label for="settings-confirm-password">Confirm new password</label>
+        <input id="settings-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+        <div class="settings-help">At least 8 characters with one letter and one number.</div>
+        <button class="btn btn-primary" id="settings-password-submit" type="submit">Change password</button>
+      </form>
+    </div>
+    <div class="settings-card" data-security-action-card="activity" hidden>
+      <div class="settings-card-title">Account activity</div>
+      <div class="settings-row"><span>Last password changed</span><b id="settings-password-changed">–</b></div>
+      <div class="settings-row"><span>Account created</span><b id="settings-account-created">–</b></div>
+      <div class="settings-row"><span>Recent logins</span><button class="btn btn-ghost btn-sm" id="settings-refresh-history" type="button">Refresh</button></div>
+      <div class="settings-login-history" id="settings-login-history"><div class="profile-empty">Open settings to load login history.</div></div>
+    </div>
+      </div>
+    </details>
+    <details class="privacy-group" id="privacy-notifications-group" data-settings-category="notifications">
+      <summary><span class="privacy-group-icon">◌</span><span><b>Notifications</b><small>Choose how PhishGuard keeps you informed</small></span><span class="privacy-chevron">⌄</span></summary>
+      <div class="privacy-group-body">
+    <div class="settings-card notification-card">
+      <div class="settings-card-title">Browser notifications</div>
+      <div class="settings-help">On this device, browser alerts work while the app is open. If the owner configures VAPID keys, enabling notifications also registers standards-based Web Push so opted-in scan and weekly campaign notices can arrive when the site is closed. A device subscription is stored against your account and removed when you disable notifications or delete the account. No paid push provider is used.</div>
+      <div class="notification-status" id="notification-status">Browser permission has not been requested.</div>
+      <div class="settings-form">
+        <label class="settings-check"><input id="notify-browser" type="checkbox"> Allow browser notifications</label>
+        <label class="settings-check"><input id="notify-scan-complete" type="checkbox"> Notify me when a scan is complete</label>
+        <label class="settings-check"><input id="notify-sound" type="checkbox"> Play a soft notification sound</label>
+        <button class="btn btn-primary" id="settings-enable-notifications" type="button">Enable browser notifications</button>
+      </div>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">Notification preferences</div>
+      <div class="settings-help">Monthly email summaries are optional. If enabled, PhishGuard stores only flagged domains and basic scan details for your account, then emails a month-end summary to your verified Gmail address when there are flagged results. It never includes full URLs or submitted email contents. Turning this off deletes the stored summary records. Password-reset codes are separate security emails.</div>
+      <form class="settings-form" id="settings-preferences-form">
+        <label class="settings-check"><input id="notify-security" type="checkbox"> Security and login alerts</label>
+        <label class="settings-check"><input id="notify-email" type="checkbox"> Monthly flagged-site summaries
+        <label class="settings-check"><input id="notify-tips" type="checkbox"> Product tips and safety guidance</label>
+        <button class="btn btn-ghost" id="settings-preferences-submit" type="submit">Save preferences</button>
+      </form>
+    </div>
+      </div>
+    </details>
+    <details class="privacy-group" id="privacy-data-group" data-settings-category="privacy">
+      <summary><span class="privacy-group-icon">▤</span><span><b>Privacy &amp; data</b><small>Download or clear the information connected to your account</small></span><span class="privacy-chevron">⌄</span></summary>
+      <div class="privacy-group-body">
+    <div class="settings-card">
+      <div class="settings-card-title">Third-party threat-intelligence checks</div>
+      <div class="settings-help">Your URL is checked against the self-made PhishGuard engines first. For a full scan, the URL is sent to Google Safe Browsing, VirusTotal, URLhaus, and/or PhishTank only if you tick the per-scan sharing option and the operator has configured that provider. Quick scans never call these providers. Provider matches are extra evidence; no match means unknown, not proven safe. Providers apply their own retention and usage terms.</div>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">Your data</div>
+      <div class="settings-help">Download your profile, login history, Help Guide questions, and reports submitted by this account.</div>
+      <button class="btn btn-ghost" id="settings-download-data" type="button">↓ Download my data</button>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">Clear personal data</div>
+      <div class="settings-help">Remove your saved Help Guide questions and submitted reports. Your account, password, and login history will remain.</div>
+      <form class="settings-form" id="settings-clear-data-form">
+        <label for="settings-clear-data-password">Current password</label>
+        <input id="settings-clear-data-password" type="password" autocomplete="current-password" required>
+        <label class="settings-check"><input id="settings-clear-data-confirm" type="checkbox" required> I understand my personal activity will be removed</label>
+        <button class="btn btn-ghost" id="settings-clear-data-submit" type="submit">Clear personal data</button>
+      </form>
+    </div>
+      </div>
+    </details>
+    <details class="privacy-group privacy-danger-group" id="privacy-danger-group" data-settings-category="privacy">
+      <summary><span class="privacy-group-icon">!</span><span><b>Danger zone</b><small>Permanent account removal</small></span><span class="privacy-chevron">⌄</span></summary>
+      <div class="privacy-group-body">
+    <div class="settings-card settings-danger-card">
+      <div class="settings-card-title">Delete account</div>
+      <div class="settings-help">This permanently deletes your account, sessions, login history, Help Guide history, and submitted reports.</div>
+      <form class="settings-form" id="settings-delete-form">
+        <label for="settings-delete-password">Current password</label>
+        <input id="settings-delete-password" type="password" autocomplete="current-password" required>
+        <label class="settings-check"><input id="settings-delete-confirm" type="checkbox" required> I understand this cannot be undone</label>
+        <button class="btn btn-danger" id="settings-delete-submit" type="submit">Delete account</button>
+      </form>
+    </div>
+      </div>
+    </details>
+    </section>
+    </div>
+    <div class="settings-message" id="settings-message" role="status" aria-live="polite"></div>
+  </div>
+</aside>
+
+<div class="drawer-scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Verdict receipt">
+  <div class="drawer-head">
+    <h3 id="drawer-title">Audit receipt</h3>
+    <div class="spacer" style="margin-left:auto"></div>
+    <button class="btn btn-ghost btn-sm" id="drawer-copy">Copy JSON</button>
+    <button class="btn btn-icon btn-ghost" id="drawer-close" aria-label="Close">×</button>
+  </div>
+  <div class="drawer-body"><pre class="code" id="drawer-code">Loading…</pre></div>
+</aside>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="{{ url_for('static', filename='app.js') }}?v=20261106-report-undo2"></script>
+<script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261106-seamless-section1"></script>
+</body>
+</html>
