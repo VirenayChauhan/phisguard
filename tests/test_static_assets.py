@@ -20,13 +20,20 @@ class TestStaticAssetServing(unittest.TestCase):
                 self.assertTrue(response.data)
                 response.close()
 
-    def test_login_screen_offers_google_and_microsoft(self):
+    def test_login_screen_offers_google_without_microsoft(self):
         response = self.client.get("/login")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Continue with Google", response.data)
-        self.assertIn(b"Continue with Microsoft", response.data)
-        self.assertIn(b'href="/auth/microsoft/start"', response.data)
+        self.assertNotIn(b"Continue with Microsoft", response.data)
+        self.assertNotIn(b"/auth/microsoft/", response.data)
         response.close()
+
+    def test_microsoft_sign_in_routes_are_removed(self):
+        for path in ("/auth/microsoft/start", "/auth/microsoft/callback"):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 404)
+                response.close()
 
     def test_service_worker_keeps_root_scope_headers(self):
         response = self.client.get("/sw.js")

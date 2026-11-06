@@ -205,26 +205,6 @@ credentials are missing, sign-in safely returns to the login screen with a setup
 message. Keep `.env` out of Git. `FLASK_SECRET_KEY` must remain stable across
 restarts so the short-lived OAuth state/nonce can be checked when Google returns.
 
-#### Optional Microsoft sign-in
-
-The same login and registration screens also support Microsoft OpenID Connect for
-work/school and personal Microsoft accounts. It requests only `openid`, `profile`,
-and `email`; it does not request Microsoft Graph access. Register a Microsoft Entra
-Web application with this redirect URI:
-
-- Production: `https://phisguard-five.vercel.app/auth/microsoft/callback`
-- Local Docker: `http://localhost:8000/auth/microsoft/callback`
-
-The optional server-side settings are `MICROSOFT_CLIENT_ID`,
-`MICROSOFT_CLIENT_SECRET`, `MICROSOFT_REDIRECT_URI`, and `MICROSOFT_TENANT_ID`
-(`common` allows personal and work/school accounts; a tenant ID can restrict access).
-Keep client secrets server-side and leave integration-managed database settings
-unchanged. Microsoft email and preferred-username claims are not assumed to be
-verified: PhishGuard never links a Microsoft identity to an existing account just
-because the addresses match. An email is retained only if Microsoft explicitly
-marks it verified; otherwise sign-in still works, but email-based recovery is not
-available for that account.
-
 Copy `.env.example` to `.env`. Keep `AUTH_COOKIE_SECURE=0` for local HTTP use and
 set it to `1` when serving through HTTPS. Mobile numbers are format-validated only;
 phone ownership is not verified because PhishGuard does not send SMS codes. Email

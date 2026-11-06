@@ -11,7 +11,6 @@ import os
 import secrets
 import time
 import traceback
-import uuid
 from datetime import datetime, timedelta, timezone
 
 from authlib.integrations.flask_client import OAuth
@@ -43,10 +42,6 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
 app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
 app.config["GOOGLE_REDIRECT_URI"] = os.environ.get("GOOGLE_REDIRECT_URI", "").strip()
-app.config["MICROSOFT_CLIENT_ID"] = os.environ.get("MICROSOFT_CLIENT_ID", "").strip()
-app.config["MICROSOFT_CLIENT_SECRET"] = os.environ.get("MICROSOFT_CLIENT_SECRET", "").strip()
-app.config["MICROSOFT_REDIRECT_URI"] = os.environ.get("MICROSOFT_REDIRECT_URI", "").strip()
-app.config["MICROSOFT_TENANT_ID"] = os.environ.get("MICROSOFT_TENANT_ID", "common").strip() or "common"
 # Templates/CSS are edited during pilots; never serve a stale cached page.
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
@@ -58,16 +53,6 @@ _google = _oauth.register(
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
 )
-_microsoft = _oauth.register(
-    name="microsoft",
-    client_id=app.config["MICROSOFT_CLIENT_ID"],
-    client_secret=app.config["MICROSOFT_CLIENT_SECRET"],
-    server_metadata_url=(
-        "https://login.microsoftonline.com/"
-        f"{app.config['MICROSOFT_TENANT_ID']}/v2.0/.well-known/openid-configuration"
-    ),
-    client_kwargs={"scope": "openid profile email"},
-)
 
 def google_auth_configured() -> bool:
     return bool(
@@ -77,40 +62,6 @@ def google_auth_configured() -> bool:
         and os.environ.get("FLASK_SECRET_KEY", "").strip()
     )
 
-
-def microsoft_auth_configured() -> bool:
-    tenant_id = app.config["MICROSOFT_TENANT_ID"]
-    valid_tenant = tenant_id == "common"
-    if not valid_tenant:
-        try:
-            valid_tenant = str(uuid.UUID(tenant_id)) == tenant_id.lower()
-        except (ValueError, TypeError, AttributeError):
-            valid_tenant = False
-    return bool(
-        app.config["MICROSOFT_CLIENT_ID"]
-        and app.config["MICROSOFT_CLIENT_SECRET"]
-        and app.config["MICROSOFT_REDIRECT_URI"]
-        and valid_tenant
-        and os.environ.get("FLASK_SECRET_KEY", "").strip()
-    )
-
-
-def _microsoft_issuer_is_valid(profile) -> bool:
-    """Validate Microsoft common-endpoint issuer against the signed tenant ID."""
-    try:
-        tenant_id = str(uuid.UUID(str(profile.get("tid", ""))))
-    except (ValueError, TypeError, AttributeError):
-        return False
-    expected_issuer = f"https://login.microsoftonline.com/{tenant_id}/v2.0"
-    if profile.get("iss") != expected_issuer:
-        return False
-    configured_tenant = app.config["MICROSOFT_TENANT_ID"]
-    if configured_tenant == "common":
-        return True
-    try:
-        return str(uuid.UUID(configured_tenant)) == tenant_id
-    except (ValueError, TypeError, AttributeError):
-        return False
 
 
 PUBLIC_API_PATHS = {
@@ -224,59 +175,6 @@ def google_sign_in_callback():
         app.logger.warning("Google sign-in failed (%s)", type(exc).__name__)
         return redirect(url_for("login_page", google_error="failed"))
 
-
-@app.get("/auth/microsoft/start")
-def microsoft_sign_in_start():
-    if not microsoft_auth_configured():
-        return redirect(url_for("login_page", microsoft_error="setup"))
-    nonce = secrets.token_urlsafe(32)
-    session["microsoft_oauth_nonce"] = nonce
-    try:
-        return _microsoft.authorize_redirect(
-            app.config["MICROSOFT_REDIRECT_URI"], nonce=nonce
-        )
-    except Exception as exc:
-        session.pop("microsoft_oauth_nonce", None)
-        app.logger.warning("Could not start Microsoft sign-in (%s)", type(exc).__name__)
-        return redirect(url_for("login_page", microsoft_error="failed"))
-
-
-@app.get("/auth/microsoft/callback")
-def microsoft_sign_in_callback():
-    if not microsoft_auth_configured():
-        return redirect(url_for("login_page", microsoft_error="setup"))
-    if request.args.get("error") == "access_denied":
-        session.pop("microsoft_oauth_nonce", None)
-        return redirect(url_for("login_page", microsoft_error="cancelled"))
-    nonce = session.pop("microsoft_oauth_nonce", None)
-    if not nonce:
-        return redirect(url_for("login_page", microsoft_error="state"))
-    try:
-        token = _microsoft.authorize_access_token(
-            claims_options={"iss": {"essential": True}}
-        )
-        profile = token.get("userinfo")
-        if not profile:
-            profile = _microsoft.parse_id_token(
-                token, nonce=nonce, claims_options={"iss": {"essential": True}}
-            )
-        if not profile or not _microsoft_issuer_is_valid(profile):
-            raise auth.AuthError("Microsoft returned an invalid tenant identity.", 401)
-        email = profile.get("email") or profile.get("preferred_username") or ""
-        user, raw_token = auth.microsoft_login_account(
-            profile.get("sub", ""), email, profile.get("name", ""),
-            request.remote_addr or "unknown", request.headers.get("User-Agent", ""),
-            email_verified=profile.get("email_verified") is True,
-        )
-        session.clear()
-        response = redirect("/")
-        return _set_auth_cookie(response, raw_token)
-    except auth.AuthError as exc:
-        app.logger.info("Microsoft account sign-in was declined (status %s)", exc.status)
-        return redirect(url_for("login_page", microsoft_error="account"))
-    except Exception as exc:
-        app.logger.warning("Microsoft sign-in failed (%s)", type(exc).__name__)
-        return redirect(url_for("login_page", microsoft_error="failed"))
 
 
 @app.get("/api/health")
