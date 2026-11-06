@@ -1823,9 +1823,11 @@ async function analyseUrl(url) {
     out.innerHTML = verdictHero(degradedQuick, { saveScan: true, facts: quickFacts })
       + `<div class="callout warn" style="margin-bottom:0">
         <b>Full analysis could not finish.</b> <span class="muted">${esc(e.message)} The result below uses the instant lexical check only; infrastructure signals are unknown.</span></div>`
-      + signalsCard(quick);
+      + signalsCard(quick)
+      + urlReportCard(degradedQuick);
     bindFilters(out);
     receiptButton(degradedQuick, out, quickSaveItem);
+    bindUrlReport(out, degradedQuick, url);
     toast('Degraded mode: infrastructure lookups unavailable', 'err');
     pushRecent({ kind: 'url', label: quick.facts.defanged, short: url.slice(0, 34), tier: quick.label, payload: url });
     notifyScanComplete('link', quick, url.replace(/^https?:\/\//, '').slice(0, 42));
@@ -1852,9 +1854,11 @@ async function analyseUrl(url) {
     + `<div class="grid grid-2">${blastCard(full.blast_radius, full.preview)}${nextStepsCard(full)}</div>`
     + signalsCard(full)
     + `<div class="grid grid-2">${infraCard(full.facts)}${previewCard(full.preview)}</div>`
-    + tipsCard(full);
+    + tipsCard(full)
+    + urlReportCard(full);
   bindFilters(out);
   receiptButton(full, out, fullSaveItem);
+  bindUrlReport(out, full, url);
 
   pushRecent({ kind: 'url', label: full.facts.defanged || url, short: url.replace(/^https?:\/\//, '').slice(0, 32), tier: full.label, payload: url });
   notifyScanComplete('link', full, url.replace(/^https?:\/\//, '').slice(0, 42));
@@ -2057,6 +2061,50 @@ function reportCard(v, e) {
     </div></div>`;
 }
 
+function urlReportCard(v) {
+  const facts = v.facts || {};
+  if (!facts.host || !['http', 'https'].includes(facts.scheme)) return '';
+  return `<div class="card"><div class="card-head">
+      <h3 class="card-title">Report this link</h3>
+      <div class="spacer"></div><span class="faint tiny">to your PhishGuard Campaigns</span></div>
+    <div class="card-body">
+      <div class="faint small">Help warn other workspace members. The report stores the host and a fingerprint of the host/path; query parameters and fragments are excluded.</div>
+      <div class="input-row" style="margin-top:14px;flex-wrap:wrap;align-items:center">
+        <label class="small muted" style="display:flex;align-items:center;gap:7px;white-space:nowrap">
+          <input type="checkbox" id="url-report-clicked"> I already clicked it</label>
+        <button class="btn btn-primary btn-sm" id="btn-report-link">Report link</button>
+      </div>
+      <div id="url-report-out" style="margin-top:12px"></div>
+    </div></div>`;
+}
+
+function bindUrlReport(out, verdict, url) {
+  const button = $('#btn-report-link', out);
+  if (!button) return;
+  button.onclick = async () => {
+    button.disabled = true;
+    try {
+      const result = await postJSON('/api/report/url', {
+        url,
+        clicked: $('#url-report-clicked', out).checked,
+        verdict: verdict.label,
+        score: verdict.score,
+      });
+      const cluster = result.cluster || {};
+      $('#url-report-out', out).innerHTML = `<div class="callout warn"><b>Link reported.</b>
+        ${esc(cluster.reports || 1)} report(s) · ${esc(cluster.clicked || 0)} clicked.
+        Workspace members can find this in Campaigns.</div>`;
+      button.textContent = 'Reported';
+      toast('Link reported to Campaigns');
+      loadHeader();
+    } catch (error) {
+      button.disabled = false;
+      $('#url-report-out', out).innerHTML = `<div class="callout warn">${esc(error.message)}</div>`;
+      toast(error.message, 'err');
+    }
+  };
+}
+
 function postClickCard() {
   return `<div class="card" id="post-click"><div class="card-head">
       <h3 class="card-title">Post-click response</h3>
@@ -2251,11 +2299,13 @@ async function loadSweep() {
     }
     list.innerHTML = d.clusters.map((c) => {
       const t = tierOf(c.verdict);
+      const linkReport = String(c.cluster_key || '').startsWith('link:');
       return `<div class="campaign">
         <div>
-          <div class="subj">${esc(c.subject || '(no subject)')}</div>
-          <div class="who">${esc(c.sender || '—')}</div>
+          <div class="subj">${linkReport ? 'Reported link' : esc(c.subject || '(no subject)')}</div>
+          <div class="who">${linkReport ? `Host · ${esc(c.sender || '—')}` : esc(c.sender || '—')}</div>
           <div class="pillrow" style="margin-top:8px">
+            ${linkReport ? '<span class="chip tiny">LINK</span>' : ''}
             <span class="badge ${c.verdict === 'malicious' ? 'b-critical' : c.verdict === 'suspicious' ? 'b-high' : 'b-ok'}">${esc(c.verdict || 'unknown')}</span>
             <span class="chip tiny">${esc(t.icon)} score ${esc(c.score)}</span>
             <span class="chip tiny">last seen ${esc((c.last || '').slice(0, 16).replace('T', ' '))}</span>

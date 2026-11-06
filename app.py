@@ -4,6 +4,7 @@ Run:  python3 app.py     (binds 0.0.0.0:8000)
 """
 from __future__ import annotations
 
+import hashlib
 import hmac
 import json
 import os
@@ -22,7 +23,7 @@ try:
 except ImportError:  # requirements.txt installs this; keep imports resilient for tests
     pass
 
-from engine import assistant, auth, emailscan, mailer, push, store, urlscan
+from engine import assistant, auth, emailscan, lexical, mailer, push, store, urlscan
 
 MAX_UPLOAD = 12 * 1024 * 1024  # 12 MB .eml ceiling
 
@@ -868,6 +869,56 @@ def monthly_scan_summary_cron():
             app.logger.info("Monthly flagged-site email was not delivered (%s)", type(exc).__name__)
     return jsonify({"ok": True, "sent": sent, "skipped_empty": skipped_empty,
                     "month": month_key})
+
+
+@app.post("/api/report/url")
+def report_url():
+    """Report a scanned web link to the authenticated workspace campaign list.
+
+    Store the host and a hash of the normalized host/path only; query strings,
+    fragments, and the full submitted URL are not added to the report record.
+    """
+    data = request.get_json(silent=True) or {}
+    raw_url = data.get("url")
+    if not isinstance(raw_url, str) or not raw_url.strip():
+        return jsonify({"error": "enter a link to report"}), 400
+    raw_url = raw_url.strip()
+    if len(raw_url) > 4000:
+        return jsonify({"error": "link is too long"}), 400
+
+    parsed = lexical.analyze_url(raw_url)
+    facts = parsed.get("facts") or {}
+    host = str(facts.get("host") or "")
+    if facts.get("scheme") not in {"http", "https"} or not host:
+        return jsonify({"error": "only web links with a hostname can be reported"}), 400
+
+    normalized = lexical.normalize_for_key(raw_url).lower()
+    if not normalized:
+        return jsonify({"error": "could not normalize that link"}), 400
+    cluster_key = "link:" + hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:32]
+    user = auth.current_user(request.cookies.get(app.config["AUTH_COOKIE_NAME"]))
+    if not user:
+        return jsonify({"error": "authentication required"}), 401
+
+    label = data.get("verdict")
+    if label not in {"safe", "low", "suspicious", "malicious", "unknown"}:
+        label = "unknown"
+    try:
+        score = max(0, min(100, int(data.get("score", 0))))
+    except (TypeError, ValueError):
+        score = 0
+
+    out = store.add_report(
+        cluster_key=cluster_key,
+        subject="Reported link",
+        sender=host[:200],
+        links=[],
+        reporter=user["username"],
+        clicked=data.get("clicked") is True,
+        verdict=label,
+        score=score,
+    )
+    return jsonify({"ok": True, "cluster_key": cluster_key, **out})
 
 
 @app.post("/api/report")
