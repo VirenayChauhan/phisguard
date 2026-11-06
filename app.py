@@ -908,6 +908,10 @@ def report_url():
     except (TypeError, ValueError):
         score = 0
 
+    undo_token = secrets.token_urlsafe(32)
+    undo_expires_at = (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(
+        timespec="seconds"
+    )
     out = store.add_report(
         cluster_key=cluster_key,
         subject="Reported link",
@@ -917,8 +921,11 @@ def report_url():
         clicked=data.get("clicked") is True,
         verdict=label,
         score=score,
+        undo_token_hash=hashlib.sha256(undo_token.encode("utf-8")).hexdigest(),
+        undo_expires_at=undo_expires_at,
     )
-    return jsonify({"ok": True, "cluster_key": cluster_key, **out})
+    return jsonify({"ok": True, "cluster_key": cluster_key, **out,
+                    "undo_token": undo_token, "undo_expires_at": undo_expires_at})
 
 
 @app.post("/api/report")
@@ -926,6 +933,10 @@ def report():
     """Report-to-sweep: one report protects everyone who got the same mail."""
     data = request.get_json(silent=True) or {}
     cluster = (data.get("cluster_key") or "").strip() or "unknown"
+    undo_token = secrets.token_urlsafe(32)
+    undo_expires_at = (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(
+        timespec="seconds"
+    )
     out = store.add_report(
         cluster_key=cluster,
         subject=(data.get("subject") or "")[:300],
@@ -935,8 +946,32 @@ def report():
         clicked=bool(data.get("clicked")),
         verdict=(data.get("verdict") or "unknown")[:40],
         score=int(data.get("score") or 0),
+        undo_token_hash=hashlib.sha256(undo_token.encode("utf-8")).hexdigest(),
+        undo_expires_at=undo_expires_at,
     )
-    return jsonify(out)
+    return jsonify({**out, "undo_token": undo_token, "undo_expires_at": undo_expires_at})
+
+
+@app.post("/api/report/<report_id>/undo")
+def undo_report(report_id: str):
+    """Withdraw only the matching report using its short-lived private token."""
+    data = request.get_json(silent=True) or {}
+    token = data.get("undo_token")
+    if (
+        len(report_id) != 12
+        or any(char not in "0123456789abcdef" for char in report_id)
+        or not isinstance(token, str)
+        or not token
+        or len(token) > 128
+    ):
+        return jsonify({"error": "undo is unavailable for this report"}), 404
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    result, cluster_key = store.undo_report(report_id, token_hash)
+    if result == "not_found":
+        return jsonify({"error": "undo is unavailable for this report"}), 404
+    if result == "expired":
+        return jsonify({"error": "the 5-minute undo period has expired"}), 410
+    return jsonify({"ok": True, "cluster": store.cluster_stats(cluster_key)})
 
 
 SAMPLE_DIR = os.path.join(os.path.dirname(__file__), "samples")

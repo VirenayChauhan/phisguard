@@ -2036,6 +2036,56 @@ function paymentCard(v) {
     </div></div>`;
 }
 
+function addUndoReportOption(target, report) {
+  if (!report?.id || !report?.undo_token || !report?.undo_expires_at) return;
+  const reportId = String(report.id);
+  const buttonId = `undo-report-${reportId}`;
+  const statusId = `undo-report-status-${reportId}`;
+  target.insertAdjacentHTML('beforeend', `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+    <button class="btn btn-ghost btn-sm" id="${esc(buttonId)}" type="button">Undo report (5:00)</button>
+    <span class="faint tiny">Only available to the person who reported it, for 5 minutes.</span>
+    <span class="small" id="${esc(statusId)}" aria-live="polite"></span></div>`);
+  const button = $(`#${buttonId}`, target);
+  const status = $(`#${statusId}`, target);
+  const deadline = Date.parse(report.undo_expires_at);
+  let timer;
+  const updateCountdown = () => {
+    const secondsLeft = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    if (!secondsLeft) {
+      clearInterval(timer);
+      button.disabled = true;
+      button.textContent = 'Undo expired';
+      return;
+    }
+    button.textContent = `Undo report (${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')})`;
+  };
+  timer = setInterval(updateCountdown, 1000);
+  updateCountdown();
+  button.onclick = async () => {
+    button.disabled = true;
+    try {
+      await postJSON(`/api/report/${encodeURIComponent(reportId)}/undo`, {
+        undo_token: report.undo_token,
+      });
+      clearInterval(timer);
+      button.remove();
+      status.textContent = 'Report withdrawn from Campaigns.';
+      toast('Report withdrawn');
+      loadHeader();
+      if (location.hash === '#sweep') loadSweep();
+    } catch (error) {
+      if (error.message.includes('5-minute undo period')) {
+        clearInterval(timer);
+        button.textContent = 'Undo expired';
+        status.textContent = error.message;
+      } else {
+        button.disabled = false;
+        status.textContent = error.message;
+      }
+    }
+  };
+}
+
 function reportCard(v, e) {
   const c = v.cluster || { reports: 0, clicked: 0 };
   const multi = (c.reports || 0) > 1;
@@ -2094,6 +2144,7 @@ function bindUrlReport(out, verdict, url) {
       $('#url-report-out', out).innerHTML = `<div class="callout warn"><b>Link reported.</b>
         ${esc(cluster.reports || 1)} report(s) · ${esc(cluster.clicked || 0)} clicked.
         Workspace members can find this in Campaigns.</div>`;
+      addUndoReportOption($('#url-report-out', out), result);
       button.textContent = 'Reported';
       toast('Link reported to Campaigns');
       loadHeader();
@@ -2222,6 +2273,7 @@ async function analyseEmail(payload, isFile) {
         $('#report-out').innerHTML = `<div class="callout warn"><b>Reported.</b>
           ${esc(d.cluster.reports)} report(s) in this cluster · ${esc(d.cluster.clicked)} clicked.
           Everyone else who receives it now sees this immediately.</div>`;
+        addUndoReportOption($('#report-out'), d);
         if (clicked && !$('#post-click')) {
           out.insertAdjacentHTML('beforeend', postClickCard());
           $('#post-click').scrollIntoView({ behavior: 'smooth', block: 'start' });

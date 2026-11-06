@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS url_snapshots(
 CREATE TABLE IF NOT EXISTS reports(
   id TEXT PRIMARY KEY, cluster_key TEXT, subject TEXT, sender TEXT, links TEXT,
   reporter TEXT, clicked INTEGER DEFAULT 0, verdict TEXT, score INTEGER,
-  created_at TEXT);
+  created_at TEXT, undo_token_hash TEXT, undo_expires_at TEXT);
 CREATE TABLE IF NOT EXISTS receipts(
   receipt_id TEXT PRIMARY KEY, subject TEXT, payload TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS auth_users(
@@ -198,6 +198,8 @@ def init():
         for table, col in (
             ("vendors", "offered TEXT"),
             ("vendors", "last_confirmed TEXT"),
+            ("reports", "undo_token_hash TEXT"),
+            ("reports", "undo_expires_at TEXT"),
             ("auth_accounts", "email TEXT"),
             ("auth_accounts", "email_verified_at TEXT"),
             ("auth_otp_challenges", "purpose TEXT NOT NULL DEFAULT 'password_reset'"),
@@ -912,14 +914,39 @@ def check_url_snapshot(url_key: str, score: int, tier: str, content_hash: str) -
 
 # ------------------------------------------------- report-to-sweep ----------
 def add_report(cluster_key: str, subject: str, sender: str, links: list[str],
-               reporter: str, clicked: bool, verdict: str, score: int) -> dict:
+               reporter: str, clicked: bool, verdict: str, score: int,
+               undo_token_hash: str | None = None,
+               undo_expires_at: str | None = None) -> dict:
     rid = uuid.uuid4().hex[:12]
     with _LOCK, _conn() as c:
         c.execute("INSERT INTO reports(id,cluster_key,subject,sender,links,reporter,"
-                  "clicked,verdict,score,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                  "clicked,verdict,score,created_at,undo_token_hash,undo_expires_at) "
+                  "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                   (rid, cluster_key, subject, sender, json.dumps(links[:20]),
-                   reporter or "anonymous", 1 if clicked else 0, verdict, score, now()))
+                   reporter or "anonymous", 1 if clicked else 0, verdict, score, now(),
+                   undo_token_hash, undo_expires_at))
     return {"id": rid, "cluster": cluster_stats(cluster_key)}
+
+
+def undo_report(report_id: str, undo_token_hash: str) -> tuple[str, str | None]:
+    """Delete one report only when its unguessable undo capability is still valid."""
+    with _LOCK, _conn() as c:
+        row = c.execute(
+            "SELECT cluster_key, undo_expires_at FROM reports "
+            "WHERE id=? AND undo_token_hash=?",
+            (report_id, undo_token_hash),
+        ).fetchone()
+        if not row:
+            return "not_found", None
+        if not row["undo_expires_at"] or row["undo_expires_at"] <= now():
+            return "expired", row["cluster_key"]
+        deleted = c.execute(
+            "DELETE FROM reports WHERE id=? AND undo_token_hash=? AND undo_expires_at>?",
+            (report_id, undo_token_hash, now()),
+        )
+        if deleted.rowcount != 1:
+            return "expired", row["cluster_key"]
+        return "deleted", row["cluster_key"]
 
 
 def cluster_stats(cluster_key: str) -> dict:

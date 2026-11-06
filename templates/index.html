@@ -664,7 +664,8 @@
               <p style="margin-top:0">When one person reports a message, we fingerprint the campaign from the
               normalised subject, the sender and the set of link hosts. Every later recipient is matched to the
               same cluster, so the warning shows <b>“3 reports · 1 clicked”</b> before they act. A standalone
-              link report is grouped by its normalized host/path; query strings and fragments are not retained.</p>
+              link report is grouped by its normalized host/path; query strings and fragments are not retained.
+              The person who submitted either kind of report can undo that specific report for five minutes.</p>
               <ul>
                 <li><b>Cluster, don't duplicate.</b> A re-sent variant with a new subject prefix or a fresh
                   lookalike domain still lands in the same cluster when the link hosts match.</li>
@@ -974,7 +975,7 @@
 </aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="{{ url_for('static', filename='app.js') }}?v=20261106-link-report1"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=20261106-report-undo1"></script>
 <script type="module" src="{{ url_for('static', filename='depth-scene.js') }}?v=20261106-seamless-section1"></script>
 </body>
 </html>

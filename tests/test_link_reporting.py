@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import sys
 import tempfile
@@ -95,6 +96,79 @@ class LinkReportingTests(unittest.TestCase):
             headers={"X-Requested-With": "XMLHttpRequest"},
         )
         self.assertEqual(response.status_code, 401)
+
+    def test_link_report_can_only_be_undone_with_its_private_token(self):
+        created = self.client.post(
+            "/api/report/url",
+            json={"url": "https://example.invalid/login"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        ).get_json()
+        token = created["undo_token"]
+        self.assertNotEqual(token, "")
+        with store._LOCK, store._conn() as conn:
+            row = conn.execute("SELECT * FROM reports WHERE id=?", (created["id"],)).fetchone()
+        self.assertEqual(row["undo_token_hash"], hashlib.sha256(token.encode()).hexdigest())
+        self.assertNotEqual(row["undo_token_hash"], token)
+
+        wrong_owner = self.client.post(
+            f"/api/report/{created['id']}/undo", json={"undo_token": "not-the-secret"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(wrong_owner.status_code, 404)
+        self.assertEqual(store.cluster_stats(created["cluster_key"])["reports"], 1)
+
+        undone = self.client.post(
+            f"/api/report/{created['id']}/undo", json={"undo_token": token},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(undone.status_code, 200, undone.get_json())
+        self.assertEqual(undone.get_json()["cluster"]["reports"], 0)
+        self.assertEqual(store.stats()["reports"], 0)
+        replay = self.client.post(
+            f"/api/report/{created['id']}/undo", json={"undo_token": token},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(replay.status_code, 404)
+
+    def test_email_report_undo_only_removes_that_report(self):
+        headers = {"X-Requested-With": "XMLHttpRequest"}
+        first = self.client.post(
+            "/api/report",
+            json={"cluster_key": "email-cluster", "subject": "Invoice", "reporter": "Analyst"},
+            headers=headers,
+        ).get_json()
+        second = self.client.post(
+            "/api/report",
+            json={"cluster_key": "email-cluster", "subject": "Invoice", "reporter": "Teammate"},
+            headers=headers,
+        ).get_json()
+        self.assertEqual(second["cluster"]["reports"], 2)
+
+        response = self.client.post(
+            f"/api/report/{first['id']}/undo", json={"undo_token": first["undo_token"]},
+            headers=headers,
+        )
+        self.assertEqual(response.status_code, 200, response.get_json())
+        self.assertEqual(response.get_json()["cluster"]["reports"], 1)
+        self.assertEqual(store.stats()["reports"], 1)
+
+    def test_report_undo_expires_after_five_minutes(self):
+        created = self.client.post(
+            "/api/report",
+            json={"cluster_key": "expiring-cluster", "reporter": "Analyst"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        ).get_json()
+        with store._LOCK, store._conn() as conn:
+            conn.execute(
+                "UPDATE reports SET undo_expires_at=? WHERE id=?",
+                ("2000-01-01T00:00:00+00:00", created["id"]),
+            )
+        expired = self.client.post(
+            f"/api/report/{created['id']}/undo", json={"undo_token": created["undo_token"]},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(expired.status_code, 410)
+        self.assertEqual(store.stats()["reports"], 1)
 
 
 if __name__ == "__main__":
