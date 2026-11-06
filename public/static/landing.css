@@ -84,6 +84,14 @@
   transition: opacity .18s ease;
 }
 .pg-hero[data-spotlight-active="true"]::after { opacity: 1; }
+/* Fade only the animated canvas at the section edge; leave the production
+   background and cursor light untouched so the two sections blend naturally. */
+.pg-hero .pg-depth-scene {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0,
+    #000 calc(100% - clamp(72px, 10vh, 110px)), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0,
+    #000 calc(100% - clamp(72px, 10vh, 110px)), transparent 100%);
+}
 .pg-virus-field { position: absolute; z-index: 1; inset: 0; overflow: hidden; pointer-events: none; }
 .pg-virus-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .pg-virus {
@@ -255,7 +263,7 @@
   inset: 0;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(circle 380px at var(--spot-x, 50%) var(--spot-y, 50%), rgba(218, 104, 194, .28), transparent 72%);
+  background: radial-gradient(circle 320px at var(--spot-x, 50%) var(--spot-y, 50%), rgba(235, 132, 218, .42), transparent 72%);
   mix-blend-mode: screen;
   transition: opacity .18s ease;
 }

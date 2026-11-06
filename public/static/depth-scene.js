@@ -12,36 +12,75 @@ async function loadThree() {
 
 function installCursorSpotlight() {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  const surfaces = document.querySelectorAll('.pg-hero, .pg-capabilities, .pg-cap-card');
-  surfaces.forEach((surface) => {
-    const viruses = [...surface.querySelectorAll('.pg-virus')];
-    surface.addEventListener('pointermove', (event) => {
-      if (event.pointerType === 'touch') return;
-      const bounds = surface.getBoundingClientRect();
-      const pointerX = event.clientX - bounds.left;
-      const pointerY = event.clientY - bounds.top;
-      surface.style.setProperty('--spot-x', `${pointerX}px`);
-      surface.style.setProperty('--spot-y', `${pointerY}px`);
-      surface.dataset.spotlightActive = 'true';
+  const landing = document.querySelector('#landing-page');
+  if (!landing) return;
 
-      viruses.forEach((virus) => {
-        const virusBounds = virus.getBoundingClientRect();
-        const distance = Math.hypot(
-          event.clientX - (virusBounds.left + virusBounds.width / 2),
-          event.clientY - (virusBounds.top + virusBounds.height / 2),
-        );
-        const reveal = Math.max(0, 1 - distance / 165);
-        virus.style.opacity = `${0.035 + reveal * 0.68}`;
-        virus.style.filter = `drop-shadow(0 0 ${4 + reveal * 13}px currentColor)`;
-      });
-    }, { passive: true });
-    surface.addEventListener('pointerleave', () => {
-      delete surface.dataset.spotlightActive;
-      viruses.forEach((virus) => {
-        virus.style.opacity = '';
-        virus.style.filter = '';
-      });
+  // Treat the hero and the following capability section as a single hover
+  // surface. Both glow layers receive the same pointer position so their light
+  // does not switch off when the pointer crosses the section boundary.
+  const panels = [...landing.querySelectorAll('.pg-hero, .pg-capabilities')];
+  const cards = [...landing.querySelectorAll('.pg-cap-card')];
+  const setSpot = (surface, clientX, clientY) => {
+    const bounds = surface.getBoundingClientRect();
+    surface.style.setProperty('--spot-x', `${clientX - bounds.left}px`);
+    surface.style.setProperty('--spot-y', `${clientY - bounds.top}px`);
+    surface.dataset.spotlightActive = 'true';
+    surface.querySelectorAll('.pg-virus').forEach((virus) => {
+      const virusBounds = virus.getBoundingClientRect();
+      const distance = Math.hypot(clientX - (virusBounds.left + virusBounds.width / 2),
+        clientY - (virusBounds.top + virusBounds.height / 2));
+      const reveal = Math.max(0, 1 - distance / 165);
+      virus.style.opacity = `${0.035 + reveal * 0.68}`;
+      virus.style.filter = `drop-shadow(0 0 ${4 + reveal * 13}px currentColor)`;
     });
+  };
+  const clearSpot = (surface) => {
+    delete surface.dataset.spotlightActive;
+    surface.querySelectorAll('.pg-virus').forEach((virus) => {
+      virus.style.opacity = '';
+      virus.style.filter = '';
+    });
+  };
+  const clearPanels = () => panels.forEach(clearSpot);
+  let lastPointer = null;
+  let scrollFrame = 0;
+
+  landing.addEventListener('pointermove', (event) => {
+    if (event.pointerType === 'touch') return;
+    if (!event.target.closest('.pg-hero, .pg-capabilities')) {
+      lastPointer = null;
+      clearPanels();
+      return;
+    }
+    lastPointer = { x: event.clientX, y: event.clientY };
+    panels.forEach((panel) => setSpot(panel, event.clientX, event.clientY));
+  }, { passive: true });
+  landing.addEventListener('pointerleave', () => {
+    lastPointer = null;
+    clearPanels();
+  });
+  window.addEventListener('scroll', () => {
+    if (!lastPointer || scrollFrame) return;
+    const point = lastPointer;
+    scrollFrame = window.requestAnimationFrame(() => {
+      scrollFrame = 0;
+      if (lastPointer !== point) return;
+      const target = document.elementFromPoint(point.x, point.y);
+      if (target && target.closest('.pg-hero, .pg-capabilities')) {
+        panels.forEach((panel) => setSpot(panel, point.x, point.y));
+      } else {
+        lastPointer = null;
+        clearPanels();
+      }
+    });
+  }, { passive: true });
+
+  // Keep the cards' tighter local glow on top of the shared section light.
+  cards.forEach((card) => {
+    card.addEventListener('pointermove', (event) => {
+      if (event.pointerType !== 'touch') setSpot(card, event.clientX, event.clientY);
+    }, { passive: true });
+    card.addEventListener('pointerleave', () => clearSpot(card));
   });
 }
 
