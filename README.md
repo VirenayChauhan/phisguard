@@ -53,7 +53,7 @@ hidden when it isn't needed.
 - Sample buttons for instant evaluation, no typing.
 - Toasts for every async outcome; nothing fails silently.
 
-**Design tokens** live at the top of `static/style.css` (`--danger`, `--warn`, `--ok`,
+**Design tokens** live at the top of `public/static/style.css` (`--danger`, `--warn`, `--ok`,
 surfaces, radii, shadows) with a full `[data-theme="light"]` override — change the accent
 in one place and the whole app follows. No external fonts, CSS or JS: the app renders
 identically inside a sandboxed preview iframe and offline.
@@ -105,7 +105,7 @@ engine/
   verdict.py            scoring, confidence, the honest "unknown", receipts
   store.py              SQLite/Postgres: baselines, auth, OTPs, subscriptions, clusters
 templates/index.html    single-page UI (vanilla JS, no build step)
-static/style.css
+public/static/style.css
 samples/*.eml           4 demo messages (3 attacks, 1 clean control)
 tests/test_engine.py    40 tests, dominated by false-positive assertions
 scripts/seed_demo.py    seeds vendor baselines + report clusters
@@ -481,3 +481,9 @@ remove, or rotate integration-managed Neon variables**. The app keeps SQLite as 
 local-development default and uses Postgres when a supported database URL is present.
 If the database is not configured, the Vercel function returns a setup-required
 response rather than storing account data in ephemeral storage.
+
+Static browser assets are in `public/static/`, which Vercel serves as static public
+files through its edge CDN at the existing `/static/*` paths. The Flask app is also
+configured to serve the same directory locally, and `/sw.js` remains a Flask route
+for the service worker's root-scope response header. This does not move the API,
+Python runtime, or persistent database.

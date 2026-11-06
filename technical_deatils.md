@@ -25,7 +25,7 @@
 
 ## 1. Product and architecture
 
-PhishGuard is a same-origin Flask application for analyzing suspicious URLs and raw email messages. It is not a separate JavaScript SPA plus API service: Flask serves the HTML template, static assets, and JSON endpoints from one origin. The browser UI is written in vanilla JavaScript and CSS; there is no frontend package manager, transpiler, bundler, or client-side framework.
+PhishGuard is a same-origin Flask application for analyzing suspicious URLs and raw email messages. It is not a separate JavaScript SPA plus API service: Flask serves the HTML template and JSON endpoints from one origin, while Vercel can serve files from `public/` through its static edge CDN. Locally, Flask serves those same assets from `public/static/` at the unchanged `/static/*` URLs. The browser UI is written in vanilla JavaScript and CSS; there is no frontend package manager, transpiler, bundler, or client-side framework.
 
 The backend combines deterministic local analysis with optional network corroboration. Its design goals are:
 
@@ -41,8 +41,11 @@ The backend combines deterministic local analysis with optional network corrobor
 
 ```text
 Browser
-  ├─ GET /, /login, /ui-trial, /static/*
-  │    └─ Flask → templates/index.html + CSS/JS/assets
+  ├─ GET /, /login, /ui-trial
+  │    └─ Flask → templates/index.html
+  ├─ GET /static/*
+  │    ├─ Vercel static edge CDN in deployment
+  │    └─ Flask app.static_folder locally / fallback
   └─ same-origin fetch('/api/...')
        └─ app.py route/auth gate
             ├─ engine/auth.py       account and session operations
@@ -88,7 +91,7 @@ engine/
   verdict.py                    Signal aggregation, label/confidence, next steps, receipts
 templates/
   index.html                    Single Jinja template for landing, login, trial and workspace
-static/
+public/static/
   app.js                        Frontend state, client routing, forms, API calls, renderers
   style.css                     Base tokens and shared workspace/auth components
   landing.css                   Public landing-page layout and effects
@@ -117,7 +120,11 @@ RUN-LOCAL.md                    Human-oriented Python/Docker setup
 README.md                       Product, local-run, UX and feature overview
 ```
 
-`templates/index.html` is intentionally one large document: Flask renders the same DOM contract for multiple states, and `static/app.js` hides/shows the public landing page, auth panel, and dashboard. Keep IDs referenced by JavaScript stable when editing markup.
+`templates/index.html` is intentionally one large document: Flask renders the same DOM contract for multiple states, and `public/static/app.js` hides/shows the public landing page, auth panel, and dashboard. Keep IDs referenced by JavaScript stable when editing markup.
+
+### Static-asset delivery boundary
+
+Browser assets live in `public/static/`, Vercel's static-public directory, and keep their existing `/static/*` URLs. In a Vercel deployment, these public files are static outputs available through Vercel's edge CDN; they do not need to run through the Flask Python function. `app.py` also points Flask's `static_folder` at `public/static` and sets `static_url_path="/static"`, preserving the same asset URLs for local Python/Docker use and a Flask fallback. The API routes, HTML routes, runtime, and persistent database are unchanged. No separate CDN vendor, bucket, or environment variable is needed. `/sw.js` deliberately remains a Flask endpoint so it can set the `Service-Worker-Allowed: /` header for root scope.
 
 ---
 
@@ -177,11 +184,11 @@ The browser receives `templates/index.html`, which contains these top-level mode
    - `#view-sweep`
 4. Shared panels: Help Guide dialog, account/settings panel, receipt drawer, scrims, and toast region.
 
-The Flask render flags determine the initial visibility for `/`, `/login`, and `/ui-trial`. `static/app.js` then calls `checkSession()` and selects landing/auth/workspace based on the cookie-backed `/api/auth/session` result. A successful login enters the dashboard client-side; it does not require a separate frontend build or a second API host.
+The Flask render flags determine the initial visibility for `/`, `/login`, and `/ui-trial`. `public/static/app.js` then calls `checkSession()` and selects landing/auth/workspace based on the cookie-backed `/api/auth/session` result. A successful login enters the dashboard client-side; it does not require a separate frontend build or a second API host.
 
 ### Client-side implementation
 
-`static/app.js` is a classic script loaded at the end of the document, after its DOM. It uses small DOM helpers (`$`, `$$`), a central `api()` wrapper, `postJSON()`, and HTML escaping (`esc()`) for data inserted into render strings. It binds form/button handlers and renders result cards with template strings. Do not interpolate untrusted API/user data without `esc()`; the scanner UI intentionally has many dynamic result fields.
+`public/static/app.js` is a classic script loaded at the end of the document, after its DOM. It uses small DOM helpers (`$`, `$$`), a central `api()` wrapper, `postJSON()`, and HTML escaping (`esc()`) for data inserted into render strings. It binds form/button handlers and renders result cards with template strings. Do not interpolate untrusted API/user data without `esc()`; the scanner UI intentionally has many dynamic result fields.
 
 Client routing is in `ROUTES` and `go(route)`. It toggles `.view` visibility, updates the active navigation's `aria-current`, title and breadcrumb, handles route-specific refreshes, writes `#overview`/`#saved`/etc. into browser history, scrolls to the top, and focuses the URL field on the link route. Keyboard shortcuts include number keys for link/email/sweep and Escape for close actions; input fields are excluded from normal shortcuts.
 
@@ -240,7 +247,7 @@ Stylesheets are linked in `templates/index.html` in this order (later layers may
 11. `google-auth.css` — Google button/panel styling.
 12. `theme-picker.css` — appearance picker.
 
-The CSS token system includes background/surface levels, border strengths, text contrast, accent/accent-soft colors, severity colors (`danger`, `warn`, `ok`, `info`, `unknown`), radii, shadows, sans and monospace stacks. `static/spectrum-theme.css` supplies palette variants. Theme IDs handled by JS are `signature`, `violet`, `blue`, and `soft`; the legacy stored value `light` maps to `soft`. `soft` sets `data-theme="light"`; the other palettes set `data-theme="dark"` and use `data-palette` for token overrides. Despite its name, the soft theme remains a dark, contrast-oriented treatment rather than a white page.
+The CSS token system includes background/surface levels, border strengths, text contrast, accent/accent-soft colors, severity colors (`danger`, `warn`, `ok`, `info`, `unknown`), radii, shadows, sans and monospace stacks. `public/static/spectrum-theme.css` supplies palette variants. Theme IDs handled by JS are `signature`, `violet`, `blue`, and `soft`; the legacy stored value `light` maps to `soft`. `soft` sets `data-theme="light"`; the other palettes set `data-theme="dark"` and use `data-palette` for token overrides. Despite its name, the soft theme remains a dark, contrast-oriented treatment rather than a white page.
 
 Responsive behavior is distributed through stylesheets rather than a component framework. Important breakpoints include `1080`, `960`, `920`, `820`, `800`, `760`, `640`, `600`, `560`, `480`, `430`, `400`, `390`, and `380` pixels. Motion is reduced using `prefers-reduced-motion`; fine-pointer hover effects are restricted to hover-capable devices. Focus-visible outlines, semantic navigation/sections, ARIA labels/live regions, and non-color text badges are used in important flows.
 
@@ -574,7 +581,7 @@ All values below are variable **names**, not values. Keep credentials in environ
 | `CRON_SECRET` | Cron endpoints | Bearer secret required for scheduled routes. |
 | `PORT` | Local/Docker | Defaults to 8000. |
 
-DNS, RDAP and TLS checks use Python/network libraries directly. Optional reputation APIs and Mailjet use HTTPS requests with bounded timeouts. VAPID uses the optional `pywebpush` dependency. Google sign-in uses Authlib. Three.js is locally bundled under `static/vendor/` rather than installed into browser code from a CDN.
+DNS, RDAP and TLS checks use Python/network libraries directly. Optional reputation APIs and Mailjet use HTTPS requests with bounded timeouts. VAPID uses the optional `pywebpush` dependency. Google sign-in uses Authlib. Three.js is locally bundled under `public/static/vendor/` rather than installed into browser code from a CDN.
 
 ---
 
@@ -614,8 +621,8 @@ Other useful checks:
 
 ```bash
 python -m py_compile app.py engine/*.py
-node --check static/app.js
-node --check static/depth-scene.js
+node --check public/static/app.js
+node --check public/static/depth-scene.js
 git diff --check
 ```
 
@@ -640,7 +647,7 @@ This section records implementation boundaries that are important during future 
 
 ### Architectural constraints
 
-- The HTML template and `static/app.js` are large, shared files. Extracting components/modules could improve maintainability, but preserve the single-origin routes, DOM IDs and no-build deployment assumptions unless a migration is deliberate.
+- The HTML template and `public/static/app.js` are large, shared files. Extracting components/modules could improve maintainability, but preserve the single-origin routes, DOM IDs and no-build deployment assumptions unless a migration is deliberate.
 - Store locks are in-process only; they do not provide cross-worker coordination. Postgres constraints/transactions should carry correctness under multi-worker/serverless concurrency.
 - The PostgreSQL adapter is intentionally small and translates `?` to `%s`; keep SQL compatible or replace the adapter with an explicit database abstraction before adding complex dialect-specific SQL.
 - Schema changes rely on idempotent creation and additive column migrations in `store.init()`, not a versioned migration framework. Larger schema changes should introduce an explicit migration strategy.
@@ -666,11 +673,11 @@ This section records implementation boundaries that are important during future 
 | New URL signal or knowledge-list entry | `engine/data.py`, `engine/lexical.py`, possibly `engine/verdict.py` | `tests/test_engine.py`, `tests/test_intel.py` if provider-related |
 | New URL infrastructure signal | `engine/net.py`, `engine/urlscan.py` | `tests/test_engine.py`; mock network and cover failure/degraded paths |
 | New reputation source | `engine/intel.py`, `engine/urlscan.py`, consent UI and `.env.example` | `tests/test_intel.py`, `tests/test_urlscan_consent.py` |
-| New email signal or attachment type | `engine/emailscan.py`, `engine/data.py`, result renderer in `static/app.js` | `tests/test_engine.py` with safe `.eml` fixtures |
+| New email signal or attachment type | `engine/emailscan.py`, `engine/data.py`, result renderer in `public/static/app.js` | `tests/test_engine.py` with safe `.eml` fixtures |
 | New account setting | `engine/store.py` schema/migration, `engine/auth.py`, routes in `app.py`, settings DOM and handlers | Auth/account route tests and isolated DB tests |
 | New API route | `app.py` auth allowlist/policy, frontend caller | Route tests for unauthenticated, authenticated and missing-header cases |
 | New persistent entity | `engine/store.py`, DB migration strategy, export/delete semantics | fresh and existing-schema tests; no live-account fixtures |
-| New theme/layout behavior | `templates/index.html`, appropriate CSS layer, `static/app.js` only if stateful | responsive/reduced-motion/keyboard checks |
+| New theme/layout behavior | `templates/index.html`, appropriate CSS layer, `public/static/app.js` only if stateful | responsive/reduced-motion/keyboard checks |
 | New notification type | `engine/push.py`/`mailer.py`, cron or scan caller, delivery idempotency store | provider mocks and duplicate-delivery tests |
 
 ### Non-goals to preserve unless product requirements change

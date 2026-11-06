@@ -25,7 +25,10 @@ from engine import assistant, auth, emailscan, mailer, push, store, urlscan
 
 MAX_UPLOAD = 12 * 1024 * 1024  # 12 MB .eml ceiling
 
-app = Flask(__name__)
+# Keep Flask's same-origin /static URL contract while placing deployable assets
+# under Vercel's public directory for edge/CDN delivery. Locally Flask serves the
+# same files from this folder as usual.
+app = Flask(__name__, static_folder="public/static", static_url_path="/static")
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD
 app.config["AUTH_COOKIE_SECURE"] = os.environ.get("AUTH_COOKIE_SECURE", "0").lower() in {"1", "true", "yes"}
 app.config["AUTH_COOKIE_NAME"] = "__Host-pg_session" if app.config["AUTH_COOKIE_SECURE"] else "pg_session"

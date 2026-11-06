@@ -22,7 +22,7 @@ phishguard/
 ├── run.sh          ← macOS / Linux launcher
 ├── run.bat         ← Windows launcher
 ├── app.py
-├── engine/  static/  templates/  samples/  tests/  scripts/
+├── engine/  public/static/  templates/  samples/  tests/  scripts/
 └── requirements.txt
 ```
 
