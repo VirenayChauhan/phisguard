@@ -2,7 +2,7 @@
 
 > **Purpose:** coder-facing map of the current PhishGuard implementation, its UI, analysis engines, persistence, security boundaries, and deployment. Treat the source files as authoritative when behavior changes.
 >
-> **Snapshot:** branch `arena/80a1b848-phisguard`, source commit `b7e7ac0` (November 2026). This document is intentionally named `technical_deatils.md` to match the requested filename.
+> **Snapshot:** branch `arena/80a1b848-phisguard`, source commit `b7e7ac0` (November 2026). This document describes the PhishGuard implementation as it stands in November 2026.
 
 ## Contents
 
